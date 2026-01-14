@@ -4,25 +4,15 @@ import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation 
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable"; 
 import { 
-  Plus, Trash2, Home, Package, FileText, 
-  CreditCard, Edit2, Check, X, Search,
-  LayoutDashboard, LogOut, ShoppingBag, 
-  Calendar, Printer, TrendingUp, Clock, 
-  Info, MapPin, ArrowRight, FilePlus,
-  AlertTriangle, CheckCircle2, UserCheck, Save, Menu
+  Plus, Trash2, Home, ShoppingBag, Printer, Edit2, Check, Search,
+  AlertTriangle, ChevronUp, ChevronDown
 } from 'lucide-react';
 
-// --- ACTIVOS ---
 import logoAlekey from './assets/alekey-logo.jpeg'; 
 
 // ==========================================
-// 1. CONSTANTES Y CONFIGURACIÓN
+// 1. CONFIGURACIÓN Y CONSTANTES
 // ==========================================
-
-const CONFIG = {
-  COLORES: { VERDE: "#8ED4BE", ROSADO: "#F79598", LIMA: "#BCC962" },
-  LIMITES: { MIN: 0, MAX: 99 }
-};
 
 const UBICACIONES_CR = {
   "San José": ["San José", "Escazú", "Desamparados", "Puriscal", "Tarrazú", "Aserrí", "Mora", "Goicoechea", "Santa Ana", "Alajuelita", "Vázquez de Coronado", "Acosta", "Tibás", "Moravia", "Montes de Oca", "Turrubares", "Dota", "Curridabat", "Pérez Zeledón", "León Cortés Castro"],
@@ -50,18 +40,11 @@ const TEMAS_PREDEFINIDOS = [
   "Mario Bros", "Mariquita Educlip", "Mariquita", "Medio Ambiente", "Mono", 
   "Monstruos 1", "Monstruos 2", "Monstruos 3", "Monster Inc", "Mickey", 
   "Mickey Safari", "Melonheadz", "Música", "Navidad", "Niños Corazón", 
-  "Niños Corazon New", "Niños Jovenes", "Oso Miel", "Oso Sandia", "Oso The Pond", 
-  "Oso Teddy", "Osos Cariñosos", "Pajaros Educlip", "Pajaros Acuarela", "Panda", 
-  "Panda Cute", "Plaza Sesamo", "Pirata", "Pirata Merita", "Piscina", "Pingüino", 
-  "Principito", "Princesa", "Pacman", "Perro", "Rana", "Rana The Pond", "Robot 1", 
-  "Robot 2", "Robot 3", "Safari Vintage", "Safari Cute", "San Valentin", "Selva", 
-  "Setiemrbe 15 Desfile", "Setiembre 15", "Star Wars", "Sloth", "Steam", 
-  "Stitch Navidad", "Stitch", "Suculentas 1", "Suculentas 2", "Super Heroes", 
-  "Steam 2", "Snoopy", "Snoopy Y Amigos", "Tortuga", "Toy Story"
+  "Niños Jovenes", "Oso Miel", "Oso Sandia", "Oso Teddy", "Panda", "Principito", "Toy Story"
 ];
 
 // ==========================================
-// 2. UTILIDADES
+// 2. UTILIDADES Y PDF
 // ==========================================
 
 const Utils = {
@@ -115,7 +98,7 @@ const exportToPDF = async (venta) => {
   const tableRows = venta.items.map(i => [
     i.cant,
     i.cat + " - " + i.tema,
-    "C " + i.precio.toLocaleString(),
+    "C " + (i.precio || 0).toLocaleString(),
     "C " + (i.cant * i.precio).toLocaleString(),
     i.pendiente > 0 ? i.pendiente : "Entregado"
   ]);
@@ -132,28 +115,24 @@ const exportToPDF = async (venta) => {
   doc.save(`Cotizacion_${venta.nombre}.pdf`);
 };
 
-const DeleteModal = ({ isOpen, onConfirm, onCancel }) => {
-  if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="bg-white rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-300 text-center">
-        <div className="w-16 h-16 md:w-20 md:h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
-          <AlertTriangle size={32}/>
-        </div>
-        <h3 className="text-xl md:text-2xl font-black italic text-slate-800 mb-2 uppercase">¿Eliminar Registro?</h3>
-        <p className="text-slate-400 font-bold text-xs md:text-sm mb-8">Esta acción no se puede deshacer.</p>
-        <div className="flex flex-col gap-3">
-          <button onClick={onConfirm} className="w-full py-4 bg-red-500 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-red-600">Eliminar Ahora</button>
-          <button onClick={onCancel} className="w-full py-4 bg-slate-100 text-slate-400 rounded-2xl font-black uppercase tracking-widest">Cancelar</button>
-        </div>
-      </div>
-    </div>
-  );
-};
+// ==========================================
+// 3. COMPONENTES INTERFAZ
+// ==========================================
 
-// ==========================================
-// 4. FORMULARIO COTIZACIÓN (RESPONSIVE)
-// ==========================================
+const QuantityControls = ({ value, onChange, colorClass = "bg-white", textClass = "text-slate-800" }) => (
+  <div className="flex items-center gap-1 min-w-[100px] justify-center">
+    <input 
+      type="number" 
+      className={`w-14 h-12 border-2 rounded-xl font-black text-center outline-none transition-all focus:border-cyan-400 ${colorClass} ${textClass}`}
+      value={value} 
+      onChange={(e) => onChange(parseInt(e.target.value) || 0)}
+    />
+    <div className="flex flex-col gap-0.5">
+      <button onClick={() => onChange(value + 1)} className="p-1.5 bg-cyan-100 rounded-md hover:bg-cyan-200 text-cyan-600"><ChevronUp size={16}/></button>
+      <button onClick={() => onChange(value - 1)} className="p-1.5 bg-cyan-100 rounded-md hover:bg-cyan-200 text-cyan-600"><ChevronDown size={16}/></button>
+    </div>
+  </div>
+);
 
 const FormularioCotizacion = ({ alGuardar, count }) => {
   const navigate = useNavigate();
@@ -165,272 +144,268 @@ const FormularioCotizacion = ({ alGuardar, count }) => {
   const total = formData.items.reduce((s, i) => s + (i.cant * i.precio), 0);
 
   const handleUpdate = (id, field, value) => {
-    const updated = formData.items.map(item => {
-      if (item.id === id) {
-        let val = value;
-        if (field === 'cant') {
-          val = Math.max(1, Math.min(99, parseInt(value) || 1));
-          return { ...item, cant: val, pendiente: val }; 
+    setFormData(prev => ({
+      ...prev,
+      items: prev.items.map(item => {
+        if (item.id === id) {
+          if (field === 'cant') {
+            const v = Math.max(1, value);
+            return { ...item, cant: v, pendiente: v };
+          }
+          if (field === 'pendiente') return { ...item, pendiente: Math.max(0, Math.min(item.cant, value)) };
+          if (field === 'cat') return { ...item, cat: value, precio: PRODUCTOS_PRECIOS[value] || 0 };
+          return { ...item, [field]: value };
         }
-        if (field === 'pendiente') {
-          val = Math.max(0, Math.min(item.cant, parseInt(value) || 0));
-          return { ...item, pendiente: val };
-        }
-        if (field === 'cat') return { ...item, cat: val, precio: PRODUCTOS_PRECIOS[val] || 0 };
-        return { ...item, [field]: val };
-      }
-      return item;
-    });
-    setFormData({ ...formData, items: updated });
+        return item;
+      })
+    }));
   };
 
-  const isInvalid = !Utils.validateName(formData.nombre) || formData.telefono.length < 9 || !formData.canton;
+  const formularioValido = formData.nombre.length > 5 && formData.telefono.length >= 8 && formData.provincia !== '';
+
+  const ejecutarGuardado = async () => {
+    const nuevaVenta = {
+      id: Utils.generateId(),
+      nombre: formData.nombre,
+      telefono: formData.telefono,
+      direccion: `${formData.provincia}, ${formData.canton}`,
+      fecha: new Date().toLocaleDateString(),
+      total: total,
+      items: formData.items
+    };
+    await alGuardar(nuevaVenta);
+    navigate('/ventas');
+  };
 
   return (
-    <div className="p-4 md:p-10 max-w-6xl mx-auto pb-32 md:pb-10">
-      <div className="bg-white rounded-[2rem] md:rounded-[3rem] p-6 md:p-12 shadow-2xl border border-slate-100">
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 md:mb-12">
-          <div>
-            <h2 className="text-2xl md:text-4xl font-black italic text-slate-800 uppercase leading-none">Cotizar Nuevo</h2>
-            <p className="text-slate-400 font-bold text-[8px] md:text-[10px] tracking-widest mt-1 uppercase">Registro Alekey #{count + 1}</p>
-          </div>
-          <div className="text-left md:text-right w-full md:w-auto">
-            <h3 className="text-3xl md:text-5xl font-black italic text-[#BCC962]">{Utils.currency(total)}</h3>
-          </div>
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32">
+      <div className="bg-white rounded-[2rem] lg:rounded-[3rem] p-6 lg:p-12 shadow-2xl">
+        <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-10">
+          <h2 className="text-3xl lg:text-4xl font-black italic text-slate-800 uppercase">Cotizar Nuevo</h2>
+          <h3 className="text-3xl lg:text-5xl font-black italic text-[#BCC962]">{Utils.currency(total)}</h3>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 mb-8 md:mb-12">
-          <div className="space-y-4 md:space-y-6">
-            <input className="w-full p-4 md:p-5 bg-slate-50 rounded-xl md:rounded-2xl font-bold outline-none border-2 border-transparent focus:border-[#8ED4BE]"
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+          <div className="space-y-4">
+            <input className="w-full p-5 bg-slate-50 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-[#8ED4BE] text-slate-800"
               placeholder="Nombre + 2 Apellidos..." value={formData.nombre} 
               onChange={e => setFormData({...formData, nombre: Utils.capitalize(e.target.value)})} />
-            
-            <input className="w-full p-4 md:p-5 bg-slate-50 rounded-xl md:rounded-2xl font-bold outline-none border-2 border-transparent focus:border-[#8ED4BE]"
-              placeholder="Numero (0000-0000)" value={formData.telefono} 
+            <input className="w-full p-5 bg-slate-50 rounded-2xl font-bold border-2 border-transparent focus:border-[#8ED4BE] outline-none text-slate-800"
+              placeholder="Número (0000-0000)" value={formData.telefono} 
               onChange={e => setFormData({...formData, telefono: Utils.formatPhone(e.target.value)})} />
           </div>
-
-          <div className="grid grid-cols-2 gap-3 md:gap-4">
-            <select className="w-full p-4 md:p-5 bg-slate-50 rounded-xl md:rounded-2xl font-bold outline-none text-xs md:text-base" value={formData.provincia} 
-              onChange={e => setFormData({...formData, provincia: e.target.value, canton: ''})}>
+          <div className="grid grid-cols-2 gap-4">
+            <select className="p-5 bg-slate-50 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-[#8ED4BE] text-slate-800"
+              value={formData.provincia} onChange={e => setFormData({...formData, provincia: e.target.value, canton: ''})}>
               <option value="">Provincia...</option>
               {Object.keys(UBICACIONES_CR).map(p => <option key={p} value={p}>{p}</option>)}
             </select>
-            <select className="w-full p-4 md:p-5 bg-slate-50 rounded-xl md:rounded-2xl font-bold outline-none disabled:opacity-30 text-xs md:text-base" 
+            <select className="p-5 bg-slate-50 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-[#8ED4BE] disabled:opacity-50 text-slate-800"
               disabled={!formData.provincia} value={formData.canton} onChange={e => setFormData({...formData, canton: e.target.value})}>
-              <option value="">Canton...</option>
+              <option value="">Cantón...</option>
               {formData.provincia && UBICACIONES_CR[formData.provincia].map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
         </div>
 
-        <div className="overflow-x-auto -mx-2 md:mx-0">
-          <table className="w-full mb-10 min-w-[600px]">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[850px] text-slate-800">
             <thead>
-              <tr className="text-left text-[10px] font-black text-slate-300 uppercase tracking-widest border-b">
-                <th className="pb-4 px-2">Cant.</th>
-                <th className="pb-4 px-2">Categoria</th>
+              <tr className="text-left text-[11px] font-black text-slate-300 uppercase border-b pb-4">
+                <th className="pb-4 px-2 w-[140px]">Cant.</th>
+                <th className="pb-4 px-2">Categoría</th>
                 <th className="pb-4 px-2">Tema</th>
-                <th className="pb-4 px-2 text-center">Pnd.</th>
+                <th className="pb-4 px-2 w-[140px] text-center">Pnd.</th>
                 <th className="pb-4 px-2 text-right">Subtotal</th>
-                <th className="pb-4"></th>
+                <th className="pb-4 w-10"></th>
               </tr>
             </thead>
             <tbody>
               {formData.items.map(item => (
                 <tr key={item.id}>
-                  <td className="py-3 md:py-4 px-1"><input type="number" className="w-14 md:w-16 p-2 md:p-3 bg-white border-2 rounded-xl font-black text-center" 
-                    value={item.cant} onChange={e => handleUpdate(item.id, 'cant', e.target.value)} /></td>
-                  <td className="py-3 md:py-4 px-1"><select className="w-full p-2 md:p-3 bg-white border-2 rounded-xl font-bold text-xs md:text-sm" value={item.cat} 
-                    onChange={e => handleUpdate(item.id, 'cat', e.target.value)}>
-                      <option value="">Seleccione...</option>
-                      {Object.keys(PRODUCTOS_PRECIOS).map(p => <option key={p} value={p}>{p}</option>)}
-                    </select></td>
-                  <td className="py-3 md:py-4 px-1"><input list="temas-list" className="w-full p-2 md:p-3 bg-white border-2 rounded-xl text-xs md:text-sm" placeholder="Tema..." 
-                    value={item.tema} onChange={e => handleUpdate(item.id, 'tema', e.target.value)} /></td>
-                  <td className="py-3 md:py-4 px-1 text-center"><input type="number" className="w-14 md:w-16 p-2 md:p-3 bg-red-50 text-red-500 rounded-xl font-black text-center" 
-                    value={item.pendiente} onChange={e => handleUpdate(item.id, 'pendiente', e.target.value)} /></td>
-                  <td className="py-3 md:py-4 px-1 text-right font-black text-xs md:text-sm">{Utils.currency(item.cant * item.precio)}</td>
-                  <td className="py-3 md:py-4 text-right"><button onClick={() => setFormData({...formData, items: formData.items.filter(i => i.id !== item.id)})} className="text-red-300 hover:text-red-500"><Trash2 size={18}/></button></td>
+                  <td className="py-4">
+                    <QuantityControls value={item.cant} onChange={(v) => handleUpdate(item.id, 'cant', v)} />
+                  </td>
+                  <td className="py-4 px-2">
+                    <input list="productos-list" className="w-full p-4 bg-white border-2 rounded-xl font-bold outline-none focus:border-[#8ED4BE]" 
+                      value={item.cat} placeholder="Seleccione..." onChange={e => handleUpdate(item.id, 'cat', e.target.value)} />
+                  </td>
+                  <td className="py-4 px-2">
+                    <input list="temas-list" className="w-full p-4 bg-white border-2 rounded-xl font-bold outline-none focus:border-[#8ED4BE]" 
+                      value={item.tema} placeholder="Tema..." onChange={e => handleUpdate(item.id, 'tema', e.target.value)} />
+                  </td>
+                  <td className="py-4">
+                    <QuantityControls value={item.pendiente} colorClass="bg-red-50" textClass="text-red-500" onChange={(v) => handleUpdate(item.id, 'pendiente', v)} />
+                  </td>
+                  <td className="py-4 px-2 text-right font-black">{Utils.currency(item.cant * item.precio)}</td>
+                  <td className="py-4 text-center">
+                    <button onClick={() => setFormData({...formData, items: formData.items.filter(i => i.id !== item.id)})} className="text-red-300 hover:text-red-500">
+                      <Trash2 size={22}/>
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        <button onClick={() => setFormData({...formData, items: [...formData.items, {id: Utils.generateId(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 1}]})}
+          className="mt-8 px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase flex items-center gap-2">
+          <Plus size={16}/> Agregar Línea
+        </button>
 
-        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-          <button onClick={() => setFormData({...formData, items: [...formData.items, {id: Utils.generateId(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 1}]})} 
-            className="w-full md:w-auto px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase">Agregar Linea</button>
-          
-          <button disabled={isInvalid} onClick={() => { alGuardar({...formData, id: Utils.generateId(), fecha: new Date().toLocaleDateString(), direccion: `${formData.provincia}, ${formData.canton}`, total}); navigate('/ventas'); }}
-            className="w-full md:w-auto px-16 py-5 bg-[#8ED4BE] text-white font-black text-lg md:text-xl rounded-2xl md:rounded-3xl shadow-2xl disabled:opacity-30">Guardar Pedido</button>
+        <div className="mt-10 flex justify-end">
+          <button 
+            disabled={!formularioValido}
+            onClick={ejecutarGuardado}
+            className="px-16 py-5 bg-[#8ED4BE] text-white font-black text-xl rounded-3xl shadow-2xl disabled:opacity-30 transition-all hover:scale-105 active:scale-95"
+          >
+            Guardar Pedido
+          </button>
         </div>
       </div>
+      <datalist id="productos-list">{Object.keys(PRODUCTOS_PRECIOS).map(p => <option key={p} value={p} />)}</datalist>
       <datalist id="temas-list">{TEMAS_PREDEFINIDOS.map(t => <option key={t} value={t} />)}</datalist>
     </div>
   );
 };
 
-// ==========================================
-// 5. HISTORIAL VENTAS (RESPONSIVE)
-// ==========================================
-
-const HistorialVentas = ({ ventas, setVentas, onDelete, onUpdate }) => {
+const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
   const [filtro, setFiltro] = useState('');
   const [editId, setEditId] = useState(null);
   const [editCache, setEditCache] = useState(null);
-  const [deleteId, setDeleteId] = useState(null);
-
-  const filtered = ventas.filter(v => v.nombre.toLowerCase().includes(filtro.toLowerCase()));
 
   const handleEditItem = (itemId, field, value) => {
-    const updated = editCache.items.map(item => {
-      if (item.id === itemId) {
-        let val = value;
-        if (field === 'cant') {
-          val = Math.max(1, Math.min(99, parseInt(value) || 1));
-          const newPendiente = Math.min(val, item.pendiente);
-          return { ...item, cant: val, pendiente: newPendiente };
+    setEditCache(prev => {
+      const updatedItems = prev.items.map(item => {
+        if (item.id === itemId) {
+          if (field === 'cant') {
+            const v = Math.max(1, value);
+            return { ...item, cant: v, pendiente: v };
+          }
+          if (field === 'pendiente') return { ...item, pendiente: Math.max(0, Math.min(item.cant, value)) };
+          if (field === 'cat') return { ...item, cat: value, precio: PRODUCTOS_PRECIOS[value] || 0 };
+          return { ...item, [field]: value };
         }
-        if (field === 'pendiente') {
-          val = Math.max(0, Math.min(item.cant, parseInt(value) || 0));
-          return { ...item, pendiente: val };
-        }
-        if (field === 'cat') return { ...item, cat: val, precio: PRODUCTOS_PRECIOS[val] || 0 };
-        return { ...item, [field]: val };
-      }
-      return item;
+        return item;
+      });
+      return { 
+        ...prev, 
+        items: updatedItems,
+        total: updatedItems.reduce((s, i) => s + (i.cant * i.precio), 0)
+      };
     });
-    setEditCache({ ...editCache, items: updated, total: updated.reduce((s, i) => s + (i.cant * i.precio), 0) });
-  };
-
-  const confirmDelete = () => {
-    onDelete(deleteId); 
-    setDeleteId(null);
-  };
-
-  const handleSaveEdit = () => {
-    onUpdate(editId, editCache);
-    setEditId(null);
   };
 
   return (
-    <div className="p-4 md:p-10 max-w-6xl mx-auto pb-32 md:pb-10">
-      <DeleteModal isOpen={!!deleteId} onConfirm={confirmDelete} onCancel={() => setDeleteId(null)} />
-      
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8 md:mb-12">
-        <div><h2 className="text-3xl md:text-4xl font-black italic text-slate-800 uppercase">Historial</h2></div>
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={20}/>
-          <input className="pl-14 pr-8 py-4 md:py-5 bg-white rounded-2xl md:rounded-3xl shadow-sm border-none w-full font-bold" 
-            placeholder="Buscar cliente..." value={filtro} onChange={e => setFiltro(e.target.value)} />
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32">
+      <header className="flex flex-col lg:flex-row justify-between gap-6 mb-10">
+        <h2 className="text-3xl lg:text-4xl font-black italic text-slate-800 uppercase">Historial</h2>
+        <div className="relative w-full lg:w-96 text-slate-800">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={20}/>
+          <input className="w-full pl-12 pr-5 py-4 bg-white rounded-2xl shadow-sm font-bold outline-none" 
+            placeholder="Buscar cliente..." onChange={e => setFiltro(e.target.value)} />
         </div>
       </header>
 
-      <div className="space-y-6 md:space-y-10">
-        {filtered.map(v => {
+      <div className="space-y-8">
+        {ventas.filter(v => v.nombre.toLowerCase().includes(filtro.toLowerCase())).map(v => {
           const editing = editId === v.id;
           const data = editing ? editCache : v;
+          const tienePendientes = data.items.some(i => i.pendiente > 0);
 
           return (
-            <div key={v.id} className={`bg-white rounded-[2rem] md:rounded-[3.5rem] p-5 md:p-10 shadow-xl border-l-[8px] md:border-l-[12px] ${data.items.some(i => i.pendiente > 0) ? 'border-red-400' : 'border-[#8ED4BE]'}`}>
-              <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6 md:mb-8">
-                <div className="flex gap-4 md:gap-6 items-center">
-                  <div className="w-12 h-12 md:w-16 md:h-16 bg-slate-100 rounded-xl md:rounded-2xl flex items-center justify-center font-black text-lg">{v.nombre.charAt(0)}</div>
+            <div key={v.id} className={`bg-white rounded-[2.5rem] p-6 lg:p-10 shadow-xl border-l-[12px] transition-colors duration-500 ${tienePendientes ? 'border-red-400' : 'border-[#8ED4BE]'}`}>
+              <div className="flex justify-between items-start mb-6">
+                <div className="w-full max-w-2xl">
                   {editing ? (
-                    <div className="flex flex-col gap-2 w-full">
-                      <input className="text-xl md:text-2xl font-black italic border-b-2 border-[#8ED4BE] outline-none" 
+                    <div className="space-y-2">
+                      <input className="text-2xl font-black italic text-slate-800 border-b-2 border-cyan-400 outline-none w-full" 
                         value={data.nombre} onChange={e => setEditCache({...editCache, nombre: Utils.capitalize(e.target.value)})} />
-                      <div className="flex flex-wrap gap-2">
-                        <input className="text-[10px] border-b outline-none" value={data.telefono} onChange={e => setEditCache({...editCache, telefono: Utils.formatPhone(e.target.value)})} />
-                        <input className="text-[10px] border-b outline-none" value={data.direccion} onChange={e => setEditCache({...editCache, direccion: e.target.value})} />
+                      <div className="flex gap-4">
+                        <input className="text-sm font-bold border-b outline-none text-slate-400" value={data.telefono} onChange={e => setEditCache({...editCache, telefono: Utils.formatPhone(e.target.value)})} />
+                        <input className="text-sm font-bold border-b outline-none text-slate-400" value={data.direccion} onChange={e => setEditCache({...editCache, direccion: e.target.value})} />
                       </div>
                     </div>
                   ) : (
-                    <div className="overflow-hidden">
-                      <h3 className="text-lg md:text-2xl font-black italic text-slate-800 truncate">{v.nombre}</h3>
-                      <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">{v.fecha} • {v.telefono} • {v.direccion}</p>
-                    </div>
+                    <>
+                      <h3 className="text-2xl font-black italic text-slate-800">{data.nombre}</h3>
+                      <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{data.fecha} • {data.telefono} • {data.direccion}</p>
+                    </>
                   )}
                 </div>
-                <div className="flex gap-2 w-full md:w-auto justify-end">
+                {/* ACCIONES: PDF y Eliminar se bloquean/ocultan al editar */}
+                <div className="flex gap-2">
                   {editing ? (
-                    <button onClick={handleSaveEdit} className="p-3 md:p-4 bg-emerald-500 text-white rounded-xl md:rounded-2xl"><Check/></button>
+                    <button onClick={() => {onUpdate(v.id, editCache); setEditId(null);}} className="p-4 bg-emerald-500 text-white rounded-2xl shadow-lg hover:bg-emerald-600 transition-all flex items-center justify-center"><Check size={24}/></button>
                   ) : (
-                    <button onClick={() => { setEditId(v.id); setEditCache(v); }} className="p-3 md:p-4 bg-slate-50 text-slate-300 rounded-xl md:rounded-2xl hover:bg-slate-900 hover:text-white transition-all"><Edit2 size={20}/></button>
+                    <button onClick={() => {setEditId(v.id); setEditCache(v);}} className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-slate-900 hover:text-white transition-all"><Edit2 size={20}/></button>
                   )}
-                  <button onClick={() => exportToPDF(v)} className="p-3 md:p-4 bg-blue-50 text-blue-500 rounded-xl md:rounded-2xl"><Printer size={20}/></button>
-                  <button onClick={() => setDeleteId(v.id)} className="p-3 md:p-4 bg-red-50 text-red-300 rounded-xl md:rounded-2xl hover:bg-red-500 hover:text-white transition-all"><Trash2 size={20}/></button>
+                  {/* Botones PDF y Eliminar: En PC se desactivan (opacity), en Móvil desaparecen (hidden) */}
+                  <button 
+                    disabled={editing}
+                    onClick={() => exportToPDF(v)} 
+                    className={`p-4 bg-blue-50 text-blue-500 rounded-2xl transition-all ${editing ? 'opacity-20 pointer-events-none hidden lg:flex' : 'hover:bg-blue-600 hover:text-white'}`}
+                  >
+                    <Printer size={20}/>
+                  </button>
+                  <button 
+                    disabled={editing}
+                    onClick={() => onDelete(v.id)} 
+                    className={`p-4 bg-red-50 text-red-300 rounded-2xl transition-all ${editing ? 'opacity-20 pointer-events-none hidden lg:flex' : 'hover:bg-red-500 hover:text-white'}`}
+                  >
+                    <Trash2 size={20}/>
+                  </button>
                 </div>
               </div>
 
-              <div className="bg-slate-50/50 rounded-[1.5rem] md:rounded-[2.5rem] p-4 md:p-8">
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[500px]">
-                    <thead>
-                      <tr className="text-left text-[8px] md:text-[9px] font-black text-slate-300 uppercase">
-                        <th className="pb-4">Cant.</th>
-                        <th className="pb-4">Descripcion</th>
-                        <th className="pb-4 text-center">Pendientes</th>
-                        <th className="pb-4 text-right">Subtotal</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {data.items.map(item => (
-                        <tr key={item.id}>
-                          <td className="py-3 md:py-4">
-                            {editing ? (
-                              <input type="number" className="w-12 p-2 border rounded-lg font-black text-center" 
-                                value={item.cant} onChange={e => handleEditItem(item.id, 'cant', e.target.value)} />
-                            ) : <span className="font-black text-slate-500">{item.cant}</span>}
-                          </td>
-                          <td className="py-3 md:py-4">
-                            {editing ? (
-                              <div className="flex gap-1 md:gap-2">
-                                <select className="text-[10px] border rounded p-1" value={item.cat} onChange={e => handleEditItem(item.id, 'cat', e.target.value)}>
-                                  {Object.keys(PRODUCTOS_PRECIOS).map(p => <option key={p} value={p}>{p}</option>)}
-                                </select>
-                                <input list="temas-list" className="text-[10px] border rounded p-1 flex-1" value={item.tema} onChange={e => handleEditItem(item.id, 'tema', e.target.value)} />
-                              </div>
-                            ) : <span className="text-[10px] font-black uppercase text-slate-700">{item.cat} - {item.tema}</span>}
-                          </td>
-                          <td className="py-3 md:py-4 text-center">
-                            {editing ? (
-                              <input type="number" className="w-12 p-2 border border-red-100 bg-red-50 rounded-lg font-black text-center text-red-500" 
-                                value={item.pendiente} onChange={e => handleEditItem(item.id, 'pendiente', e.target.value)} />
-                            ) : (
-                              <span className={`px-3 py-1 rounded-full text-[8px] md:text-[10px] font-black ${item.pendiente > 0 ? 'bg-red-100 text-red-500' : 'bg-emerald-100 text-emerald-600'}`}>
+              <div className="overflow-x-auto bg-slate-50/50 rounded-[2rem] p-4 lg:p-6 text-slate-800">
+                <table className="w-full min-w-[700px]">
+                  <thead>
+                    <tr className="text-left text-[10px] font-black text-slate-300 uppercase border-b pb-2">
+                      <th className="pb-2 w-[130px]">Cant.</th>
+                      <th className="pb-2">Descripción</th>
+                      <th className="pb-2 text-center w-[130px]">Pendientes</th>
+                      <th className="pb-2 text-right">Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.items.map(item => (
+                      <tr key={item.id}>
+                        <td className="py-4">
+                          {editing ? <QuantityControls value={item.cant} onChange={(val) => handleEditItem(item.id, 'cant', val)} /> : <span className="font-black text-slate-600 ml-4">{item.cant}</span>}
+                        </td>
+                        <td className="py-4">
+                          {editing ? (
+                            <div className="flex gap-2">
+                              <input list="productos-list" className="text-xs border-2 rounded-lg p-2 w-1/2 outline-none focus:border-[#8ED4BE]" value={item.cat} onChange={e => handleEditItem(item.id, 'cat', e.target.value)} />
+                              <input list="temas-list" className="text-xs border-2 rounded-lg p-2 w-1/2 outline-none focus:border-[#8ED4BE]" value={item.tema} onChange={e => handleEditItem(item.id, 'tema', e.target.value)} />
+                            </div>
+                          ) : <span className="text-[11px] font-black uppercase text-slate-700">{item.cat} - {item.tema}</span>}
+                        </td>
+                        <td className="py-4">
+                          <div className="flex justify-center">
+                            {editing ? <QuantityControls value={item.pendiente} colorClass="bg-red-50" textClass="text-red-500" onChange={(val) => handleEditItem(item.id, 'pendiente', val)} /> : (
+                              <span className={`px-4 py-1.5 rounded-full text-[10px] font-black ${item.pendiente > 0 ? 'bg-red-100 text-red-500' : 'bg-emerald-100 text-emerald-600'}`}>
                                 {item.pendiente > 0 ? item.pendiente : 'Entregado'}
                               </span>
                             )}
-                          </td>
-                          <td className="py-3 md:py-4 text-right font-black text-xs md:text-sm">{Utils.currency(item.cant * item.precio)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                {editing && (
-                  <button onClick={() => setEditCache({...editCache, items: [...editCache.items, {id: Utils.generateId(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 1}]})}
-                    className="mt-6 flex items-center gap-2 text-[10px] font-black text-[#8ED4BE] uppercase border-2 border-dashed border-[#8ED4BE]/30 p-4 rounded-2xl w-full justify-center">
-                    <Plus size={14}/> Agregar Linea
-                  </button>
-                )}
-                <div className="mt-6 pt-4 border-t flex justify-end">
-                  <div className="text-[8px] md:text-[10px] font-black text-white px-4 py-2 rounded-full bg-slate-900 uppercase">Total: {Utils.currency(data.total)}</div>
-                </div>
+                          </div>
+                        </td>
+                        <td className="py-4 text-right font-black text-slate-800">{Utils.currency(item.cant * item.precio)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           );
         })}
       </div>
+      <datalist id="productos-list">{Object.keys(PRODUCTOS_PRECIOS).map(p => <option key={p} value={p} />)}</datalist>
+      <datalist id="temas-list">{TEMAS_PREDEFINIDOS.map(t => <option key={t} value={t} />)}</datalist>
     </div>
   );
 };
-
-// ==========================================
-// 6. DASHBOARD HOME (RESPONSIVE)
-// ==========================================
 
 const DashboardHome = ({ historial }) => {
   const stats = useMemo(() => {
@@ -440,118 +415,93 @@ const DashboardHome = ({ historial }) => {
   }, [historial]);
 
   return (
-    <div className="p-6 md:p-12 max-w-7xl mx-auto pb-32 md:pb-12">
-      <header className="mb-12 md:mb-20">
-        <h1 className="text-5xl md:text-8xl font-black italic text-slate-800 tracking-tighter uppercase leading-[0.9]">Panel<br/><span className="text-[#8ED4BE]">Alekey.</span></h1>
+    <div className="p-6 lg:p-12 max-w-7xl mx-auto pb-32 overflow-x-hidden">
+      <header className="mb-16 text-center lg:text-left">
+        <h1 className="text-5xl lg:text-8xl font-black italic text-slate-800 tracking-tighter uppercase leading-[0.9]">Panel<br/><span className="text-[#8ED4BE]">Alekey.</span></h1>
       </header>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10 mb-12 md:mb-20">
-        <div className="bg-[#8ED4BE] p-8 md:p-12 rounded-[2.5rem] md:rounded-[4rem] text-white shadow-2xl shadow-[#8ED4BE]/20">
-          <p className="text-[10px] font-black uppercase mb-2 opacity-60">Ingresos</p>
-          <h3 className="text-3xl md:text-5xl font-black italic">{Utils.currency(stats.ing)}</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-20">
+        <div className="bg-[#8ED4BE] p-10 rounded-[3rem] text-white shadow-2xl min-h-[220px] flex flex-col justify-center">
+          <p className="text-xs font-black uppercase mb-3 opacity-80">Ingresos</p>
+          <h3 className={`font-black italic leading-none truncate ${stats.ing > 999999 ? 'text-3xl lg:text-5xl' : 'text-4xl lg:text-6xl'}`}>{Utils.currency(stats.ing)}</h3>
         </div>
-        <div className="bg-[#F79598] p-8 md:p-12 rounded-[2.5rem] md:rounded-[4rem] text-white shadow-2xl shadow-[#F79598]/20">
-          <p className="text-[10px] font-black uppercase mb-2 opacity-60">Pendientes</p>
-          <h3 className="text-3xl md:text-5xl font-black italic">{stats.pnd} Piezas</h3>
+        <div className="bg-[#F79598] p-10 rounded-[3rem] text-white shadow-2xl min-h-[220px] flex flex-col justify-center">
+          <p className="text-xs font-black uppercase mb-3 opacity-80">Pendientes</p>
+          <h3 className="text-4xl lg:text-6xl font-black italic leading-none">{stats.pnd} <span className="text-2xl lg:text-3xl opacity-60 font-bold">Pzs</span></h3>
         </div>
-        <div className="bg-[#C0C976] p-8 md:p-12 rounded-[2.5rem] md:rounded-[4rem] text-white shadow-2xl shadow-[#C0C976]/30">
-          <p className="text-[10px] font-black uppercase mb-2 opacity-60">Ordenes</p>
-          <h3 className="text-3xl md:text-5xl font-black italic">{stats.total}</h3>
+        <div className="bg-[#C0C976] p-10 rounded-[3rem] text-white shadow-2xl min-h-[220px] flex flex-col justify-center">
+          <p className="text-xs font-black uppercase mb-3 opacity-80">Órdenes</p>
+          <h3 className="text-4xl lg:text-6xl font-black italic leading-none">{stats.total}</h3>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
-        <Link to="/cotizar" className="p-8 md:p-14 bg-white rounded-[2rem] md:rounded-[4.5rem] flex items-center justify-between border-4 border-slate-50 hover:border-[#8ED4BE] transition-all group shadow-xl">
-          <div><h4 className="text-2xl md:text-4xl font-black italic uppercase tracking-tighter">Cotizar</h4><p className="text-[8px] md:text-[10px] font-bold mt-1 uppercase opacity-60">Nuevo presupuesto</p></div>
-          <ArrowRight size={24} className="group-hover:translate-x-3 transition-transform text-[#8ED4BE]"/>
+      <div id="seccion-pedidos" className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
+        <Link to="/cotizar" className="p-10 lg:p-14 bg-white rounded-[2.5rem] lg:rounded-[4.5rem] flex items-center justify-between border-4 border-slate-50 hover:border-[#8ED4BE] transition-all group shadow-xl">
+          <div><h4 className="text-3xl lg:text-4xl font-black italic uppercase text-slate-800">Cotizar</h4><p className="text-xs font-bold opacity-40 uppercase mt-1 text-slate-800">Nuevo Pedido</p></div>
+          <ChevronUp size={32} className="group-hover:translate-x-3 transition-all text-[#8ED4BE] rotate-90"/>
         </Link>
-        <Link to="/ventas" className="p-8 md:p-14 bg-white rounded-[2rem] md:rounded-[4.5rem] flex items-center justify-between border-4 border-slate-50 hover:border-[#F79598] transition-all group shadow-xl">
-          <div><h4 className="text-2xl md:text-4xl font-black italic uppercase tracking-tighter">Ventas</h4><p className="text-[8px] md:text-[10px] font-bold mt-1 uppercase opacity-60">Historial y entregas</p></div>
-          <ArrowRight size={24} className="group-hover:translate-x-3 transition-transform text-[#F79598]"/>
+        <Link to="/ventas" className="p-10 lg:p-14 bg-white rounded-[2.5rem] lg:rounded-[4.5rem] flex items-center justify-between border-4 border-slate-50 hover:border-[#F79598] transition-all group shadow-xl">
+          <div><h4 className="text-3xl lg:text-4xl font-black italic uppercase text-slate-800">Ventas</h4><p className="text-xs font-bold opacity-40 uppercase mt-1 text-slate-800">Historial</p></div>
+          <ChevronUp size={32} className="group-hover:translate-x-3 transition-all text-[#F79598] rotate-90"/>
         </Link>
+      </div>
+
+      <div className="lg:hidden fixed bottom-28 right-6 flex flex-col gap-4 z-50">
+        <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="bg-slate-800 text-white p-4 rounded-full border-2 border-white shadow-xl"><ChevronUp size={24}/></button>
+        <button onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })} className="bg-slate-800 text-white p-4 rounded-full border-2 border-white shadow-xl"><ChevronDown size={24}/></button>
       </div>
     </div>
   );
 };
 
-// ==========================================
-// 7. APP PRINCIPAL
-// ==========================================
-
 export default function App() {
   const [ventas, setVentas] = useState([]);
 
   useEffect(() => {
-    cargarVentas();
+    const fetch = async () => {
+      const { data } = await supabase.from('ventas').select('*').order('created_at', { ascending: false });
+      if (data) setVentas(data);
+    };
+    fetch();
   }, []);
 
-  const cargarVentas = async () => {
-    const { data, error } = await supabase
-      .from('ventas')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (!error && data) setVentas(data);
+  const alGuardarEnNube = async (nv) => {
+    const { data } = await supabase.from('ventas').insert([nv]).select();
+    if (data) setVentas([data[0], ...ventas]);
   };
 
-  const alGuardarEnNube = async (nuevaVenta) => {
-    const { data, error } = await supabase
-      .from('ventas')
-      .insert([{
-        id: nuevaVenta.id,
-        nombre: nuevaVenta.nombre,
-        telefono: nuevaVenta.telefono,
-        direccion: nuevaVenta.direccion,
-        fecha: nuevaVenta.fecha,
-        total: nuevaVenta.total,
-        items: nuevaVenta.items
-      }])
-      .select();
-
-    if (!error && data) {
-      setVentas([data[0], ...ventas]);
-    } else if (error) {
-      alert("Error: " + error.message);
-    }
-  };
-
-  const alEliminarDeNube = async (id) => {
+  const alEliminar = async (id) => {
     const { error } = await supabase.from('ventas').delete().eq('id', id);
     if (!error) setVentas(ventas.filter(v => v.id !== id));
   };
 
-  const alActualizarVenta = async (id, ventaActualizada) => {
-    const { created_at, ...dataToUpdate } = ventaActualizada;
-    const { error } = await supabase.from('ventas').update(dataToUpdate).eq('id', id);
-    if (!error) setVentas(ventas.map(v => v.id === id ? ventaActualizada : v));
+  const alActualizar = async (id, va) => {
+    const { created_at, ...updateData } = va;
+    const { error } = await supabase.from('ventas').update(updateData).eq('id', id);
+    if (!error) setVentas(ventas.map(v => v.id === id ? va : v));
   };
 
   return (
     <Router>
-      <div className="flex flex-col md:flex-row h-screen bg-[#F8FAFC] overflow-hidden">
-        
-        {/* Sidebar: Lateral en PC, Inferior en Móvil */}
-        <aside className="fixed bottom-0 left-0 w-full md:relative md:w-80 bg-white border-t md:border-r md:border-t-0 p-4 md:p-12 flex flex-row md:flex-col justify-between z-50">
-          <div className="flex md:flex-col items-center md:items-start justify-between w-full md:space-y-20">
-            <div className="hidden md:block text-4xl font-black italic text-slate-800">ALEKEY<span className="text-[#8ED4BE]">.</span></div>
-            
-            <nav className="flex flex-row md:flex-col gap-2 md:gap-6 w-full justify-around md:justify-start">
-              <NavLink to="/" icon={<Home size={20}/>} label="Inicio" />
-              <NavLink to="/cotizar" icon={<Plus size={20}/>} label="Cotizar" />
-              <NavLink to="/ventas" icon={<ShoppingBag size={20}/>} label="Ventas" />
+      <div className="flex flex-col lg:flex-row h-screen bg-[#F8FAFC] overflow-hidden">
+        <aside className="fixed bottom-0 left-0 w-full lg:relative lg:w-80 bg-white border-t lg:border-r p-4 lg:p-12 flex flex-row lg:flex-col justify-between z-50">
+          <div className="flex lg:flex-col items-center lg:items-start justify-between w-full lg:space-y-20">
+            <div className="hidden lg:block text-4xl font-black italic text-slate-800 tracking-tighter">ALEKEY<span className="text-[#8ED4BE]">.</span></div>
+            <nav className="flex flex-row lg:flex-col gap-2 lg:gap-6 w-full justify-around lg:justify-start">
+              <NavLink to="/" icon={<Home size={22}/>} label="Inicio" />
+              <NavLink to="/cotizar" icon={<Plus size={22}/>} label="Cotizar" />
+              <NavLink to="/ventas" icon={<ShoppingBag size={22}/>} label="Ventas" />
             </nav>
           </div>
-          <div className="hidden md:flex p-6 bg-slate-900 rounded-[2rem] text-white items-center gap-4 italic font-black text-xs">
-            <div className="w-8 h-8 bg-[#8ED4BE] rounded-lg flex items-center justify-center">IV</div>
-            Admin Alekey
+          <div className="hidden lg:flex p-6 bg-slate-900 rounded-[2rem] text-white items-center gap-4 italic font-black text-xs">
+            <div className="w-8 h-8 bg-[#8ED4BE] rounded-xl flex items-center justify-center font-bold text-slate-800">IV</div> Admin Alekey
           </div>
         </aside>
-
-        {/* Contenido Principal */}
         <main className="flex-1 overflow-y-auto bg-slate-50/30">
           <Routes>
             <Route path="/" element={<DashboardHome historial={ventas} />} />
             <Route path="/cotizar" element={<FormularioCotizacion count={ventas.length} alGuardar={alGuardarEnNube} />} />
-            <Route path="/ventas" element={<HistorialVentas ventas={ventas} setVentas={setVentas} onDelete={alEliminarDeNube} onUpdate={alActualizarVenta} />} />
+            <Route path="/ventas" element={<HistorialVentas ventas={ventas} onDelete={alEliminar} onUpdate={alActualizar} />} />
           </Routes>
         </main>
       </div>
@@ -562,8 +512,8 @@ export default function App() {
 const NavLink = ({ to, icon, label }) => {
   const active = useLocation().pathname === to;
   return (
-    <Link to={to} className={`flex flex-col md:flex-row items-center gap-1 md:gap-6 p-2 md:p-5 rounded-xl md:rounded-[2rem] transition-all font-black italic uppercase text-[10px] md:text-xs flex-1 md:flex-none ${active ? 'bg-[#8ED4BE] text-white shadow-lg' : 'text-slate-300'}`}>
-      {icon} <span className="md:inline">{label}</span>
+    <Link to={to} className={`flex flex-col lg:flex-row items-center gap-1.5 lg:gap-6 p-2 lg:p-5 rounded-xl lg:rounded-[2rem] transition-all font-black italic uppercase text-[10px] lg:text-xs flex-1 lg:flex-none ${active ? 'bg-[#8ED4BE] text-white shadow-xl scale-105' : 'text-slate-300'}`}>
+      {icon} <span className="lg:inline">{label}</span>
     </Link>
   );
 };
