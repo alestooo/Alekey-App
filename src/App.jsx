@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import Swal from 'sweetalert2';
 import React, { useState, useEffect, useMemo } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { jsPDF } from "jspdf";
@@ -31,7 +32,8 @@ const UBICACIONES_CR = {
 
 const PRODUCTOS_PRECIOS = {
   "DCC": 3750, "Distintivos": 1350, "MR6": 6500, "Bienvenidos": 4750,
-  "Puerta": 1500, "Cumpleaños": 1500, "Nombres": 1500, "Borde": 4500
+  "Puerta": 1500, "Cumpleaños": 1500, "Nombres": 1500, "Borde": 4500,
+  "OTROS...": 0
 };
 
 const TEMAS_PREDEFINIDOS = [
@@ -45,7 +47,7 @@ const TEMAS_PREDEFINIDOS = [
   "Mario Bros", "Mariquita Educlip", "Mariquita", "Medio Ambiente", "Mono", 
   "Monstruos 1", "Monstruos 2", "Monstruos 3", "Monster Inc", "Mickey", 
   "Mickey Safari", "Melonheadz", "Música", "Navidad", "Niños Corazón", 
-  "Niños Jovenes", "Oso Miel", "Oso Sandia", "Oso Teddy", "Panda", "Principito", "Toy Story"
+  "Niños Jovenes", "Oso Miel", "Oso Sandia", "Oso Teddy", "Panda", "Principito", "Toy Story", "FALTA...", "ENVIO..."
 ];
 
 // ==========================================
@@ -116,48 +118,30 @@ const exportToPDF = async (venta) => {
 };
 
 // ==========================================
-// 3. ESTADÍSTICAS (REDISEÑADAS)
+// 3. ESTADÍSTICAS
 // ==========================================
 
 const Estadisticas = ({ ventas }) => {
   const stats = useMemo(() => {
     if (!ventas.length) return null;
-    
     const totalDinero = ventas.reduce((acc, v) => acc + (v.total || 0), 0);
     const piezasTotales = ventas.reduce((acc, v) => acc + v.items.reduce((s, i) => s + i.cant, 0), 0);
     const totalPendientes = ventas.reduce((acc, v) => acc + v.items.reduce((s, i) => s + i.pendiente, 0), 0);
-    
     const productosMap = {};
     const temasMap = {};
     const clientesMap = {};
-    
     ventas.forEach(v => {
-      // Sumar dinero por cliente
       clientesMap[v.nombre] = (clientesMap[v.nombre] || 0) + (v.total || 0);
-      
       v.items.forEach(item => {
-        // Contar piezas por categoría
         productosMap[item.cat] = (productosMap[item.cat] || 0) + item.cant;
-        // Contar piezas por tema
         temasMap[item.tema] = (temasMap[item.tema] || 0) + item.cant;
       });
     });
-
-    // Ordenar rankings
     const topTemas = Object.entries(temasMap).sort((a,b) => b[1] - a[1]).slice(0, 5);
     const topCategorias = Object.entries(productosMap).sort((a,b) => b[1] - a[1]).slice(0, 5);
     const mejorCliente = Object.entries(clientesMap).sort((a,b) => b[1] - a[1])[0];
-
-    // Datos para gráfico de barras
-    const dataBarras = ventas.slice(0, 10).reverse().map(v => ({ 
-      name: v.nombre.split(' ')[0], 
-      monto: v.total 
-    }));
-
-    return { 
-      totalDinero, piezasTotales, totalPendientes, 
-      topTemas, topCategorias, mejorCliente, dataBarras 
-    };
+    const dataBarras = ventas.slice(0, 10).reverse().map(v => ({ name: v.nombre.split(' ')[0], monto: v.total }));
+    return { totalDinero, piezasTotales, totalPendientes, topTemas, topCategorias, mejorCliente, dataBarras };
   }, [ventas]);
 
   if (!stats) return <div className="p-20 text-center font-black italic opacity-20 text-4xl uppercase">Cargando Datos...</div>;
@@ -167,44 +151,15 @@ const Estadisticas = ({ ventas }) => {
       <header className="mb-10 text-center lg:text-left">
         <h2 className="text-4xl font-black italic uppercase tracking-tighter">Métricas Alekey<span className="text-[#8ED4BE]">.</span></h2>
       </header>
-
-      {/* BLOQUE SUPERIOR: 4 TARJETAS GRANDES */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        <StatCard 
-          icon={<TrendingUp size={24} className="text-[#8ED4BE]"/>} 
-          label="Ingresos" 
-          val={Utils.currency(stats.totalDinero)} 
-          borderColor="border-[#8ED4BE]"
-        />
-        <StatCard 
-          icon={<AlertCircle size={24} className="text-[#F79598]"/>} 
-          label="Pendientes" 
-          val={stats.totalPendientes} 
-          borderColor="border-[#F79598]"
-        />
-        <StatCard 
-          icon={<Package size={24} className="text-[#C0C976]"/>} 
-          label="Piezas" 
-          val={stats.piezasTotales} 
-          borderColor="border-[#C0C976]"
-        />
-        <StatCard 
-          icon={<User size={24} className="text-slate-800"/>} 
-          label="Top Cliente" 
-          val={stats.mejorCliente?.[0] || 'N/A'} 
-          borderColor="border-slate-800"
-          isClient
-        />
+        <StatCard icon={<TrendingUp size={24} className="text-[#8ED4BE]"/>} label="Ingresos" val={Utils.currency(stats.totalDinero)} borderColor="border-[#8ED4BE]"/>
+        <StatCard icon={<AlertCircle size={24} className="text-[#F79598]"/>} label="Pendientes" val={stats.totalPendientes} borderColor="border-[#F79598]"/>
+        <StatCard icon={<Package size={24} className="text-[#C0C976]"/>} label="Piezas" val={stats.piezasTotales} borderColor="border-[#C0C976]"/>
+        <StatCard icon={<User size={24} className="text-slate-800"/>} label="Top Cliente" val={stats.mejorCliente?.[0] || 'N/A'} borderColor="border-slate-800" isClient/>
       </div>
-
-      {/* BLOQUE INFERIOR: 3 COLUMNAS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* 1. RANKING DE TEMAS */}
         <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50">
-          <h4 className="font-black italic mb-8 uppercase text-xs flex items-center gap-2 text-slate-400">
-            <Trophy size={16} className="text-[#C0C976]"/> Ranking de Temas
-          </h4>
+          <h4 className="font-black italic mb-8 uppercase text-xs flex items-center gap-2 text-slate-400"><Trophy size={16} className="text-[#C0C976]"/> Ranking de Temas</h4>
           <div className="space-y-4">
             {stats.topTemas.map(([tema, cant], i) => (
               <div key={tema} className="flex items-center justify-between group">
@@ -217,9 +172,7 @@ const Estadisticas = ({ ventas }) => {
             ))}
           </div>
         </div>
-
-        {/* 2. FLUJO DE DINERO (CENTRO) */}
-        <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50">
+        <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 text-center">
           <h4 className="font-black italic mb-8 uppercase text-xs text-slate-400">Flujo de Dinero (Últimas 10)</h4>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -232,12 +185,8 @@ const Estadisticas = ({ ventas }) => {
             </ResponsiveContainer>
           </div>
         </div>
-
-        {/* 3. RANKING DE CATEGORÍAS */}
-        <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50">
-          <h4 className="font-black italic mb-8 uppercase text-xs flex items-center gap-2 text-slate-400">
-            <Star size={16} className="text-[#F79598]"/> Ranking de Categorías
-          </h4>
+        <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 text-center lg:text-left">
+          <h4 className="font-black italic mb-8 uppercase text-xs flex items-center gap-2 text-slate-400"><Star size={16} className="text-[#F79598]"/> Ranking de Categorías</h4>
           <div className="space-y-4">
             {stats.topCategorias.map(([cat, cant], i) => (
               <div key={cat} className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl group hover:bg-white hover:shadow-md transition-all">
@@ -250,33 +199,37 @@ const Estadisticas = ({ ventas }) => {
             ))}
           </div>
         </div>
-
       </div>
     </div>
   );
 };
 
-// Componente auxiliar para las tarjetas superiores
 const StatCard = ({ icon, label, val, borderColor, isClient }) => (
   <div className={`bg-white p-8 rounded-[3rem] shadow-xl border-b-[10px] ${borderColor} transition-transform hover:scale-[1.02]`}>
     <div className="mb-4 opacity-40">{icon}</div>
     <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">{label}</p>
-    <h4 className={`font-black italic uppercase leading-tight ${isClient ? 'text-sm lg:text-md text-slate-800' : 'text-2xl text-slate-900'}`}>
-      {val}
-    </h4>
+    <h4 className={`font-black italic uppercase leading-tight ${isClient ? 'text-sm lg:text-md text-slate-800' : 'text-2xl text-slate-900'}`}>{val}</h4>
   </div>
 );
 
 // ==========================================
-// 4. COMPONENTES INTERFAZ (HISTORIAL Y EDICIÓN)
+// 4. COMPONENTES INTERFAZ
 // ==========================================
 
 const QuantityControls = ({ value, onChange, colorClass = "bg-white", textClass = "text-slate-800" }) => (
   <div className="flex items-center gap-1 min-w-[100px] justify-center">
-    <input type="number" className={`w-14 h-12 border-2 rounded-xl font-black text-center outline-none transition-all focus:border-cyan-400 ${colorClass} ${textClass}`} value={value} onChange={(e) => onChange(parseInt(e.target.value) || 0)} />
+    <input 
+      type="number" 
+      className={`w-14 h-12 border-2 rounded-xl font-black text-center outline-none transition-all focus:border-cyan-400 ${colorClass} ${textClass}`} 
+      value={value} 
+      onChange={(e) => {
+        const v = parseInt(e.target.value) || 0;
+        onChange(Math.max(0, Math.min(99, v)));
+      }} 
+    />
     <div className="flex flex-col gap-0.5">
-      <button onClick={() => onChange(value + 1)} className="p-1.5 bg-cyan-100 rounded-md text-cyan-600"><ChevronUp size={16}/></button>
-      <button onClick={() => onChange(value - 1)} className="p-1.5 bg-cyan-100 rounded-md text-cyan-600"><ChevronDown size={16}/></button>
+      <button onClick={() => onChange(Math.min(99, value + 1))} className="p-1.5 bg-cyan-100 rounded-md text-cyan-600"><ChevronUp size={16}/></button>
+      <button onClick={() => onChange(Math.max(0, value - 1))} className="p-1.5 bg-cyan-100 rounded-md text-cyan-600"><ChevronDown size={16}/></button>
     </div>
   </div>
 );
@@ -290,7 +243,10 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
     setEditCache(prev => {
       const updatedItems = prev.items.map(item => {
         if (item.id === itemId) {
-          if (field === 'cant') { const v = Math.max(1, value); return { ...item, cant: v, pendiente: v }; }
+          if (field === 'cant') { 
+            const v = Math.max(1, Math.min(99, value)); 
+            return { ...item, cant: v, pendiente: v }; 
+          }
           if (field === 'pendiente') return { ...item, pendiente: Math.max(0, Math.min(item.cant, value)) };
           if (field === 'cat') return { ...item, cat: value, precio: PRODUCTOS_PRECIOS[value] || 0 };
           return { ...item, [field]: value };
@@ -317,18 +273,24 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
           const tienePendientes = data.items.some(i => i.pendiente > 0);
           const [provActual, cantActual] = (data.direccion || "").split(', ');
 
+          const editNombreValido = Utils.validateName(data.nombre || "");
+          const editTelValido = (data.telefono || "").replace(/\D/g, '').length === 8;
+          const editUbicacionValida = provActual && cantActual && provActual !== "" && cantActual !== "";
+          const editItemsValidos = data.items.length > 0 && data.items.every(i => i.cat !== "" && i.tema !== "");
+          const editValido = editNombreValido && editTelValido && editUbicacionValida && editItemsValidos;
+
           return (
             <div key={v.id} className={`bg-white rounded-[2.5rem] p-6 lg:p-10 shadow-xl border-l-[12px] transition-all duration-500 ${tienePendientes ? 'border-red-400' : 'border-[#8ED4BE]'}`}>
               <div className="flex justify-between items-start mb-6">
                 <div className="flex-1 mr-4">
                   {editing ? (
                     <div className="space-y-4 animate-in slide-in-from-left-2">
-                      <input className="text-2xl font-black italic border-b-2 border-[#8ED4BE] outline-none w-full bg-slate-50 p-2" value={data.nombre} onChange={e => setEditCache({...editCache, nombre: Utils.capitalize(e.target.value)})} />
+                      <input className={`text-2xl font-black italic border-b-2 outline-none w-full bg-slate-50 p-2 ${!editNombreValido ? 'border-red-300' : 'border-[#8ED4BE]'}`} value={data.nombre} onChange={e => setEditCache({...editCache, nombre: Utils.capitalize(e.target.value)})} placeholder="Nombre + 2 Apellidos" />
                       <div className="flex flex-wrap gap-3">
-                        <div className="flex items-center gap-2 bg-slate-50 px-3 py-1 rounded-full border">
-                           <Clock size={12}/> <input className="text-xs font-bold outline-none bg-transparent w-24" value={data.telefono} onChange={e => setEditCache({...editCache, telefono: Utils.formatPhone(e.target.value)})} />
+                        <div className={`flex items-center gap-2 bg-slate-50 px-3 py-1 rounded-full border ${!editTelValido ? 'border-red-300' : ''}`}>
+                           <Clock size={12}/> <input className="text-xs font-bold outline-none bg-transparent w-24" value={data.telefono} onChange={e => setEditCache({...editCache, telefono: Utils.formatPhone(e.target.value)})} placeholder="0000-0000" />
                         </div>
-                        <div className="flex items-center gap-2 bg-slate-50 px-3 py-1 rounded-full border">
+                        <div className={`flex items-center gap-2 bg-slate-50 px-3 py-1 rounded-full border ${!editUbicacionValida ? 'border-red-300' : ''}`}>
                            <MapPin size={12}/>
                            <select className="text-xs font-bold bg-transparent outline-none" value={provActual || ""} onChange={e => setEditCache({...editCache, direccion: `${e.target.value}, `})}>
                               <option value="">Prov...</option>
@@ -348,7 +310,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
                 
                 <div className="flex gap-2">
                   {editing ? (
-                    <button onClick={() => {onUpdate(v.id, editCache); setEditId(null);}} className="p-4 bg-emerald-500 text-white rounded-2xl shadow-lg scale-110"><Check size={24}/></button>
+                    <button disabled={!editValido} onClick={() => {onUpdate(v.id, editCache); setEditId(null);}} className="p-4 bg-emerald-500 text-white rounded-2xl shadow-lg scale-110 disabled:opacity-20 transition-all active:scale-95"><Check size={24}/></button>
                   ) : (
                     <>
                       <button onClick={() => {setEditId(v.id); setEditCache(JSON.parse(JSON.stringify(v)));}} className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-slate-900 hover:text-white transition-all"><Edit2 size={20}/></button>
@@ -361,32 +323,51 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
 
               <div className="overflow-x-auto bg-slate-50/50 rounded-[2rem] p-4 lg:p-6">
                 <table className="w-full min-w-[700px]">
-                  <thead><tr className="text-left text-[10px] font-black text-slate-300 uppercase border-b pb-2"><th className="pb-2 w-[130px]">Cant.</th><th className="pb-2">Descripción / Tema</th><th className="pb-2 text-center w-[130px]">Pendientes</th><th className="pb-2 text-right">Subtotal</th>{editing && <th className="w-10"></th>}</tr></thead>
+                  <thead><tr className="text-left text-[10px] font-black text-slate-300 uppercase border-b pb-2"><th className="pb-2 w-[130px]">Cant.</th><th className="pb-2">Categoría*</th><th className="pb-2">Tema*</th><th className="pb-2 text-center w-[130px]">Pendientes</th><th className="pb-2 text-right">Subtotal</th>{editing && <th className="w-10"></th>}</tr></thead>
                   <tbody>
                     {data.items.map(item => (
                       <tr key={item.id}>
                         <td className="py-4">{editing ? <QuantityControls value={item.cant} onChange={(val) => handleEditItem(item.id, 'cant', val)} /> : <span className="font-black text-slate-600 ml-4">{item.cant}</span>}</td>
                         <td className="py-4 font-black uppercase text-[11px] text-slate-700">
                           {editing ? (
-                            <div className="flex gap-2">
-                              <input list="productos-list" className="bg-white border rounded p-1 w-24 outline-none" value={item.cat} onChange={e => handleEditItem(item.id, 'cat', e.target.value)} />
-                              <input list="temas-list" className="bg-white border rounded p-1 flex-1 outline-none" value={item.tema} onChange={e => handleEditItem(item.id, 'tema', e.target.value)} />
-                            </div>
-                          ) : `${item.cat} - ${item.tema}`}
+                            <input list="productos-list" className={`bg-white border-2 rounded p-2 w-full outline-none transition-all ${item.cat === "OTROS..." ? 'border-purple-300 text-purple-600 bg-purple-50' : item.cat === "" ? 'border-red-200' : 'border-slate-100'}`} value={item.cat} onChange={e => handleEditItem(item.id, 'cat', e.target.value)} placeholder="Categoría..." />
+                          ) : item.cat}
+                        </td>
+                        <td className="py-4 font-black uppercase text-[11px] text-slate-700">
+                          {editing ? (
+                            <input list="temas-list" className={`bg-white border-2 rounded p-2 w-full outline-none ${item.tema === "" ? 'border-red-200' : 'border-slate-100'}`} value={item.tema} onChange={e => handleEditItem(item.id, 'tema', e.target.value)} placeholder="Tema..." />
+                          ) : item.tema}
                         </td>
                         <td className="py-4 text-center">{editing ? <QuantityControls value={item.pendiente} colorClass="bg-red-50" textClass="text-red-500" onChange={(val) => handleEditItem(item.id, 'pendiente', val)} /> : <span className={`px-4 py-1.5 rounded-full text-[10px] font-black ${item.pendiente > 0 ? 'bg-red-100 text-red-500' : 'bg-emerald-100 text-emerald-600'}`}>{item.pendiente > 0 ? item.pendiente : 'Entregado'}</span>}</td>
-                        <td className="py-4 text-right font-black">{Utils.currency(item.cant * item.precio)}</td>
-                        {editing && <td className="text-center"><button onClick={() => setEditCache({...editCache, items: editCache.items.filter(i => i.id !== item.id)})} className="text-red-300"><Trash2 size={16}/></button></td>}
+                        <td className="py-4 text-right font-black">
+                          {editing && item.cat === "OTROS..." ? (
+                            <div className="flex items-center justify-end gap-1">
+                              <span className="text-purple-600 italic text-[10px]">C</span>
+                              <input type="number" className="bg-purple-50 border-2 border-purple-200 rounded-lg p-1 w-24 text-right outline-none text-purple-600" value={item.precio} onChange={e => handleEditItem(item.id, 'precio', parseInt(e.target.value) || 0)} />
+                            </div>
+                          ) : Utils.currency(item.cant * item.precio)}
+                        </td>
+                        {editing && <td className="text-center"><button onClick={() => setEditCache({...editCache, items: editCache.items.filter(i => i.id !== item.id)})} className="text-red-300 hover:text-red-500"><Trash2 size={16}/></button></td>}
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
+              
+              {/* BOTÓN AGREGAR LÍNEA EN EDICIÓN */}
               {editing && (
                 <button onClick={() => setEditCache({...editCache, items: [...editCache.items, { id: Utils.generateId(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 1 }]})} className="mt-6 flex items-center gap-2 text-[10px] font-black text-[#8ED4BE] uppercase px-6 py-3 border-2 border-emerald-50 rounded-2xl hover:bg-emerald-50 transition-all">
                   <Plus size={14}/> Agregar Producto al Pedido
                 </button>
               )}
+
+              {/* TOTAL INDIVIDUAL POR CLIENTE */}
+              <div className="mt-6 flex justify-end">
+                <div className="bg-[#8ED4BE] px-8 py-4 rounded-3xl text-white shadow-lg flex items-baseline gap-3 border-b-4 border-emerald-600/20">
+                  <span className="text-[10px] font-black uppercase tracking-widest opacity-80 italic">Total Pedido</span>
+                  <span className="text-2xl font-black italic">{Utils.currency(data.total)}</span>
+                </div>
+              </div>
             </div>
           );
         })}
@@ -397,12 +378,9 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
   );
 };
 
-// ... (Componentes FormularioCotizacion, DashboardHome y NavLink iguales al diseño previo)
-
 const FormularioCotizacion = ({ alGuardar }) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ nombre: '', telefono: '', provincia: '', canton: '', items: [{ id: Utils.generateId(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 1 }] });
-  
   const total = formData.items.reduce((s, i) => s + (i.cant * i.precio), 0);
   const nombreValido = Utils.validateName(formData.nombre);
   const telefonoValido = formData.telefono.replace(/\D/g, '').length === 8;
@@ -413,7 +391,7 @@ const FormularioCotizacion = ({ alGuardar }) => {
   const handleUpdate = (id, field, value) => {
     setFormData(prev => ({ ...prev, items: prev.items.map(item => {
       if (item.id === id) {
-        if (field === 'cant') { const v = Math.max(1, value); return { ...item, cant: v, pendiente: v }; }
+        if (field === 'cant') { const v = Math.max(1, Math.min(99, value)); return { ...item, cant: v, pendiente: v }; }
         if (field === 'pendiente') return { ...item, pendiente: Math.max(0, Math.min(item.cant, value)) };
         if (field === 'cat') return { ...item, cat: value, precio: PRODUCTOS_PRECIOS[value] || 0 };
         return { ...item, [field]: value };
@@ -431,26 +409,15 @@ const FormularioCotizacion = ({ alGuardar }) => {
   return (
     <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32">
       <div className="bg-white rounded-[2rem] lg:rounded-[3rem] p-6 lg:p-12 shadow-2xl">
-        <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-10">
-          <h2 className="text-3xl lg:text-4xl font-black italic text-slate-800 uppercase">Cotizar Nuevo</h2>
-          <h3 className="text-3xl lg:text-5xl font-black italic text-[#BCC962]">{Utils.currency(total)}</h3>
-        </header>
+        <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-10"><h2 className="text-3xl lg:text-4xl font-black italic text-slate-800 uppercase">Cotizar Nuevo</h2><h3 className="text-3xl lg:text-5xl font-black italic text-[#BCC962]">{Utils.currency(total)}</h3></header>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10 text-slate-800">
           <div className="space-y-4">
             <input className={`w-full p-5 bg-slate-50 rounded-2xl font-bold border-2 outline-none transition-all ${formData.nombre && !nombreValido ? 'border-red-200' : 'border-transparent focus:border-[#8ED4BE]'}`} placeholder="Nombre + 2 Apellidos" value={formData.nombre} onChange={e => setFormData({...formData, nombre: Utils.capitalize(e.target.value)})} />
             <input className={`w-full p-5 bg-slate-50 rounded-2xl font-bold border-2 outline-none transition-all ${formData.telefono && !telefonoValido ? 'border-red-200' : 'border-transparent focus:border-[#8ED4BE]'}`} placeholder="Teléfono 0000-0000" value={formData.telefono} onChange={e => setFormData({...formData, telefono: Utils.formatPhone(e.target.value)})} />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <select className="p-5 bg-slate-50 rounded-2xl font-bold border-2 border-transparent focus:border-[#8ED4BE] outline-none" value={formData.provincia} onChange={e => setFormData({...formData, provincia: e.target.value, canton: ''})}>
-              <option value="">Provincia...</option>
-              {Object.keys(UBICACIONES_CR).map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
-            {formData.provincia && (
-              <select className="p-5 bg-slate-50 rounded-2xl font-bold border-2 border-transparent focus:border-[#8ED4BE] outline-none" value={formData.canton} onChange={e => setFormData({...formData, canton: e.target.value})}>
-                <option value="">Cantón...</option>
-                {UBICACIONES_CR[formData.provincia].map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            )}
+            <select className="p-5 bg-slate-50 rounded-2xl font-bold border-2 border-transparent focus:border-[#8ED4BE] outline-none" value={formData.provincia} onChange={e => setFormData({...formData, provincia: e.target.value, canton: ''})}><option value="">Provincia...</option>{Object.keys(UBICACIONES_CR).map(p => <option key={p} value={p}>{p}</option>)}</select>
+            {formData.provincia && <select className="p-5 bg-slate-50 rounded-2xl font-bold border-2 border-transparent focus:border-[#8ED4BE] outline-none" value={formData.canton} onChange={e => setFormData({...formData, canton: e.target.value})}><option value="">Cantón...</option>{UBICACIONES_CR[formData.provincia].map(c => <option key={c} value={c}>{c}</option>)}</select>}
           </div>
         </div>
         <div className="overflow-x-auto">
@@ -460,10 +427,19 @@ const FormularioCotizacion = ({ alGuardar }) => {
               {formData.items.map(item => (
                 <tr key={item.id}>
                   <td className="py-4"><QuantityControls value={item.cant} onChange={(v) => handleUpdate(item.id, 'cant', v)} /></td>
-                  <td className="py-4 px-2"><input list="productos-list" className="w-full p-4 bg-white border-2 rounded-xl font-bold outline-none focus:border-[#8ED4BE]" value={item.cat} placeholder="Seleccione..." onChange={e => handleUpdate(item.id, 'cat', e.target.value)} /></td>
+                  <td className="py-4 px-2">
+                    <input list="productos-list" className={`w-full p-4 border-2 rounded-xl font-bold outline-none transition-all ${item.cat === "OTROS..." ? 'border-purple-300 text-purple-600 bg-purple-50' : 'bg-white border-slate-100 focus:border-[#8ED4BE]'}`} value={item.cat} placeholder="Seleccione..." onChange={e => handleUpdate(item.id, 'cat', e.target.value)} />
+                  </td>
                   <td className="py-4 px-2"><input list="temas-list" className="w-full p-4 bg-white border-2 rounded-xl font-bold outline-none focus:border-[#8ED4BE]" value={item.tema} placeholder="Tema..." onChange={e => handleUpdate(item.id, 'tema', e.target.value)} /></td>
                   <td className="py-4"><QuantityControls value={item.pendiente} colorClass="bg-red-50" textClass="text-red-500" onChange={(v) => handleUpdate(item.id, 'pendiente', v)} /></td>
-                  <td className="py-4 px-2 text-right font-black">{Utils.currency(item.cant * item.precio)}</td>
+                  <td className="py-4 px-2 text-right font-black">
+                    {item.cat === "OTROS..." ? (
+                      <div className="flex items-center justify-end gap-1">
+                        <span className="text-purple-600 italic text-[10px]">C</span>
+                        <input type="number" className="bg-purple-50 border-2 border-purple-200 rounded-lg p-2 w-28 text-right outline-none text-purple-600" value={item.precio} onChange={e => handleUpdate(item.id, 'precio', parseInt(e.target.value) || 0)} />
+                      </div>
+                    ) : Utils.currency(item.cant * item.precio)}
+                  </td>
                   <td className="py-4 text-center"><button onClick={() => setFormData({...formData, items: formData.items.filter(i => i.id !== item.id)})} className="text-red-300 hover:text-red-500"><Trash2 size={22}/></button></td>
                 </tr>
               ))}
@@ -471,10 +447,7 @@ const FormularioCotizacion = ({ alGuardar }) => {
           </table>
         </div>
         <button onClick={() => setFormData({...formData, items: [...formData.items, {id: Utils.generateId(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 1}]})} className="mt-8 px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase flex items-center gap-2 transition-transform active:scale-95"><Plus size={16}/> Agregar Línea</button>
-        <div className="mt-10 flex flex-col items-end gap-3">
-          {!formularioValido && <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest italic animate-pulse">* Complete campos requeridos</p>}
-          <button disabled={!formularioValido} onClick={ejecutarGuardado} className="px-16 py-5 bg-[#8ED4BE] text-white font-black text-xl rounded-3xl shadow-2xl disabled:opacity-20 transition-all hover:scale-105 active:scale-95">Guardar Pedido</button>
-        </div>
+        <div className="mt-10 flex flex-col items-end gap-3">{!formularioValido && <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest italic animate-pulse">* Complete campos requeridos</p>}<button disabled={!formularioValido} onClick={ejecutarGuardado} className="px-16 py-5 bg-[#8ED4BE] text-white font-black text-xl rounded-3xl shadow-2xl disabled:opacity-20 transition-all hover:scale-105 active:scale-95">Guardar Pedido</button></div>
       </div>
       <datalist id="productos-list">{Object.keys(PRODUCTOS_PRECIOS).map(p => <option key={p} value={p} />)}</datalist>
       <datalist id="temas-list">{TEMAS_PREDEFINIDOS.map(t => <option key={t} value={t} />)}</datalist>
@@ -488,7 +461,6 @@ const DashboardHome = ({ historial }) => {
     const pnd = historial.reduce((a, v) => a + (v.items?.reduce((s, i) => s + (i.pendiente || 0), 0) || 0), 0);
     return { ing, pnd, total: historial.length };
   }, [historial]);
-
   return (
     <div className="p-6 lg:p-12 max-w-7xl mx-auto pb-32 text-slate-800">
       <header className="mb-16 text-center lg:text-left"><h1 className="text-5xl lg:text-8xl font-black italic tracking-tighter uppercase leading-[0.9]">Panel<br/><span className="text-[#8ED4BE]">Alekey.</span></h1></header>
@@ -497,17 +469,13 @@ const DashboardHome = ({ historial }) => {
         <div className="bg-[#F79598] p-10 rounded-[3rem] text-white shadow-2xl flex flex-col justify-center transition-transform hover:scale-105"><p className="text-xs font-black uppercase mb-3 opacity-80">Pendientes</p><h3 className="text-4xl lg:text-6xl font-black italic leading-none">{stats.pnd} <span className="text-2xl opacity-60">Pzs</span></h3></div>
         <div className="bg-[#C0C976] p-10 rounded-[3rem] text-white shadow-2xl flex flex-col justify-center transition-transform hover:scale-105"><p className="text-xs font-black uppercase mb-3 opacity-80">Órdenes</p><h3 className="text-4xl lg:text-6xl font-black italic leading-none">{stats.total}</h3></div>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Link to="/cotizar" className="p-10 bg-white rounded-[3rem] flex items-center justify-between border-4 border-slate-50 hover:border-[#8ED4BE] transition-all shadow-xl group"><div><h4 className="text-3xl font-black italic uppercase">Cotizar</h4><p className="text-xs font-bold opacity-40 uppercase">Nuevo Pedido</p></div><Plus size={32} className="group-hover:rotate-90 transition-all text-[#8ED4BE]"/></Link>
-        <Link to="/ventas" className="p-10 bg-white rounded-[3rem] flex items-center justify-between border-4 border-slate-50 hover:border-[#F79598] transition-all shadow-xl group"><div><h4 className="text-3xl font-black italic uppercase">Ventas</h4><p className="text-xs font-bold opacity-40 uppercase">Historial</p></div><ShoppingBag size={32} className="group-hover:scale-110 transition-all text-[#F79598]"/></Link>
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8"><Link to="/cotizar" className="p-10 bg-white rounded-[3rem] flex items-center justify-between border-4 border-slate-50 hover:border-[#8ED4BE] transition-all shadow-xl group"><div><h4 className="text-3xl font-black italic uppercase">Cotizar</h4><p className="text-xs font-bold opacity-40 uppercase">Nuevo Pedido</p></div><Plus size={32} className="group-hover:rotate-90 transition-all text-[#8ED4BE]"/></Link><Link to="/ventas" className="p-10 bg-white rounded-[3rem] flex items-center justify-between border-4 border-slate-50 hover:border-[#F79598] transition-all shadow-xl group"><div><h4 className="text-3xl font-black italic uppercase">Ventas</h4><p className="text-xs font-bold opacity-40 uppercase">Historial</p></div><ShoppingBag size={32} className="group-hover:scale-110 transition-all text-[#F79598]"/></Link></div>
     </div>
   );
 };
 
 export default function App() {
   const [ventas, setVentas] = useState([]);
-  
   useEffect(() => {
     const fetch = async () => {
       const { data } = await supabase.from('ventas').select('*').order('created_at', { ascending: false });
@@ -515,25 +483,67 @@ export default function App() {
     };
     fetch();
   }, []);
-
   const alGuardarEnNube = async (nv) => {
     const { data, error } = await supabase.from('ventas').insert([nv]).select();
     if (!error && data) setVentas([data[0], ...ventas]);
   };
-
   const alEliminar = async (id) => {
-    if(window.confirm("¿Seguro que quieres eliminar este pedido?")) {
-      const { error } = await supabase.from('ventas').delete().eq('id', id);
-      if (!error) setVentas(ventas.filter(v => v.id !== id));
-    }
+    Swal.fire({
+      title: '¿Eliminar pedido?',
+      text: "ESTA ACCIÓN NO SE PUEDE DESHACER.",
+      icon: 'warning',
+      iconColor: '#F79598',
+      showCancelButton: true,
+      confirmButtonText: 'SÍ, ELIMINAR',
+      cancelButtonText: 'CANCELAR',
+      buttonsStyling: false,
+      customClass: {
+        popup: 'rounded-[3rem] shadow-2xl border-none p-10',
+        title: 'text-2xl font-black text-slate-800 tracking-tight', 
+        htmlContainer: 'text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2',
+        confirmButton: 'px-10 py-4 bg-[#F79598] text-white font-black italic rounded-[1.5rem] mx-2 hover:scale-105 transition-all uppercase text-[10px] shadow-lg shadow-red-100',
+        cancelButton: 'px-10 py-4 bg-slate-50 text-slate-400 font-black italic rounded-[1.5rem] mx-2 hover:bg-slate-100 transition-all uppercase text-[10px]'
+      },
+      showClass: { popup: 'animate__animated animate__zoomIn animate__faster' },
+      hideClass: { popup: 'animate__animated animate__zoomOut animate__faster' },
+      background: '#ffffff',
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const { error } = await supabase.from('ventas').delete().eq('id', id);
+          if (error) throw error;
+          setVentas(ventas.filter(v => v.id !== id));
+          Swal.fire({
+            title: '¡LISTO!',
+            text: 'EL PEDIDO FUE BORRADO CORRECTAMENTE.',
+            icon: 'success',
+            iconColor: '#8ED4BE',
+            showConfirmButton: false,
+            timer: 1500,
+            timerProgressBar: true,
+            customClass: {
+              popup: 'rounded-[3rem] p-10 shadow-2xl',
+              title: 'text-2xl font-black text-[#8ED4BE] italic',
+              htmlContainer: 'text-[10px] font-bold text-slate-400 uppercase tracking-widest'
+            }
+          });
+        } catch (error) {
+          Swal.fire({
+            title: 'ERROR',
+            text: 'NO SE PUDO BORRAR EL PEDIDO.',
+            icon: 'error',
+            confirmButtonColor: '#1e293b',
+            customClass: { popup: 'rounded-[3rem]' }
+          });
+        }
+      }
+    });
   };
-
   const alActualizar = async (id, va) => {
     const { created_at, ...updateData } = va;
     const { error } = await supabase.from('ventas').update(updateData).eq('id', id);
     if (!error) setVentas(ventas.map(v => v.id === id ? va : v));
   };
-
   return (
     <Router>
       <div className="flex flex-col lg:flex-row h-screen bg-[#F8FAFC] overflow-hidden">
@@ -547,9 +557,7 @@ export default function App() {
               <NavLink to="/stats" icon={<BarChart3 size={20}/>} label="Stats" />
             </nav>
           </div>
-          <div className="hidden lg:flex p-6 bg-slate-900 rounded-[2rem] text-white items-center gap-4 italic font-black text-xs">
-            <div className="w-8 h-8 bg-[#8ED4BE] rounded-xl flex items-center justify-center font-bold text-slate-800">IV</div> Admin Alekey
-          </div>
+          <div className="hidden lg:flex p-6 bg-slate-900 rounded-[2rem] text-white items-center gap-4 italic font-black text-xs"><div className="w-8 h-8 bg-[#8ED4BE] rounded-xl flex items-center justify-center font-bold text-slate-800">IV</div> Admin Alekey</div>
         </aside>
         <main className="flex-1 overflow-y-auto bg-slate-50/30">
           <Routes>
