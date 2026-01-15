@@ -42,164 +42,18 @@ const PRODUCTOS_PRECIOS = {
 };
 
 const TEMAS_PREDEFINIDOS = [
-  "Abeja Acuarela",
-  "Abeja Cute",
-  "Abeja Spelling",
-  "Alicia",
-  "Amarillo",
-  "Arcoiris",
-  "Arcoliris Pastel",
-  "Autismo",
-  "Avenger",
-  "Azul",
-  "Be Happy",
-  "Bosque",
-  "Bosque Acuarela",
-  "Bosque CR",
-  "Búho",
-  "Caballito de mar",
-  "Cactus",
-  "Campamento",
-  "Cangrejo",
-  "Capibara",
-  "Celeste",
-  "Chimuelos",
-  "Circo",
-  "Circo 1",
-  "Circo 2",
-  "Colores arcoiris",
-  "Colores arcoiris cafe",
-  "Colores arcoiris navidad",
-  "Colores arcoiris pastel",
-  "Confeti café",
-  "Confeti colores",
-  "Confeti negro",
-  "Crayola",
-  "Crayola Niños",
-  "Crayola Pastel",
-  "Cumpleaños",
-  "Deporte",
-  "Dino Baby",
-  "Dinosaurio",
-  "Elefante",
-  "Escolar",
-  "Espacio",
-  "Espacio Azul",
-  "Espantapajaros",
-  "Feria Cientifica",
-  "Flor café",
-  "Fucsia",
-  "Gato",
-  "Granja 1",
-  "Granja 2",
-  "Granja Acuarela",
-  "Granja New",
-  "Granjeros",
-  "Harry Potter",
-  "Insectos",
-  "Intensamente",
-  "Jirafa",
-  "Kirby",
-  "Koala",
-  "Leones",
-  "Leones Pareja",
-  "Llama",
-  "Mar",
-  "Mar fondo blanco",
-  "Mar New",
-  "Margarita",
-  "Mario Bros",
-  "Mariquita",
-  "Mariquita Educlip",
-  "Mariquita insecto",
-  "Medio Ambiente",
-  "Melonheadz",
-  "Menta",
-  "Mickey",
-  "Mickey Safari",
-  "Mono",
-  "Monster Inc",
-  "Monstruos 1",
-  "Monstruos 2",
-  "Monstruos 3",
-  "Morado",
-  "Música",
-  "Naranja",
-  "Navidad",
-  "Negro",
-  "Niños Corazón 1",
-  "Niños Corazón 2",
-  "Niños Jovenes",
-  "OFERTA",
-  "Oso Cariñoso",
-  "Oso Miel",
-  "Oso Sandia",
-  "Oso Teddy",
-  "Oso the Pond",
-  "Pacman",
-  "Pajaro Acuarela",
-  "Pajaro Educlip",
-  "Panda",
-  "Panda Cute",
-  "Patrio Desfile",
-  "Patrio Niños Campesinos",
-  "Perro",
-  "Pingüino",
-  "Pirata",
-  "Pirata Meryta",
-  "Plaza Sesamo",
-  "Principito",
-  "Puntos Amarillos",
-  "Puntos Azul",
-  "Puntos Celeste",
-  "Puntos colores fondo blanco",
-  "Puntos colores fondo negro",
-  "Puntos Fucsia",
-  "Puntos Naranja",
-  "Puntos Negro",
-  "Puntos Rainbow",
-  "Puntos Rojo",
-  "Puntos Rosado",
-  "Puntos Turquesa",
-  "Puntos Verde",
-  "Rana",
-  "Rana the Pond",
-  "Raya Bullying",
-  "Raya Café",
-  "Raya Cumpleaños",
-  "Robot 1",
-  "Robot 2",
-  "Robot 3",
-  "Rojo",
-  "Rombo",
-  "Rompecabezas",
-  "Rosado",
-  "Safari",
-  "Safari Cute",
-  "San Valentin",
-  "Selva",
-  "Sloth",
-  "Snoopy",
-  "Snoopy colores",
-  "Snoopy rojo",
-  "Snoopy y amigos",
-  "Spring",
-  "Star Wars",
-  "Stitch 1",
-  "Stitch 2",
-  "Suculentas 1",
-  "Suculentas 2",
-  "Super Heroes",
-  "Toy Story",
-  "Tortuga",
-  "Turquesa",
-  "UP",
-  "Verde Limon",
-  "Verde Oscuro",
-  "Zootopia",
-  "LAMINADO...",
-  "ENVIO...",
-  "FALTA..."
+  "Abeja Acuarela", "Abeja Cute","Abeja Spelling","Alicia","Amarillo","Arcoiris","Arcoliris Pastel","Autismo","Avenger","Azul","Be Happy","Bosque","Bosque Acuarela",
+  "Bosque CR","Búho","Caballito de mar","Cactus","Campamento","Cangrejo","Capibara","Celeste","Chimuelos","Circo","Circo 1","Circo 2","Colores arcoiris","Colores arcoiris cafe",
+  "Colores arcoiris navidad","Colores arcoiris pastel","Confeti café","Confeti colores","Confeti negro","Crayola","Crayola Niños","Crayola Pastel","Cumpleaños","Deporte","Dino Baby",
+  "Dinosaurio","Elefante","Escolar","Espacio","Espacio Azul","Espantapajaros","Feria Cientifica","Flor café","Fucsia","Gato","Granja 1","Granja 2","Granja Acuarela","Granja New","Granjeros",
+  "Harry Potter","Insectos","Intensamente","Jirafa","Kirby","Koala","Leones","Leones Pareja","Llama","Mar","Mar fondo blanco","Mar New","Margarita","Mario Bros","Mariquita","Mariquita Educlip",
+  "Mariquita insecto","Medio Ambiente","Melonheadz","Menta","Mickey","Mickey Safari","Mono","Monster Inc","Monstruos 1","Monstruos 2","Monstruos 3","Morado","Música","Naranja","Navidad",
+  "Negro","Niños Corazón 1","Niños Corazón 2","Niños Jovenes","OFERTA","Oso Cariñoso","Oso Miel","Oso Sandia","Oso Teddy","Oso the Pond","Pacman","Pajaro Acuarela","Pajaro Educlip",
+  "Panda","Panda Cute","Patrio Desfile","Patrio Niños Campesinos","Perro","Pingüino","Pirata","Pirata Meryta","Plaza Sesamo","Principito","Puntos Amarillos","Puntos Azul","Puntos Celeste",
+  "Puntos colores fondo blanco","Puntos colores fondo negro","Puntos Fucsia","Puntos Naranja","Puntos Negro","Puntos Rainbow","Puntos Rojo","Puntos Rosado","Puntos Turquesa","Puntos Verde",
+  "Rana","Rana the Pond","Raya Bullying","Raya Café","Raya Cumpleaños","Robot 1","Robot 2","Robot 3","Rojo","Rombo","Rompecabezas","Rosado","Safari","Safari Cute","San Valentin",
+  "Selva","Sloth","Snoopy","Snoopy colores","Snoopy rojo","Snoopy y amigos","Spring","Star Wars","Stitch 1","Stitch 2","Suculentas 1","Suculentas 2","Super Heroes","Toy Story","Tortuga",
+  "Turquesa","UP","Verde Limon","Verde Oscuro","Zootopia","LAMINADO...","ENVIO...","FALTA..."
 ];
 
 // ==========================================
@@ -277,62 +131,211 @@ const exportToPDF = async (venta) => {
 };
 
 // ==========================================
-// 3. ESTADÍSTICAS
+// 3. ESTADÍSTICAS (CON DESGLOSE DE CATEGORÍAS)
 // ==========================================
 
+const StatCard = ({ icon, label, val, borderColor, isClient }) => (
+  <div className={`bg-white p-8 rounded-[3rem] shadow-xl border-b-[10px] ${borderColor} transition-transform hover:scale-[1.02]`}>
+    <div className="mb-4 opacity-40">{icon}</div>
+    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">{label}</p>
+    <h4 className={`font-black italic uppercase leading-tight ${isClient ? 'text-sm lg:text-md text-slate-800' : 'text-2xl text-slate-900'}`}>
+      {val}
+    </h4>
+  </div>
+);
+
 const Estadisticas = ({ ventas }) => {
+  const [view, setView] = useState('general'); 
+  const [sortFlujo, setSortFlujo] = useState('recientes');
+
   const stats = useMemo(() => {
-    if (!ventas.length) return null;
+    if (!ventas || !ventas.length) return null;
+    
     const totalDinero = ventas.reduce((acc, v) => acc + (v.total || 0), 0);
-    const piezasTotales = ventas.reduce((acc, v) => acc + v.items.reduce((s, i) => s + i.cant, 0), 0);
-    const totalPendientes = ventas.reduce((acc, v) => acc + v.items.reduce((s, i) => s + i.pendiente, 0), 0);
-    const productosMap = {};
+    const piezasTotales = ventas.reduce((acc, v) => acc + (v.items?.reduce((s, i) => s + (i.cant || 0), 0) || 0), 0);
+    const totalPendientes = ventas.reduce((acc, v) => acc + (v.items?.reduce((s, i) => s + (i.pendiente || 0), 0) || 0), 0);
+    
+    const productosMap = {}; // { Categoria: { total: X, temas: { Tema: Cant } } }
     const temasMap = {};
     const clientesMap = {};
+    
     ventas.forEach(v => {
-      clientesMap[v.nombre] = (clientesMap[v.nombre] || 0) + (v.total || 0);
-      v.items.forEach(item => {
-        productosMap[item.cat] = (productosMap[item.cat] || 0) + item.cant;
-        temasMap[item.tema] = (temasMap[item.tema] || 0) + item.cant;
+      const nombre = v.nombre || "Sin Nombre";
+      if (!clientesMap[nombre]) {
+        clientesMap[nombre] = { nombre, tel: v.telefono, total: 0, fecha: v.fecha, rawDate: v.created_at };
+      }
+      clientesMap[nombre].total += (v.total || 0);
+
+      v.items?.forEach(item => {
+        const cant = item.cant || 0;
+        // Mapa general de temas
+        temasMap[item.tema] = (temasMap[item.tema] || 0) + cant;
+        
+        // Mapa detallado de categorías
+        if (!productosMap[item.cat]) {
+          productosMap[item.cat] = { total: 0, temas: {} };
+        }
+        productosMap[item.cat].total += cant;
+        productosMap[item.cat].temas[item.tema] = (productosMap[item.cat].temas[item.tema] || 0) + cant;
       });
     });
+
     const topTemas = Object.entries(temasMap).sort((a,b) => b[1] - a[1]).slice(0, 5);
-    const topCategorias = Object.entries(productosMap).sort((a,b) => b[1] - a[1]).slice(0, 5);
+    const allTemas = Object.entries(temasMap).sort((a,b) => b[1] - a[1]);
+    
+    const topCategorias = Object.entries(productosMap)
+      .sort((a,b) => b[1].total - a[1].total)
+      .slice(0, 5);
+      
+    const allCategorias = Object.entries(productosMap)
+      .sort((a,b) => b[1].total - a[1].total);
+
     const mejorCliente = Object.entries(clientesMap).sort((a,b) => b[1] - a[1])[0];
-    const dataBarras = ventas.slice(0, 10).reverse().map(v => ({ name: v.nombre.split(' ')[0], monto: v.total }));
-    return { totalDinero, piezasTotales, totalPendientes, topTemas, topCategorias, mejorCliente, dataBarras };
-  }, [ventas]);
+
+    const dataBarras = ventas.slice(0, 10).reverse().map(v => ({ 
+      name: (v.nombre || "").split(' ')[0] || "Cli", 
+      monto: v.total 
+    }));
+
+    const listaFlujo = Object.values(clientesMap);
+    if(sortFlujo === 'recientes') {
+        listaFlujo.sort((a,b) => new Date(b.rawDate) - new Date(a.rawDate));
+    } else {
+        listaFlujo.sort((a,b) => b.total - a.total);
+    }
+
+    return { totalDinero, piezasTotales, totalPendientes, topTemas, allTemas, topCategorias, allCategorias, mejorCliente, dataBarras, listaFlujo };
+  }, [ventas, sortFlujo]);
 
   if (!stats) return <div className="p-20 text-center font-black italic opacity-20 text-4xl uppercase">Cargando Datos...</div>;
 
+  // --- VISTAS DETALLADAS ---
+  if (view === 'temas') return (
+    <div className="p-4 lg:p-10 max-w-5xl mx-auto pb-32 animate-in slide-in-from-left duration-300">
+      <button onClick={() => setView('general')} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all">
+        <Plus className="rotate-45" size={20}/> Volver Atrás
+      </button>
+      <div className="bg-white p-10 rounded-[3.5rem] shadow-2xl">
+        <h2 className="text-3xl font-black italic uppercase mb-10 text-slate-800">Todos los Temas</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {stats.allTemas.map(([tema, cant], i) => (
+            <div key={i} className="flex items-center justify-between p-5 bg-slate-50 rounded-3xl">
+              <span className="font-black italic text-slate-200 text-2xl"># {i+1}</span>
+              <span className="font-bold uppercase text-[10px] text-slate-600">{tema}</span>
+              <span className="font-black text-slate-800 text-xs">{cant} pzs</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (view === 'flujo') return (
+    <div className="p-4 lg:p-10 max-w-5xl mx-auto pb-32 animate-in slide-in-from-left duration-300">
+      <button onClick={() => setView('general')} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all">
+        <Plus className="rotate-45" size={20}/> Volver Atrás
+      </button>
+      <div className="bg-white p-10 rounded-[3.5rem] shadow-2xl">
+        <div className="flex justify-between items-center mb-10">
+          <h2 className="text-3xl font-black italic uppercase text-slate-800">Lista de Clientes</h2>
+          <select value={sortFlujo} onChange={(e) => setSortFlujo(e.target.value)} className="p-3 bg-slate-100 rounded-xl font-black text-[10px] uppercase outline-none shadow-sm cursor-pointer">
+            <option value="recientes">Más Recientes</option>
+            <option value="top">Top Cliente (Pagos)</option>
+          </select>
+        </div>
+        <div className="space-y-4">
+          {stats.listaFlujo.map((c, i) => (
+            <div key={i} className="flex items-center justify-between p-6 bg-slate-50 rounded-[2.5rem]">
+              <div>
+                <h4 className="font-black italic uppercase text-slate-800">{c.nombre}</h4>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{c.tel} • {c.fecha}</p>
+              </div>
+              <span className="font-black text-xl text-[#8ED4BE]">{Utils.currency(c.total)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (view === 'categorias') return (
+    <div className="p-4 lg:p-10 max-w-5xl mx-auto pb-32 animate-in slide-in-from-left duration-300">
+      <button onClick={() => setView('general')} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all">
+        <Plus className="rotate-45" size={20}/> Volver Atrás
+      </button>
+      <div className="bg-white p-10 rounded-[3.5rem] shadow-2xl">
+        <h2 className="text-3xl font-black italic uppercase mb-10 text-slate-800 tracking-tighter">Ranking Detallado por Categoría</h2>
+        <div className="space-y-10">
+          {stats.allCategorias.map(([cat, data], i) => (
+            <div key={i} className="bg-slate-50 rounded-[3rem] p-8 border-l-[15px] border-[#F79598]">
+              <div className="flex justify-between items-center mb-6 border-b border-slate-200 pb-4">
+                <div className="flex items-center gap-6">
+                  <span className="font-black italic text-5xl text-slate-200"># {i+1}</span>
+                  <span className="font-black uppercase text-2xl text-slate-700 tracking-tighter">{cat}</span>
+                </div>
+                <span className="font-black text-3xl text-slate-800">{data.total} <span className="text-sm opacity-30 italic">pzs totales</span></span>
+              </div>
+              
+              {/* DESGLOSE DE TEMAS DENTRO DE LA CATEGORÍA */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {Object.entries(data.temas)
+                  .sort((a, b) => b[1] - a[1]) // Ordenar temas más vendidos dentro de la categoría
+                  .map(([tema, cantidad]) => (
+                    <div key={tema} className="flex justify-between bg-white/60 p-4 rounded-2xl border border-white">
+                      <span className="font-bold uppercase text-[9px] text-slate-500 tracking-wider">{tema}</span>
+                      <span className="font-black text-[10px] text-[#F79598]">{cantidad} pzs</span>
+                    </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  // --- VISTA GENERAL ---
   return (
     <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 animate-in fade-in duration-500 text-slate-800">
       <header className="mb-10 text-center lg:text-left">
         <h2 className="text-4xl font-black italic uppercase tracking-tighter">Métricas Alekey<span className="text-[#8ED4BE]">.</span></h2>
       </header>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         <StatCard icon={<TrendingUp size={24} className="text-[#8ED4BE]"/>} label="Ingresos" val={Utils.currency(stats.totalDinero)} borderColor="border-[#8ED4BE]"/>
         <StatCard icon={<AlertCircle size={24} className="text-[#F79598]"/>} label="Pendientes" val={stats.totalPendientes} borderColor="border-[#F79598]"/>
         <StatCard icon={<Package size={24} className="text-[#C0C976]"/>} label="Piezas" val={stats.piezasTotales} borderColor="border-[#C0C976]"/>
         <StatCard icon={<User size={24} className="text-slate-800"/>} label="Top Cliente" val={stats.mejorCliente?.[0] || 'N/A'} borderColor="border-slate-800" isClient/>
       </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* RANKING DE TEMAS */}
         <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50">
-          <h4 className="font-black italic mb-8 uppercase text-xs flex items-center gap-2 text-slate-400"><Trophy size={16} className="text-[#C0C976]"/> Ranking de Temas</h4>
+          <div className="flex justify-between items-center mb-8">
+            <h4 className="font-black italic uppercase text-xs flex items-center gap-2 text-slate-400">
+              <Trophy size={16} className="text-[#C0C976]"/> Ranking de Temas
+            </h4>
+            <button onClick={() => setView('temas')} className="bg-slate-50 px-3 py-1.5 rounded-full font-black text-[9px] uppercase text-slate-400 hover:bg-[#C0C976] hover:text-white transition-all shadow-sm">Ver más</button>
+          </div>
           <div className="space-y-4">
             {stats.topTemas.map(([tema, cant], i) => (
-              <div key={tema} className="flex items-center justify-between group">
+              <div key={i} className="flex items-center justify-between group">
                 <div className="flex items-center gap-4">
                   <span className="font-black italic text-slate-200 text-2xl group-hover:text-[#C0C976] transition-colors"># {i+1}</span>
-                  <span className="font-bold uppercase text-[10px] text-slate-600 tracking-wider">{tema || "Sin Tema"}</span>
+                  <span className="font-bold uppercase text-[10px] text-slate-600 tracking-wider">{tema}</span>
                 </div>
                 <span className="font-black text-slate-800 text-xs">{cant} pzs</span>
               </div>
             ))}
           </div>
         </div>
+
+        {/* FLUJO DE DINERO */}
         <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 text-center">
-          <h4 className="font-black italic mb-8 uppercase text-xs text-slate-400">Flujo de Dinero (Últimas 10)</h4>
+          <div className="flex justify-between items-center mb-8">
+            <h4 className="font-black italic uppercase text-xs text-slate-400">Flujo de Dinero (Últimas 10)</h4>
+            <button onClick={() => setView('flujo')} className="bg-slate-50 px-3 py-1.5 rounded-full font-black text-[9px] uppercase text-slate-400 hover:bg-[#8ED4BE] hover:text-white transition-all shadow-sm">Ver</button>
+          </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stats.dataBarras}>
@@ -344,16 +347,23 @@ const Estadisticas = ({ ventas }) => {
             </ResponsiveContainer>
           </div>
         </div>
+
+        {/* RANKING DE CATEGORÍAS */}
         <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 text-center lg:text-left">
-          <h4 className="font-black italic mb-8 uppercase text-xs flex items-center gap-2 text-slate-400"><Star size={16} className="text-[#F79598]"/> Ranking de Categorías</h4>
+          <div className="flex justify-between items-center mb-8">
+            <h4 className="font-black italic uppercase text-xs flex items-center gap-2 text-slate-400">
+              <Star size={16} className="text-[#F79598]"/> Ranking de Categorías
+            </h4>
+            <button onClick={() => setView('categorias')} className="bg-slate-50 px-3 py-1.5 rounded-full font-black text-[9px] uppercase text-slate-400 hover:bg-[#F79598] hover:text-white transition-all shadow-sm">Ver más</button>
+          </div>
           <div className="space-y-4">
-            {stats.topCategorias.map(([cat, cant], i) => (
-              <div key={cat} className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl group hover:bg-white hover:shadow-md transition-all">
+            {stats.topCategorias.map(([cat, data], i) => (
+              <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl group hover:bg-white hover:shadow-md transition-all">
                 <div className="flex items-center gap-3">
                   <span className="font-black italic text-slate-300 transition-colors group-hover:text-[#F79598]"># {i+1}</span>
                   <span className="font-bold uppercase text-[10px] text-slate-700">{cat}</span>
                 </div>
-                <span className="font-black bg-[#F79598]/10 text-[#F79598] px-3 py-1 rounded-full text-[10px]">{cant} pzs</span>
+                <span className="font-black bg-[#F79598]/10 text-[#F79598] px-3 py-1 rounded-full text-[10px]">{data.total} pzs</span>
               </div>
             ))}
           </div>
@@ -362,14 +372,6 @@ const Estadisticas = ({ ventas }) => {
     </div>
   );
 };
-
-const StatCard = ({ icon, label, val, borderColor, isClient }) => (
-  <div className={`bg-white p-8 rounded-[3rem] shadow-xl border-b-[10px] ${borderColor} transition-transform hover:scale-[1.02]`}>
-    <div className="mb-4 opacity-40">{icon}</div>
-    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">{label}</p>
-    <h4 className={`font-black italic uppercase leading-tight ${isClient ? 'text-sm lg:text-md text-slate-800' : 'text-2xl text-slate-900'}`}>{val}</h4>
-  </div>
-);
 
 // ==========================================
 // 4. COMPONENTES INTERFAZ
