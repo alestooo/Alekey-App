@@ -31,23 +31,175 @@ const UBICACIONES_CR = {
 };
 
 const PRODUCTOS_PRECIOS = {
-  "DCC": 3750, "Distintivos": 1350, "MR6": 6500, "Bienvenidos": 4750,
-  "Puerta": 1500, "Cumpleaños": 1500, "Nombres": 1500, "Borde": 4500,
-  "OTROS...": 0
+  "Abecedarios": 5000, "Areas": 4500, "Asistencia": 2500, "Bienvenidos": 4750,
+  "Borde decorado": 4500, "Borde liso": 2500, "Calendario 1": 1500, "Calendario 2": 2500,
+  "Calendario 3": 3750, "Cumpleaños": 1500, "Cumpleaños MR-2": 2500, "DG - amarilla": 1350,
+  "DCC": 3750, "Distintivo": 1350, "Distintivo foto": 1350, "DM - celeste": 700,
+  "DP - rosado": 500, "Fechero": 4750, "Fechero completo": 8500, "Laminario 5": 2250,
+  "Laminario 6": 2750, "Laminario 7": 3150, "Laminario 8": 3500, "MR-2": 2500,
+  "MR-6": 6500, "MR-8": 8000, "Nombres": 1500, "Pasafecha": 12500, "Pasalista": 5500, "Puerta": 1500, "Puerta grande": 2500,
+  "Rótulo 60 cm": 2750, "Tablas": 2000, "Velcro": 1250, "OTROS...": 0
 };
 
 const TEMAS_PREDEFINIDOS = [
-  "Abeja Spelling", "Abeja Cute", "Abeja Acuarela", "Arcoiris", "Arcoliris Pastel", 
-  "Alicia", "Avenger", "Be Happy", "Bosque", "Bosque Acuarela", "Bosque Cr", 
-  "Buho", "Chimuelos", "Cactus", "Crayola", "Crayola Pastel", "Capivara", 
-  "Crayola Niños", "Campamento", "Circo 1", "Circo 2", "Deporte", "Dinosaurio", 
-  "Dino Baby", "Escolar", "Espacio", "Espacio Azul", "Elefante", "Feria Cientifica", 
-  "Granja", "Granja Acuarela", "Granja New", "Granjeros", "Gato", "Harry Potter", 
-  "Insectos", "Jirafa", "Koala", "Leones Pareja", "Llama", "Mar", "Mar New", 
-  "Mario Bros", "Mariquita Educlip", "Mariquita", "Medio Ambiente", "Mono", 
-  "Monstruos 1", "Monstruos 2", "Monstruos 3", "Monster Inc", "Mickey", 
-  "Mickey Safari", "Melonheadz", "Música", "Navidad", "Niños Corazón", 
-  "Niños Jovenes", "Oso Miel", "Oso Sandia", "Oso Teddy", "Panda", "Principito", "Toy Story", "FALTA...", "ENVIO..."
+  "Abeja Acuarela",
+  "Abeja Cute",
+  "Abeja Spelling",
+  "Alicia",
+  "Amarillo",
+  "Arcoiris",
+  "Arcoliris Pastel",
+  "Autismo",
+  "Avenger",
+  "Azul",
+  "Be Happy",
+  "Bosque",
+  "Bosque Acuarela",
+  "Bosque CR",
+  "Búho",
+  "Caballito de mar",
+  "Cactus",
+  "Campamento",
+  "Cangrejo",
+  "Capibara",
+  "Celeste",
+  "Chimuelos",
+  "Circo",
+  "Circo 1",
+  "Circo 2",
+  "Colores arcoiris",
+  "Colores arcoiris cafe",
+  "Colores arcoiris navidad",
+  "Colores arcoiris pastel",
+  "Confeti café",
+  "Confeti colores",
+  "Confeti negro",
+  "Crayola",
+  "Crayola Niños",
+  "Crayola Pastel",
+  "Cumpleaños",
+  "Deporte",
+  "Dino Baby",
+  "Dinosaurio",
+  "Elefante",
+  "Escolar",
+  "Espacio",
+  "Espacio Azul",
+  "Espantapajaros",
+  "Feria Cientifica",
+  "Flor café",
+  "Fucsia",
+  "Gato",
+  "Granja 1",
+  "Granja 2",
+  "Granja Acuarela",
+  "Granja New",
+  "Granjeros",
+  "Harry Potter",
+  "Insectos",
+  "Intensamente",
+  "Jirafa",
+  "Kirby",
+  "Koala",
+  "Leones",
+  "Leones Pareja",
+  "Llama",
+  "Mar",
+  "Mar fondo blanco",
+  "Mar New",
+  "Margarita",
+  "Mario Bros",
+  "Mariquita",
+  "Mariquita Educlip",
+  "Mariquita insecto",
+  "Medio Ambiente",
+  "Melonheadz",
+  "Menta",
+  "Mickey",
+  "Mickey Safari",
+  "Mono",
+  "Monster Inc",
+  "Monstruos 1",
+  "Monstruos 2",
+  "Monstruos 3",
+  "Morado",
+  "Música",
+  "Naranja",
+  "Navidad",
+  "Negro",
+  "Niños Corazón 1",
+  "Niños Corazón 2",
+  "Niños Jovenes",
+  "OFERTA",
+  "Oso Cariñoso",
+  "Oso Miel",
+  "Oso Sandia",
+  "Oso Teddy",
+  "Oso the Pond",
+  "Pacman",
+  "Pajaro Acuarela",
+  "Pajaro Educlip",
+  "Panda",
+  "Panda Cute",
+  "Patrio Desfile",
+  "Patrio Niños Campesinos",
+  "Perro",
+  "Pingüino",
+  "Pirata",
+  "Pirata Meryta",
+  "Plaza Sesamo",
+  "Principito",
+  "Puntos Amarillos",
+  "Puntos Azul",
+  "Puntos Celeste",
+  "Puntos colores fondo blanco",
+  "Puntos colores fondo negro",
+  "Puntos Fucsia",
+  "Puntos Naranja",
+  "Puntos Negro",
+  "Puntos Rainbow",
+  "Puntos Rojo",
+  "Puntos Rosado",
+  "Puntos Turquesa",
+  "Puntos Verde",
+  "Rana",
+  "Rana the Pond",
+  "Raya Bullying",
+  "Raya Café",
+  "Raya Cumpleaños",
+  "Robot 1",
+  "Robot 2",
+  "Robot 3",
+  "Rojo",
+  "Rombo",
+  "Rompecabezas",
+  "Rosado",
+  "Safari",
+  "Safari Cute",
+  "San Valentin",
+  "Selva",
+  "Sloth",
+  "Snoopy",
+  "Snoopy colores",
+  "Snoopy rojo",
+  "Snoopy y amigos",
+  "Spring",
+  "Star Wars",
+  "Stitch 1",
+  "Stitch 2",
+  "Suculentas 1",
+  "Suculentas 2",
+  "Super Heroes",
+  "Toy Story",
+  "Tortuga",
+  "Turquesa",
+  "UP",
+  "Verde Limon",
+  "Verde Oscuro",
+  "Zootopia",
+  "LAMINADO...",
+  "ENVIO...",
+  "FALTA..."
 ];
 
 // ==========================================
@@ -82,6 +234,13 @@ const Utils = {
       };
       img.src = url;
     });
+  },
+  // Nueva utilidad para colores de temas especiales
+  getThemeColorClass: (tema) => {
+    if (tema === "LAMINADO...") return "bg-blue-50 border-blue-200 text-blue-600";
+    if (tema === "ENVIO...") return "bg-green-50 border-green-200 text-green-600";
+    if (tema === "FALTA...") return "bg-red-50 border-red-200 text-red-600";
+    return "bg-white border-slate-100 focus:border-[#8ED4BE]";
   }
 };
 
@@ -335,7 +494,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
                         </td>
                         <td className="py-4 font-black uppercase text-[11px] text-slate-700">
                           {editing ? (
-                            <input list="temas-list" className={`bg-white border-2 rounded p-2 w-full outline-none ${item.tema === "" ? 'border-red-200' : 'border-slate-100'}`} value={item.tema} onChange={e => handleEditItem(item.id, 'tema', e.target.value)} placeholder="Tema..." />
+                            <input list="temas-list" className={`border-2 rounded p-2 w-full outline-none transition-all ${Utils.getThemeColorClass(item.tema)}`} value={item.tema} onChange={e => handleEditItem(item.id, 'tema', e.target.value)} placeholder="Tema..." />
                           ) : item.tema}
                         </td>
                         <td className="py-4 text-center">{editing ? <QuantityControls value={item.pendiente} colorClass="bg-red-50" textClass="text-red-500" onChange={(val) => handleEditItem(item.id, 'pendiente', val)} /> : <span className={`px-4 py-1.5 rounded-full text-[10px] font-black ${item.pendiente > 0 ? 'bg-red-100 text-red-500' : 'bg-emerald-100 text-emerald-600'}`}>{item.pendiente > 0 ? item.pendiente : 'Entregado'}</span>}</td>
@@ -430,7 +589,9 @@ const FormularioCotizacion = ({ alGuardar }) => {
                   <td className="py-4 px-2">
                     <input list="productos-list" className={`w-full p-4 border-2 rounded-xl font-bold outline-none transition-all ${item.cat === "OTROS..." ? 'border-purple-300 text-purple-600 bg-purple-50' : 'bg-white border-slate-100 focus:border-[#8ED4BE]'}`} value={item.cat} placeholder="Seleccione..." onChange={e => handleUpdate(item.id, 'cat', e.target.value)} />
                   </td>
-                  <td className="py-4 px-2"><input list="temas-list" className="w-full p-4 bg-white border-2 rounded-xl font-bold outline-none focus:border-[#8ED4BE]" value={item.tema} placeholder="Tema..." onChange={e => handleUpdate(item.id, 'tema', e.target.value)} /></td>
+                  <td className="py-4 px-2">
+                    <input list="temas-list" className={`w-full p-4 border-2 rounded-xl font-bold outline-none transition-all ${Utils.getThemeColorClass(item.tema)}`} value={item.tema} placeholder="Tema..." onChange={e => handleUpdate(item.id, 'tema', e.target.value)} />
+                  </td>
                   <td className="py-4"><QuantityControls value={item.pendiente} colorClass="bg-red-50" textClass="text-red-500" onChange={(v) => handleUpdate(item.id, 'pendiente', v)} /></td>
                   <td className="py-4 px-2 text-right font-black">
                     {item.cat === "OTROS..." ? (
