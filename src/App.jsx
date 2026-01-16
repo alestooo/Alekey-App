@@ -153,7 +153,7 @@ const exportToPDF = async (venta) => {
 
 const Estadisticas = ({ ventas }) => {
   const [view, setView] = useState('general'); 
-  const [sortFlujo, setSortFlujo] = useState('recientes');
+  const [sortFlujo, setSortFlujo] = useState('top'); // CAMBIADO A TOP POR DEFECTO
 
   useEffect(() => {
     const mainContent = document.querySelector('main');
@@ -206,19 +206,19 @@ const Estadisticas = ({ ventas }) => {
   if (view === 'flujo') return (
     <div className="p-4 lg:p-10 max-w-5xl mx-auto pb-32 animate-in slide-in-from-left duration-300 text-slate-800">
       <button onClick={() => setView('general')} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all"><Plus className="rotate-45" size={20}/> Volver Atrás</button>
-      <div className="bg-white p-10 rounded-[3.5rem] shadow-2xl">
-        <div className="flex justify-between items-center mb-10">
-          <h2 className="text-3xl font-black italic uppercase tracking-tighter">Lista de Clientes</h2>
-          <select value={sortFlujo} onChange={(e) => setSortFlujo(e.target.value)} className="p-4 bg-slate-50 rounded-2xl font-black text-[10px] uppercase outline-none shadow-sm cursor-pointer border-2 border-transparent focus:border-[#8ED4BE] transition-all">
-            <option value="recientes">Más Recientes</option>
+      <div className="bg-white p-6 lg:p-10 rounded-[3.5rem] shadow-2xl">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-10">
+          <h2 className="text-2xl lg:text-3xl font-black italic uppercase">Lista de Clientes</h2>
+          <select value={sortFlujo} onChange={(e) => setSortFlujo(e.target.value)} className="w-full sm:w-auto p-4 bg-slate-50 rounded-2xl font-black text-[10px] uppercase outline-none border-2 border-transparent focus:border-[#8ED4BE]">
             <option value="top">Top Clientes (Ventas)</option>
+            <option value="recientes">Más Recientes</option>
           </select>
         </div>
         <div className="space-y-4">
           {stats.listaFlujo.map((c, i) => (
             <div key={i} className="flex items-center justify-between p-6 bg-slate-50 rounded-[2.5rem] border-l-8 border-[#8ED4BE]">
-              <div><h4 className="font-black italic uppercase text-slate-800">{c.nombre}</h4><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{c.tel} • {c.fecha}</p></div>
-              <span className="font-black text-xl text-[#8ED4BE]">{Utils.currency(c.total)}</span>
+              <div className="max-w-[60%]"><h4 className="font-black italic uppercase text-slate-800 text-sm sm:text-base truncate">{c.nombre}</h4><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{c.tel} • {c.fecha}</p></div>
+              <span className="font-black text-lg sm:text-xl text-[#8ED4BE]">{Utils.currency(c.total)}</span>
             </div>
           ))}
         </div>
@@ -229,9 +229,25 @@ const Estadisticas = ({ ventas }) => {
   if (view === 'categorias') return (
     <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 animate-in slide-in-from-left duration-300 text-slate-800">
       <button onClick={() => setView('general')} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all"><Plus className="rotate-45" size={20}/> Volver Atrás</button>
-      <div className="bg-white p-10 rounded-[3.5rem] shadow-2xl">
+      <div className="bg-white p-6 lg:p-10 rounded-[3.5rem] shadow-2xl">
         <h2 className="text-3xl font-black italic uppercase mb-10 tracking-tighter">Ranking Categorías</h2>
-        <div className="space-y-10">{stats.allCategorias.map(([cat, data], i) => (<div key={i} className="bg-slate-50 rounded-[3rem] p-8 border-l-[15px] border-[#F79598]"><div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 border-b border-slate-200 pb-4 gap-4"><div className="flex items-center gap-6"><span className="font-black italic text-5xl text-slate-200"># {i+1}</span><span className="font-black uppercase text-xl sm:text-2xl text-slate-700 tracking-tighter leading-tight">{cat}</span></div><span className="font-black text-xl sm:text-3xl text-slate-800">{data.total} <span className="text-sm opacity-30 italic">pzs</span></span></div><div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">{Object.entries(data.temas).sort((a,b)=>b[1]-a[1]).map(([tema, c]) => (<div key={tema} className="flex flex-col justify-center bg-white/60 p-4 rounded-2xl border border-white min-h-[60px]"><span className="font-bold uppercase text-[9px] text-slate-500 tracking-wider leading-tight mb-1 truncate">{tema}</span><span className="font-black text-[11px] text-[#F79598]">{c} pzs</span></div>))}</div></div>))}</div>
+        <div className="space-y-10">{stats.allCategorias.map(([cat, data], i) => (<div key={i} className="bg-slate-50 rounded-[3rem] p-6 lg:p-8 border-l-[15px] border-[#F79598]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 border-b border-slate-200 pb-4 gap-2">
+            <div className="flex items-center gap-4">
+              <span className="font-black italic text-4xl lg:text-5xl text-slate-200"># {i+1}</span>
+              <span className="font-black uppercase text-base lg:text-2xl text-slate-700 tracking-tighter leading-tight">{cat}</span>
+            </div>
+            <span className="font-black text-lg lg:text-3xl text-slate-800">{data.total} <span className="text-[10px] lg:text-sm opacity-30 italic">pzs</span></span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {Object.entries(data.temas).sort((a,b)=>b[1]-a[1]).map(([tema, c]) => (
+              <div key={tema} className="flex flex-col justify-center bg-white/60 p-4 rounded-2xl border border-white min-h-[60px]">
+                <span className="font-bold uppercase text-[8px] lg:text-[9px] text-slate-500 tracking-wider leading-tight mb-1 truncate">{tema}</span>
+                <span className="font-black text-[10px] lg:text-[11px] text-[#F79598]">{c} pzs</span>
+              </div>
+            ))}
+          </div>
+        </div>))}</div>
       </div>
     </div>
   );
@@ -267,6 +283,8 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
   const [folderView, setFolderView] = useState(null);
 
   useEffect(() => { obtenerCarpetas(); }, []);
+  useEffect(() => { const mainContent = document.querySelector('main'); if (mainContent) mainContent.scrollTo(0, 0); }, [folderView]);
+
   const obtenerCarpetas = async () => { const { data } = await supabase.from('carpetas_centros').select('*'); if (data) setCarpetas(data); };
   
   const crearCarpeta = async () => {
@@ -275,7 +293,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
   };
 
   const eliminarCarpeta = async (id, nombre) => {
-    const result = await Swal.fire({ title: `¿Eliminar "${nombre}"?`, text: "No se borrarán los pedidos.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#F79598' });
+    const result = await Swal.fire({ title: `¿Eliminar?`, text: `Se borrará "${nombre}". Los pedidos NO se borran.`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#F79598' });
     if (result.isConfirmed) { await supabase.from('carpetas_centros').delete().eq('id', id); obtenerCarpetas(); setFolderView(null); }
   };
 
@@ -313,15 +331,6 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
     });
   };
 
-  const groupVentasByMonth = () => {
-    const groups = {};
-    ventas.forEach(v => {
-      const parts = v.fecha.split('/'); const mesIndex = parseInt(parts[1]) - 1; const nombreMes = MESES[mesIndex] || "Otros";
-      if (!groups[nombreMes]) groups[nombreMes] = []; groups[nombreMes].push(v);
-    });
-    return groups;
-  };
-
   const renderVentaCard = (v, inFolder = false) => {
     const editing = editId === v.id;
     const data = editing ? editCache : v;
@@ -331,24 +340,34 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
 
     return (
       <div key={v.id} className={`bg-white rounded-[2.5rem] p-6 lg:p-10 shadow-xl border-l-[12px] transition-all duration-500 ${tienePendientes ? 'border-red-400' : 'border-[#8ED4BE]'}`}>
-        <div className="flex justify-between items-start mb-6">
-          <div className="flex-1 mr-4">
+        <div className="flex flex-col lg:flex-row justify-between items-start gap-4 mb-6">
+          <div className="flex-1 w-full text-slate-800">
             {editing ? (
               <div className="space-y-4">
-                <input className={`text-2xl font-black italic border-b-2 outline-none w-full bg-slate-50 p-2 ${!Utils.validateName(data.nombre) ? 'border-red-300' : 'border-[#8ED4BE]'}`} value={data.nombre} onChange={e => setEditCache({...editCache, nombre: Utils.capitalize(e.target.value)})} />
+                <input className={`text-xl lg:text-2xl font-black italic border-b-2 outline-none w-full bg-slate-50 p-2 ${!Utils.validateName(data.nombre) ? 'border-red-300' : 'border-[#8ED4BE]'}`} value={data.nombre} onChange={e => setEditCache({...editCache, nombre: Utils.capitalize(e.target.value)})} />
                 <div className="flex flex-wrap gap-3">
                    <input className="text-sm font-bold border-b outline-none w-32 bg-transparent" value={data.telefono} onChange={e => setEditCache({...editCache, telefono: Utils.formatPhone(e.target.value)})} />
                    <select className="text-sm font-bold border-b outline-none bg-transparent" value={provActual || ""} onChange={e => setEditCache({...editCache, direccion: `${e.target.value}, `})}>{Object.keys(UBICACIONES_CR).map(p => <option key={p} value={p}>{p}</option>)}</select>
                    <select className="text-sm font-bold border-b outline-none bg-transparent" value={cantActual || ""} onChange={e => setEditCache({...editCache, direccion: `${provActual}, ${e.target.value}`})}>{provActual && UBICACIONES_CR[provActual]?.map(c => <option key={c} value={c}>{c}</option>)}</select>
                 </div>
               </div>
-            ) : (<><h3 className="text-2xl font-black italic">{data.nombre}</h3><p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{data.fecha} • {data.telefono} • {data.direccion}</p></>)}
+            ) : (<><h3 className="text-xl lg:text-2xl font-black italic">{data.nombre}</h3><p className="text-xs lg:text-sm font-bold text-slate-400 uppercase tracking-widest">{data.fecha} • {data.telefono} • {data.direccion}</p></>)}
           </div>
-          <div className="flex gap-2">
-            {editing ? <button disabled={!editValido} onClick={() => {onUpdate(v.id, editCache); setEditId(null);}} className="p-4 bg-emerald-500 text-white rounded-2xl shadow-lg active:scale-95"><Check size={24}/></button> : <button onClick={() => {setEditId(v.id); setEditCache(JSON.parse(JSON.stringify(v)));}} className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-slate-900 hover:text-white transition-all"><Edit2 size={20}/></button>}
-            {!editing && inFolder ? <button onClick={() => deseleccionarDeCarpeta(v.id, folderView)} className="p-4 bg-orange-50 text-orange-500 rounded-2xl hover:bg-orange-500 hover:text-white transition-all"><FolderMinus size={20}/></button> : !editing && <button onClick={() => agregarACarpeta(v.id)} className="p-4 bg-purple-50 text-purple-500 rounded-2xl hover:bg-purple-500 hover:text-white transition-all"><FolderPlus size={20}/></button>}
-            <button disabled={editing} onClick={() => exportToPDF(v)} className={`p-4 bg-blue-50 text-blue-500 rounded-2xl ${editing ? 'hidden' : 'hover:bg-blue-600 hover:text-white'}`}><Printer size={20}/></button>
-            <button disabled={editing} onClick={() => onDelete(v.id)} className={`p-4 bg-red-50 text-red-300 rounded-2xl ${editing ? 'hidden' : 'hover:bg-red-500 hover:text-white'}`}><Trash2 size={20}/></button>
+          <div className="grid grid-cols-2 gap-2 w-full lg:flex lg:w-auto lg:gap-2">
+            {editing ? (
+              <button disabled={!editValido} onClick={() => {onUpdate(v.id, editCache); setEditId(null);}} className="col-span-2 p-4 bg-emerald-500 text-white rounded-2xl shadow-lg active:scale-95 flex justify-center"><Check size={24}/></button>
+            ) : (
+              <>
+                <button onClick={() => {setEditId(v.id); setEditCache(JSON.parse(JSON.stringify(v)));}} className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-slate-900 hover:text-white transition-all flex justify-center items-center"><Edit2 size={20}/></button>
+                {inFolder ? (
+                  <button onClick={() => deseleccionarDeCarpeta(v.id, folderView)} className="p-4 bg-orange-50 text-orange-500 rounded-2xl hover:bg-orange-500 hover:text-white transition-all flex justify-center items-center"><FolderMinus size={20}/></button>
+                ) : (
+                  <button onClick={() => agregarACarpeta(v.id)} className="p-4 bg-purple-50 text-purple-500 rounded-2xl hover:bg-purple-500 hover:text-white transition-all flex justify-center items-center"><FolderPlus size={20}/></button>
+                )}
+                <button onClick={() => exportToPDF(v)} className="p-4 bg-blue-50 text-blue-500 rounded-2xl hover:bg-blue-600 hover:text-white transition-all flex justify-center items-center"><Printer size={20}/></button>
+                <button onClick={() => onDelete(v.id)} className="p-4 bg-red-50 text-red-300 rounded-2xl hover:bg-red-500 hover:text-white transition-all flex justify-center items-center"><Trash2 size={20}/></button>
+              </>
+            )}
           </div>
         </div>
         <div className="overflow-x-auto bg-slate-50/50 rounded-[2rem] p-4 lg:p-6 text-slate-800">
@@ -358,20 +377,9 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
               {data.items.map(item => (
                 <tr key={item.id}>
                   <td className="py-4">{editing ? <QuantityControls value={item.cant} onChange={(val) => handleEditItem(item.id, 'cant', val)} /> : <span className="font-black text-slate-600 ml-4">{item.cant}</span>}</td>
-                  <td className="py-4 text-[11px] font-black uppercase">
-                    {editing ? (
-                      <div className="flex gap-2">
-                        <input list="productos-list" className={`border-2 rounded p-1 w-1/2 ${item.cat === "OTROS..." ? 'text-purple-600 border-purple-200' : ''}`} value={item.cat} onChange={e => handleEditItem(item.id, 'cat', e.target.value)} />
-                        <input list="temas-list" className="border-2 rounded p-1 w-1/2" value={item.tema} onChange={e => handleEditItem(item.id, 'tema', e.target.value)} />
-                      </div>
-                    ) : `${item.cat} - ${item.tema}`}
-                  </td>
+                  <td className="py-4 text-[11px] font-black uppercase">{editing ? (<div className="flex gap-2"><input list="productos-list" className={`border-2 rounded p-1 w-1/2 ${item.cat === "OTROS..." ? 'text-purple-600 border-purple-200' : ''}`} value={item.cat} onChange={e => handleEditItem(item.id, 'cat', e.target.value)} /><input list="temas-list" className="border-2 rounded p-1 w-1/2" value={item.tema} onChange={e => handleEditItem(item.id, 'tema', e.target.value)} /></div>) : `${item.cat} - ${item.tema}`}</td>
                   <td className="py-4"><div className="flex justify-center">{editing ? <QuantityControls value={item.pendiente} colorClass="bg-red-50" textClass="text-red-500" onChange={(val) => handleEditItem(item.id, 'pendiente', val)} /> : <span className={`px-4 py-1.5 rounded-full text-[10px] font-black ${item.pendiente > 0 ? 'bg-red-100 text-red-500' : 'bg-emerald-100 text-emerald-600'}`}>{item.pendiente > 0 ? item.pendiente : 'Entregado'}</span>}</div></td>
-                  <td className="py-4 text-right font-black">
-                    {editing && item.cat === "OTROS..." ? (
-                       <input type="number" className="w-24 text-right border rounded p-1 text-purple-600" value={item.precio} onChange={e => handleEditItem(item.id, 'precio', parseInt(e.target.value) || 0)} />
-                    ) : Utils.currency(item.cant * item.precio)}
-                  </td>
+                  <td className="py-4 text-right font-black">{editing && item.cat === "OTROS..." ? (<input type="number" className="w-24 text-right border rounded p-1 text-purple-600" value={item.precio} onChange={e => handleEditItem(item.id, 'precio', parseInt(e.target.value) || 0)} />) : Utils.currency(item.cant * item.precio)}</td>
                   <td>{editing && <button onClick={() => setEditCache({...editCache, items: editCache.items.filter(i => i.id !== item.id)})} className="text-red-300 ml-2"><Trash2 size={16}/></button>}</td>
                 </tr>
               ))}
@@ -383,10 +391,19 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
     );
   };
 
+  const groupVentasByMonth = () => {
+    const groups = {};
+    ventas.forEach(v => {
+      const parts = v.fecha.split('/'); const mesIndex = parseInt(parts[1]) - 1; const nombreMes = MESES[mesIndex] || "Otros";
+      if (!groups[nombreMes]) groups[nombreMes] = []; groups[nombreMes].push(v);
+    });
+    return groups;
+  };
+
   return (
     <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 text-slate-800">
       <header className="flex flex-col lg:flex-row justify-between items-center gap-6 mb-10">
-        <div className="flex items-center gap-4">{folderView && <button onClick={() => setFolderView(null)} className="p-3 bg-white rounded-full shadow-md"><ArrowLeft size={20}/></button>}<h2 className="text-3xl lg:text-4xl font-black italic uppercase tracking-tighter">{folderView ? folderView.nombre : (mode === 'normal' ? 'Historial' : mode === 'folders' ? 'Centros' : 'Por Meses')}</h2>{folderView && <button onClick={() => eliminarCarpeta(folderView.id, folderView.nombre)} className="p-3 bg-red-50 text-red-400 rounded-full hover:bg-red-500 hover:text-white transition-all"><Trash2 size={18}/></button>}</div>
+        <div className="flex items-center gap-4">{folderView && <button onClick={() => setFolderView(null)} className="p-3 bg-white rounded-full shadow-md"><ArrowLeft size={20}/></button>}<h2 className="text-3xl lg:text-4xl font-black italic uppercase tracking-tighter leading-none">{folderView ? folderView.nombre : (mode === 'normal' ? 'Historial' : mode === 'folders' ? 'Centros' : 'Por Meses')}</h2>{folderView && <button onClick={() => eliminarCarpeta(folderView.id, folderView.nombre)} className="p-3 bg-red-50 text-red-400 rounded-full hover:bg-red-500 hover:text-white transition-all"><Trash2 size={18}/></button>}</div>
         <div className="flex flex-wrap gap-2">
            <button onClick={() => {setMode('normal'); setFolderView(null);}} className={`px-6 py-3 rounded-2xl font-black text-[10px] uppercase transition-all ${mode === 'normal' ? 'bg-[#8ED4BE] text-white shadow-lg' : 'bg-white text-slate-400 shadow-sm'}`}>Listado</button>
            <button onClick={() => {setMode('folders'); setFolderView(null);}} className={`px-6 py-3 rounded-2xl font-black text-[10px] uppercase transition-all ${mode === 'folders' ? 'bg-purple-400 text-white shadow-lg' : 'bg-white text-slate-400 shadow-sm'}`}>Centros</button>
@@ -394,7 +411,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
         </div>
       </header>
       {mode === 'normal' && !folderView && (<div className="space-y-8 animate-in fade-in"><div className="relative w-full max-w-md"><Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18}/><input className="w-full pl-12 pr-6 py-4 bg-white rounded-[2rem] shadow-sm font-bold outline-none focus:border-[#8ED4BE] border-2 border-transparent" placeholder="Buscar cliente..." onChange={e => setFiltro(e.target.value)} /></div>{ventas.filter(v => v.nombre.toLowerCase().includes(filtro.toLowerCase()) || v.telefono.includes(filtro)).map(v => renderVentaCard(v, false))}</div>)}
-      {mode === 'folders' && !folderView && (<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in zoom-in-95"><button onClick={crearCarpeta} className="h-48 border-4 border-dashed border-slate-200 rounded-[3rem] flex flex-col items-center justify-center text-slate-300 hover:border-purple-300 hover:text-purple-300 transition-all"><FolderPlus size={40} className="mb-2"/> <span className="font-black uppercase text-xs">Nuevo Centro</span></button>{carpetas.map(c => { const vF = ventas.filter(v => c.ids_ventas.includes(v.id)); return (<div key={c.id} onClick={() => setFolderView(c)} className="h-48 bg-white p-8 rounded-[3rem] shadow-xl border-b-8 border-purple-400 flex flex-col justify-between cursor-pointer hover:scale-105 transition-all"><div className="flex justify-between items-start"><Folder className="text-purple-400" size={32}/><span className="font-black text-[9px] bg-purple-50 text-purple-500 px-3 py-1 rounded-full uppercase">{vF.length} Pedidos</span></div><div><h4 className="font-black italic uppercase text-lg leading-tight truncate">{c.nombre}</h4><p className="font-black text-purple-600 mt-1">{Utils.currency(vF.reduce((s,v)=>s+v.total,0))}</p></div></div>);})}</div>)}
+      {mode === 'folders' && !folderView && (<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in zoom-in-95"><button onClick={crearCarpeta} className="h-48 border-4 border-dashed border-slate-200 rounded-[3rem] flex flex-col items-center justify-center text-slate-300 hover:border-purple-300 hover:text-purple-300 transition-all group"><FolderPlus size={40} className="mb-2 group-hover:scale-110 transition-transform"/> <span className="font-black uppercase text-xs">Nuevo Centro</span></button>{carpetas.map(c => { const vF = ventas.filter(v => c.ids_ventas.includes(v.id)); return (<div key={c.id} onClick={() => setFolderView(c)} className="h-48 bg-white p-8 rounded-[3rem] shadow-xl border-b-8 border-purple-400 flex flex-col justify-between cursor-pointer hover:scale-105 transition-all"><div className="flex justify-between items-start"><Folder className="text-purple-400" size={32}/><span className="font-black text-[9px] bg-purple-50 text-purple-500 px-3 py-1 rounded-full uppercase">{vF.length} Pedidos</span></div><div><h4 className="font-black italic uppercase text-lg leading-tight truncate">{c.nombre}</h4><p className="font-black text-purple-600 mt-1">{Utils.currency(vF.reduce((s,v)=>s+v.total,0))}</p></div></div>);})}</div>)}
       {folderView && <div className="space-y-8 animate-in slide-in-from-bottom-4">{ventas.filter(v => folderView.ids_ventas.includes(v.id)).map(v => renderVentaCard(v, true))}</div>}
       {mode === 'months' && (<div className="space-y-12">{Object.entries(groupVentasByMonth()).map(([mes, lista]) => (<div key={mes}><div className="flex items-center gap-4 mb-6"><Calendar className="text-orange-400" size={24}/><h3 className="text-2xl font-black italic uppercase text-slate-600">{mes}</h3><div className="h-[2px] flex-1 bg-slate-100"></div><span className="bg-orange-50 text-orange-500 font-black text-xs px-4 py-2 rounded-full">{Utils.currency(lista.reduce((s,v)=>s+v.total,0))}</span></div><div className="space-y-6">{lista.map(v => renderVentaCard(v, false))}</div></div>))}</div>)}
     </div>
