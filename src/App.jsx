@@ -13,7 +13,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
 
-import logoAlekey from './assets/alekey-logo.jpeg'; 
+import logoAlekey from './assets/alekey-logo.jpeg';
 
 // ==========================================
 // 1. CONFIGURACIÓN Y CONSTANTES
@@ -55,8 +55,6 @@ const TEMAS_PREDEFINIDOS = [
   "Turquesa","UP","Verde Limon","Verde Oscuro","Zootopia","LAMINADO...","ENVIO...","FALTA..."
 ];
 
-const MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-
 // ==========================================
 // 2. UTILIDADES GLOBALES
 // ==========================================
@@ -64,15 +62,15 @@ const MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "
 const Utils = {
   currency: (v) => `C ${(v || 0).toLocaleString()}`, 
   formatPhone: (val) => {
-    const d = val.replace(/\D/g, '').substring(0, 8);
+    const d = (val || '').replace(/\D/g, '').substring(0, 8);
     return d.length > 4 ? `${d.slice(0, 4)}-${d.slice(4)}` : d;
   },
   capitalize: (str) => {
-    const clean = str.replace(/[0-9]/g, ''); 
+    const clean = (str || '').replace(/[0-9]/g, '');
     return clean.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   },
   validateName: (str) => {
-    const words = str.trim().split(/\s+/).filter(w => w.length > 0);
+    const words = (str || '').trim().split(/\s+/).filter(w => w.length > 0);
     const hasNumbers = /\d/.test(str);
     return words.length >= 3 && !hasNumbers;
   },
@@ -94,6 +92,7 @@ const Utils = {
     if (tema === "LAMINADO...") return "bg-blue-50 border-blue-200 text-blue-600";
     if (tema === "ENVIO...") return "bg-green-50 border-green-200 text-green-600";
     if (tema === "FALTA...") return "bg-red-50 border-red-200 text-red-600";
+    if (tema === "OTROS...") return "bg-purple-50 border-purple-200 text-purple-600";
     return "bg-white border-slate-100 focus:border-[#8ED4BE]";
   }
 };
@@ -122,10 +121,21 @@ const StatCard = ({ icon, label, val, borderColor, isClient }) => (
   </div>
 );
 
-const QuantityControls = ({ value, onChange, colorClass = "bg-white", textClass = "text-slate-800" }) => (
-  <div className="flex items-center gap-1 min-w-[100px] justify-center">
-    <input type="number" className={`w-14 h-12 border-2 rounded-xl font-black text-center outline-none transition-all focus:border-cyan-400 ${colorClass} ${textClass}`} value={value} onChange={(e) => { const v = parseInt(e.target.value) || 0; onChange(Math.max(0, Math.min(99, v))); }} />
-    <div className="flex flex-col gap-0.5"><button onClick={() => onChange(Math.min(99, value + 1))} className="p-1.5 bg-cyan-100 rounded-md text-cyan-600"><ChevronUp size={16}/></button><button onClick={() => onChange(Math.max(0, value - 1))} className="p-1.5 bg-cyan-100 rounded-md text-cyan-600"><ChevronDown size={16}/></button></div>
+const QuantityControls = ({ value, onChange, max = 99, colorClass = "bg-white", textClass = "text-slate-800" }) => (
+  <div className="flex items-center gap-1 justify-center scale-90 sm:scale-100">
+    <input 
+      type="number" 
+      className={`w-12 sm:w-14 h-10 sm:h-12 border-2 rounded-xl font-black text-center outline-none transition-all focus:border-cyan-400 ${colorClass} ${textClass}`} 
+      value={value} 
+      onChange={(e) => { 
+        const v = parseInt(e.target.value) || 0; 
+        onChange(Math.max(0, Math.min(max, v))); 
+      }} 
+    />
+    <div className="flex flex-col gap-0.5">
+      <button onClick={() => onChange(Math.min(max, value + 1))} className="p-1 sm:p-1.5 bg-cyan-100 rounded-md text-cyan-600"><ChevronUp size={14}/></button>
+      <button onClick={() => onChange(Math.max(0, value - 1))} className="p-1 sm:p-1.5 bg-cyan-100 rounded-md text-cyan-600"><ChevronDown size={14}/></button>
+    </div>
   </div>
 );
 
@@ -134,13 +144,16 @@ const exportToPDF = async (venta) => {
   const logo = await Utils.getBase64(logoAlekey);
   doc.setFillColor(245, 247, 250); doc.rect(0, 0, 210, 50, 'F');
   doc.addImage(logo, 'JPEG', 155, 5, 40, 40);
-  doc.setFont("helvetica", "bold"); doc.setFontSize(30); doc.setTextColor(30, 41, 59); doc.text("FACTURA", 15, 25);
+  doc.setFont("helvetica", "bold"); doc.setFontSize(30); doc.setTextColor(30, 41, 59);
+  doc.text("FACTURA", 15, 25);
   doc.setFontSize(10); doc.setTextColor(100); doc.text("ORDEN: " + venta.id, 15, 35); doc.text("FECHA: " + venta.fecha, 15, 42);
-  doc.setFontSize(11); doc.setTextColor(40); doc.text("Isabel Viquez Fernandez", 15, 65);
+  doc.setFontSize(11); doc.setTextColor(40);
+  doc.text("Isabel Viquez Fernandez", 15, 65);
   doc.setFont("helvetica", "normal"); doc.text("San Joaquín de Flores", 15, 71);
   doc.setFont("helvetica", "bold"); doc.text("CLIENTE:", 110, 65);
-  doc.setFont("helvetica", "normal"); doc.text(venta.nombre, 110, 71); doc.text("Tel: " + venta.telefono, 110, 77); doc.text("Lugar: " + venta.direccion, 110, 83);
-  const tableRows = venta.items.map(i => [i.cant, i.cat + " - " + i.tema, "C " + (i.precio || 0).toLocaleString(), "C " + (i.cant * i.precio).toLocaleString(), i.pendiente > 0 ? i.pendiente : "Entregado"]);
+  doc.setFont("helvetica", "normal");
+  doc.text(venta.nombre, 110, 71); doc.text("Tel: " + venta.telefono, 110, 77); doc.text("Lugar: " + venta.direccion, 110, 83);
+  const tableRows = (venta.items || []).map(i => [i.cant, i.cat + " - " + i.tema, "C " + (i.precio || 0).toLocaleString(), "C " + (i.cant * i.precio).toLocaleString(), i.pendiente > 0 ? i.pendiente : "Entregado"]);
   autoTable(doc, { startY: 95, head: [['Cant.', 'Descripcion', 'Unitario', 'Subtotal', 'Pend.']], body: tableRows, headStyles: { fillColor: [142, 212, 190] } });
   const finalY = doc.lastAutoTable.finalY + 15;
   doc.setFontSize(14); doc.setFont("helvetica", "bold"); doc.text("TOTAL FINAL: C " + (venta.total || 0).toLocaleString(), 195, finalY, { align: 'right' });
@@ -152,7 +165,7 @@ const exportToPDF = async (venta) => {
 // ==========================================
 
 const Estadisticas = ({ ventas }) => {
-  const [view, setView] = useState('general'); 
+  const [view, setView] = useState('general');
   const [sortFlujo, setSortFlujo] = useState('top'); 
 
   useEffect(() => {
@@ -180,8 +193,7 @@ const Estadisticas = ({ ventas }) => {
     });
     const topTemas = Object.entries(temasMap).sort((a,b) => b[1] - a[1]).slice(0, 5);
     const topCategorias = Object.entries(productosMap).sort((a,b) => b[1].total - a[1].total).slice(0, 5);
-    const dataBarras = ventas.slice(0, 10).reverse().map(v => ({ name: v.nombre.split(' ')[0], monto: v.total }));
-    
+    const dataBarras = ventas.slice(0, 10).reverse().map(v => ({ name: (v.nombre || "").split(' ')[0], monto: v.total }));
     const listaFlujo = Object.values(clientesMap);
     if (sortFlujo === 'recientes') {
       listaFlujo.sort((a,b) => new Date(b.rawDate) - new Date(a.rawDate));
@@ -271,21 +283,21 @@ const Estadisticas = ({ ventas }) => {
 };
 
 // ==========================================
-// 5. COMPONENTE VENTAS (VERSIÓN CORREGIDA)
+// 5. COMPONENTE VENTAS
 // ==========================================
 
 const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
-  const [mode, setMode] = useState('normal'); 
+  const [mode, setMode] = useState('normal');
   const [filtro, setFiltro] = useState('');
   const [editId, setEditId] = useState(null);
   const [editCache, setEditCache] = useState(null);
   const [carpetas, setCarpetas] = useState([]);
   const [folderView, setFolderView] = useState(null);
+  const [provinciaEdit, setProvinciaEdit] = useState("San José");
 
   useEffect(() => { obtenerCarpetas(); }, []);
-
   const obtenerCarpetas = async () => { 
-    const { data } = await supabase.from('carpetas_centros').select('*').order('orden', { ascending: true }); 
+    const { data } = await supabase.from('carpetas_centros').select('*').order('orden', { ascending: true });
     if (data) setCarpetas(data); 
   };
   
@@ -293,7 +305,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
     const { value: nombre } = await Swal.fire({ title: 'Nuevo Centro Educativo', input: 'text', inputPlaceholder: 'Ej: Escuelita 2026', showCancelButton: true, confirmButtonColor: '#8ED4BE' });
     if (nombre) { 
       const nuevoOrden = carpetas.length > 0 ? Math.max(...carpetas.map(c => c.orden || 0)) + 1 : 0;
-      const { data } = await supabase.from('carpetas_centros').insert([{ nombre, ids_ventas: [], orden: nuevoOrden }]).select(); 
+      const { data } = await supabase.from('carpetas_centros').insert([{ nombre, ids_ventas: [], orden: nuevoOrden }]).select();
       if (data) setCarpetas([...carpetas, data[0]]); 
     }
   };
@@ -315,11 +327,9 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
     const index = carpetas.findIndex(c => c.id === id);
     if (direccion === 'izq' && index === 0) return;
     if (direccion === 'der' && index === carpetas.length - 1) return;
-
     const nuevas = [...carpetas];
     const targetIdx = direccion === 'izq' ? index - 1 : index + 1;
     [nuevas[index], nuevas[targetIdx]] = [nuevas[targetIdx], nuevas[index]];
-
     setCarpetas(nuevas);
     const updates = nuevas.map((c, i) => supabase.from('carpetas_centros').update({ orden: i }).eq('id', c.id));
     await Promise.all(updates);
@@ -348,7 +358,10 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
     setEditCache(prev => {
       const updatedItems = prev.items.map(item => {
         if (item.id === itemId) {
-          if (field === 'cant') { const v = Math.max(1, value); return { ...item, cant: v, pendiente: v }; }
+          if (field === 'cant') { 
+            const v = Math.max(0, Math.min(99, value)); 
+            return { ...item, cant: v, pendiente: Math.min(item.pendiente, v) }; 
+          }
           if (field === 'pendiente') return { ...item, pendiente: Math.max(0, Math.min(item.cant, value)) };
           if (field === 'cat') return { ...item, cat: value, precio: PRODUCTOS_PRECIOS[value] || 0 };
           return { ...item, [field]: value };
@@ -359,12 +372,26 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
     });
   };
 
+  const agregarLineaEnEdicion = () => {
+    const nuevo = { id: Date.now(), cant: 1, cat: 'Abecedarios', tema: 'Abeja Acuarela', precio: 5000, pendiente: 0 };
+    setEditCache(prev => {
+      const updatedItems = [...prev.items, nuevo];
+      return { ...prev, items: updatedItems, total: updatedItems.reduce((s, i) => s + (i.cant * i.precio), 0) };
+    });
+  };
+
+  const borrarLineaEnEdicion = (itemId) => {
+    setEditCache(prev => {
+      const updatedItems = prev.items.filter(i => i.id !== itemId);
+      return { ...prev, items: updatedItems, total: updatedItems.reduce((s, i) => s + (i.cant * i.precio), 0) };
+    });
+  };
+
   const renderVentaCard = (v, inFolder = false) => {
     const editing = editId === v.id;
     const data = editing ? editCache : v;
-    const tienePendientes = data.items.some(i => i.pendiente > 0);
-    const editValido = Utils.validateName(data.nombre || "") && (data.telefono || "").replace(/\D/g, '').length === 8;
-
+    const tienePendientes = (data.items || []).some(i => i.pendiente > 0);
+    const editValido = Utils.validateName(data.nombre || "") && (data.telefono || "").replace(/\D/g, '').length === 8 && (data.items || []).length > 0;
     return (
       <div key={v.id} className={`bg-white rounded-[2.5rem] shadow-xl border-l-[12px] flex flex-col overflow-hidden ${tienePendientes ? 'border-red-400' : 'border-[#8ED4BE]'}`}>
         <div className="p-6 lg:p-8 border-b border-slate-50 bg-white z-10">
@@ -373,12 +400,23 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
               {editing ? (
                 <div className="space-y-4">
                   <input className={`text-xl font-black border-b-2 outline-none w-full bg-slate-50 p-2 ${!Utils.validateName(data.nombre) ? 'border-red-300' : 'border-[#8ED4BE]'}`} value={data.nombre} onChange={e => setEditCache({...editCache, nombre: Utils.capitalize(e.target.value)})} />
-                  <input className="text-sm font-bold border-b outline-none w-32 bg-transparent" value={data.telefono} onChange={e => setEditCache({...editCache, telefono: Utils.formatPhone(e.target.value)})} />
+                  <div className="flex flex-wrap gap-2">
+                    <input className="text-sm font-bold border-b outline-none w-32 bg-transparent" value={data.telefono} onChange={e => setEditCache({...editCache, telefono: Utils.formatPhone(e.target.value)})} />
+                    <select className="text-xs font-bold border-b bg-slate-50 p-1" value={provinciaEdit} onChange={e => setProvinciaEdit(e.target.value)}>
+                      {Object.keys(UBICACIONES_CR).map(p => <option key={p} value={p}>{p}</option>)}
+                    </select>
+                    <select className="text-xs font-bold border-b bg-slate-50 p-1" value={data.direccion} onChange={e => setEditCache({...editCache, direccion: e.target.value})}>
+                      {UBICACIONES_CR[provinciaEdit].map(loc => <option key={loc} value={loc}>{loc}</option>)}
+                    </select>
+                  </div>
                 </div>
               ) : (
                 <div>
                   <h3 className="text-xl lg:text-2xl font-black italic">{data.nombre}</h3>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{data.fecha} • {data.telefono} • {data.direccion}</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    <span className="bg-slate-100 px-2 py-0.5 rounded-md mr-2 text-slate-500">#{data.id}</span>
+                    {data.fecha} • {data.telefono} • {data.direccion}
+                  </p>
                 </div>
               )}
             </div>
@@ -396,230 +434,320 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
             </div>
           </div>
         </div>
-
         <div className="overflow-x-auto max-h-[300px] overflow-y-auto bg-slate-50/40 p-4 scrollbar-thin">
           <table className="w-full min-w-[600px]">
             <thead className="text-[10px] font-black text-slate-300 uppercase">
-                <tr><th className="text-left pb-2">Cant.</th><th className="text-left pb-2">Descripción</th><th className="text-center pb-2">Pend.</th><th className="text-right pb-2">Subtotal</th></tr>
+              <tr><th className="text-left pb-2">Cant.</th><th className="text-left pb-2">Descripción</th><th className="text-center pb-2">Pend.</th><th className="text-right pb-2">Subtotal</th>{editing && <th className="w-10"></th>}</tr>
             </thead>
             <tbody>
-              {data.items.map(item => (
+              {(data.items || []).map(item => (
                 <tr key={item.id} className="border-b border-slate-100 last:border-0">
-                  <td className="py-3">{editing ? <QuantityControls value={item.cant} onChange={(val) => handleEditItem(item.id, 'cant', val)} /> : <span className="font-black text-slate-600">{item.cant}</span>}</td>
-                  <td className="py-3 text-[11px] font-black uppercase text-slate-700">{editing ? <input className="border rounded p-1 w-full" value={item.cat} onChange={e => handleEditItem(item.id, 'cat', e.target.value)} /> : `${item.cat} - ${item.tema}`}</td>
-                  <td className="py-3 text-center"><span className={`px-3 py-1.5 rounded-full text-[9px] font-black ${item.pendiente > 0 ? 'bg-red-100 text-red-500' : 'bg-emerald-100 text-emerald-600'}`}>{item.pendiente > 0 ? item.pendiente : 'OK'}</span></td>
-                  <td className="py-3 text-right font-black">{Utils.currency(item.cant * item.precio)}</td>
+                  <td className="py-3">
+                    {editing ? (
+                      <QuantityControls value={item.cant} onChange={(val) => handleEditItem(item.id, 'cant', val)} max={99} />
+                    ) : (
+                      <span className="font-black text-slate-600">{item.cant}</span>
+                    )}
+                  </td>
+                  <td className="py-3 text-[11px] font-black uppercase text-slate-700">
+                    {editing ? (
+                      <div className="flex flex-col gap-1">
+                        <input list="productos-list" className="border rounded p-1 w-full" value={item.cat} onChange={e => handleEditItem(item.id, 'cat', e.target.value)} />
+                        <input list="temas-list" className="border rounded p-1 w-full" value={item.tema} onChange={e => handleEditItem(item.id, 'tema', e.target.value)} />
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-0.5 rounded-full text-[8px] ${Utils.getThemeColorClass(item.tema)}`}>{item.cat}</span>
+                        {item.tema}
+                      </div>
+                    )}
+                  </td>
+                  <td className="py-3">
+                    {editing ? (
+                      <QuantityControls value={item.pendiente} onChange={(val) => handleEditItem(item.id, 'pendiente', val)} max={item.cant} colorClass="bg-red-50" textClass="text-red-500" />
+                    ) : (
+                      <div className="flex justify-center">
+                        <span className={`px-4 py-1.5 rounded-xl font-black text-[10px] ${item.pendiente > 0 ? 'bg-red-50 text-red-400' : 'bg-emerald-50 text-emerald-500'}`}>
+                          {item.pendiente > 0 ? `${item.pendiente} PEND` : 'OK'}
+                        </span>
+                      </div>
+                    )}
+                  </td>
+                  <td className="py-3 text-right font-black text-slate-400 text-xs">{Utils.currency(item.cant * item.precio)}</td>
+                  {editing && (
+                    <td className="py-3 text-center">
+                      <button onClick={() => borrarLineaEnEdicion(item.id)} className="text-red-300 hover:text-red-500 transition-colors"><Trash2 size={16}/></button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
           </table>
+          {editing && (
+            <button onClick={agregarLineaEnEdicion} className="mt-4 w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-black uppercase text-[10px] hover:bg-slate-100 transition-all flex items-center justify-center gap-2">
+              <Plus size={14}/> Agregar Línea
+            </button>
+          )}
         </div>
-
-        <div className="p-6 bg-white border-t flex justify-center lg:justify-end">
-          <div className="bg-slate-900 px-6 py-3 rounded-2xl shadow-xl w-full sm:w-auto">
-            <p className="text-[9px] font-black text-slate-400 uppercase text-center">Total Pedido</p>
-            <h4 className="text-xl font-black italic text-[#C0C976] text-center">{Utils.currency(data.items.reduce((s, i) => s + (i.cant * i.precio), 0))}</h4>
-          </div>
-        </div>
+        <div className="p-6 bg-slate-900 flex justify-between items-center"><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Total Final</span><span className="text-xl font-black italic text-[#8ED4BE]">{Utils.currency(data.total)}</span></div>
       </div>
     );
   };
 
-  const groupVentasByMonth = () => {
-    const groups = {};
-    ventas.forEach(v => {
-      const parts = v.fecha.split('/'); const mesIndex = parseInt(parts[1]) - 1; const nombreMes = MESES[mesIndex] || "Otros";
-      if (!groups[nombreMes]) groups[nombreMes] = []; groups[nombreMes].push(v);
-    });
-    return groups;
-  };
+  if (folderView) {
+    const pedidos = ventas.filter(v => folderView.ids_ventas.includes(v.id));
+    return (
+      <div className="p-4 lg:p-10 max-w-5xl mx-auto pb-32 animate-in slide-in-from-bottom duration-300">
+        <button onClick={() => setFolderView(null)} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all"><ArrowLeft size={20}/> Volver a Centros</button>
+        <div className="mb-10 flex justify-between items-center"><h2 className="text-3xl font-black italic uppercase text-slate-800 tracking-tighter">{folderView.nombre} <span className="text-[#8ED4BE]">({pedidos.length})</span></h2></div>
+        <div className="grid grid-cols-1 gap-8">{pedidos.length ? pedidos.map(v => renderVentaCard(v, true)) : <div className="p-20 text-center border-4 border-dashed rounded-[3rem] opacity-20 font-black italic text-2xl uppercase">Carpeta Vacía</div>}</div>
+      </div>
+    );
+  }
+
+  if (mode === 'carpetas') return (
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 animate-in fade-in duration-500">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-12">
+        <div className="text-center sm:text-left"><h2 className="text-4xl font-black italic uppercase tracking-tighter text-slate-800">Centros Educativos<span className="text-[#8ED4BE]">.</span></h2><p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Organiza tus pedidos por instituciones</p></div>
+        <div className="flex gap-3">
+          <button onClick={() => setMode('normal')} className="px-6 py-4 bg-white shadow-lg rounded-2xl font-black uppercase text-xs text-slate-400 hover:text-slate-800 transition-all">Historial</button>
+          <button onClick={crearCarpeta} className="px-6 py-4 bg-[#8ED4BE] text-slate-800 shadow-lg rounded-2xl font-black uppercase text-xs flex items-center gap-2 hover:scale-105 transition-all"><FolderPlus size={18}/> Nuevo Centro</button>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {carpetas.map(c => (
+          <div key={c.id} onClick={() => setFolderView(c)} className="group bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 cursor-pointer hover:shadow-2xl transition-all relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-6 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+              <button onClick={(e) => moverCarpeta(c.id, 'izq', e)} className="p-2 bg-slate-100 rounded-lg hover:bg-slate-200"><ChevronUp className="-rotate-90" size={14}/></button>
+              <button onClick={(e) => moverCarpeta(c.id, 'der', e)} className="p-2 bg-slate-100 rounded-lg hover:bg-slate-200"><ChevronDown className="-rotate-90" size={14}/></button>
+              <button onClick={(e) => editarNombreCarpeta(c.id, c.nombre, e)} className="p-2 bg-blue-50 text-blue-400 rounded-lg hover:bg-blue-400 hover:text-white"><Edit2 size={14}/></button>
+              <button onClick={(e) => eliminarCarpeta(c.id, c.nombre, e)} className="p-2 bg-red-50 text-red-300 rounded-lg hover:bg-red-400 hover:text-white"><Trash2 size={14}/></button>
+            </div>
+            <div className="w-16 h-16 bg-slate-50 rounded-[1.5rem] flex items-center justify-center mb-6 group-hover:bg-[#8ED4BE] transition-colors"><Folder size={32} className="text-slate-200 group-hover:text-white"/></div>
+            <h4 className="font-black italic uppercase text-lg text-slate-800 leading-tight mb-2">{c.nombre}</h4>
+            <div className="flex items-center gap-2">
+              <span className="bg-[#8ED4BE]/10 text-[#8ED4BE] px-3 py-1 rounded-full text-[10px] font-black uppercase">{c.ids_ventas?.length || 0} PEDIDOS</span>
+              <span className="text-[10px] font-bold text-slate-300 uppercase italic">Orden: #{c.orden}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const filtradas = ventas.filter(v => (v.nombre || "").toLowerCase().includes(filtro.toLowerCase()) || (v.id || "").toString().includes(filtro));
 
   return (
-    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 text-slate-800">
-      <header className="flex flex-col lg:flex-row justify-between items-center gap-6 mb-10">
-        <div className="flex items-center gap-4">
-          {folderView && <button onClick={() => setFolderView(null)} className="p-3 bg-white rounded-full shadow-md"><ArrowLeft size={20}/></button>}
-          <h2 className="text-3xl font-black italic uppercase tracking-tighter">{folderView ? folderView.nombre : (mode === 'normal' ? 'Historial' : mode === 'folders' ? 'Centros' : 'Meses')}</h2>
+    <div className="p-4 lg:p-10 max-w-6xl mx-auto pb-32 animate-in fade-in duration-500">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-12">
+        <div className="text-center sm:text-left"><h2 className="text-4xl font-black italic uppercase tracking-tighter text-slate-800">Historial de Ventas<span className="text-[#F79598]">.</span></h2><p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Control total de pedidos y entregas</p></div>
+        <div className="flex gap-3">
+          <button onClick={() => setMode('carpetas')} className="px-6 py-4 bg-white shadow-lg rounded-2xl font-black uppercase text-xs text-slate-400 hover:text-slate-800 transition-all flex items-center gap-2"><Folder size={18}/> Ver Centros</button>
+          <Link to="/cotizar" className="px-6 py-4 bg-[#F79598] text-white shadow-lg rounded-2xl font-black uppercase text-xs flex items-center gap-2 hover:scale-105 transition-all shadow-[#F79598]/20"><Plus size={18}/> Nueva Venta</Link>
         </div>
-        <div className="flex bg-white p-1.5 rounded-2xl shadow-sm">
-           <button onClick={() => {setMode('normal'); setFolderView(null);}} className={`px-4 py-2 rounded-xl font-black text-[10px] uppercase ${mode === 'normal' && !folderView ? 'bg-[#8ED4BE] text-white' : 'text-slate-400'}`}>Listado</button>
-           <button onClick={() => {setMode('folders'); setFolderView(null);}} className={`px-4 py-2 rounded-xl font-black text-[10px] uppercase ${mode === 'folders' && !folderView ? 'bg-purple-400 text-white' : 'text-slate-400'}`}>Centros</button>
-           <button onClick={() => {setMode('months'); setFolderView(null);}} className={`px-4 py-2 rounded-xl font-black text-[10px] uppercase ${mode === 'months' && !folderView ? 'bg-orange-400 text-white' : 'text-slate-400'}`}>Meses</button>
-        </div>
-      </header>
-
-      {mode === 'normal' && !folderView && (
-        <div className="space-y-6">
-            <div className="relative max-w-md"><Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18}/><input className="w-full pl-12 pr-6 py-4 bg-white rounded-2xl shadow-sm outline-none" placeholder="Buscar cliente..." onChange={e => setFiltro(e.target.value)} /></div>
-            {ventas.filter(v => v.nombre.toLowerCase().includes(filtro.toLowerCase())).map(v => renderVentaCard(v))}
-        </div>
-      )}
-
-      {mode === 'folders' && !folderView && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in zoom-in-95">
-          <button onClick={crearCarpeta} className="h-52 border-4 border-dashed border-slate-200 rounded-[2.5rem] flex flex-col items-center justify-center text-slate-300 hover:text-purple-400 hover:border-purple-200 transition-all group bg-white/50">
-            <FolderPlus size={40} className="mb-2 group-hover:scale-110 transition-transform"/>
-            <span className="font-black uppercase text-[10px]">Nuevo Centro</span>
-          </button>
-          
-          {carpetas.map((c) => {
-            const vF = ventas.filter(v => c.ids_ventas.includes(v.id));
-            const totalCarpeta = vF.reduce((s, v) => s + (v.total || 0), 0);
-
-            return (
-              <div key={c.id} onClick={() => setFolderView(c)} className="relative h-52 bg-white p-6 rounded-[2.5rem] shadow-xl border-b-8 border-purple-400 flex flex-col justify-between cursor-pointer hover:translate-y-[-4px] transition-all group">
-                
-                {/* CABECERA: ICONO Y BOTONES DE CONTROL (ARRIBA) */}
-                <div className="flex justify-between items-start">
-                  <div className="p-3 bg-purple-50 rounded-2xl">
-                    <Folder className="text-purple-500" size={28}/>
-                  </div>
-                  
-                  {/* PANEL DE ACCIONES CON FONDO PROPIO PARA NO MEZCLARSE */}
-                  <div className="flex gap-1 bg-slate-50 p-1.5 rounded-xl border border-slate-100" onClick={(e) => e.stopPropagation()}>
-                    <button onClick={(e) => moverCarpeta(c.id, 'izq', e)} className="p-1.5 text-slate-400 hover:text-purple-500 transition-all"><ChevronUp size={14} className="-rotate-90"/></button>
-                    <button onClick={(e) => moverCarpeta(c.id, 'der', e)} className="p-1.5 text-slate-400 hover:text-purple-500 transition-all"><ChevronDown size={14} className="-rotate-90"/></button>
-                    <div className="w-[1px] bg-slate-200 mx-1 my-1" />
-                    <button onClick={(e) => editarNombreCarpeta(c.id, c.nombre, e)} className="p-1.5 text-blue-400 hover:bg-white rounded-md transition-all"><Edit2 size={14}/></button>
-                    <button onClick={(e) => eliminarCarpeta(c.id, c.nombre, e)} className="p-1.5 text-red-300 hover:bg-red-500 hover:text-white rounded-md transition-all"><Trash2 size={14}/></button>
-                  </div>
-                </div>
-
-                {/* CUERPO: NOMBRE */}
-                <div className="mt-2">
-                  <h4 className="font-black italic uppercase text-lg leading-tight text-slate-800 line-clamp-2">
-                    {c.nombre}
-                  </h4>
-                </div>
-
-                {/* PIE: INFO DE DINERO Y BADGE DE PEDIDOS (ABAJO) */}
-                <div className="flex justify-between items-end pt-3 border-t border-slate-50">
-                  <div className="flex flex-col">
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Acumulado</span>
-                    <p className="font-black text-purple-600 text-base leading-none mt-1">{Utils.currency(totalCarpeta)}</p>
-                  </div>
-
-                  <div className="bg-purple-500 text-white px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-md shadow-purple-100">
-                    <span className="font-black text-[11px] leading-none">{vF.length}</span>
-                    <span className="font-bold text-[8px] uppercase opacity-80 leading-none">Pedidos</span>
-                  </div>
-                </div>
-
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {folderView && <div className="space-y-6">{ventas.filter(v => folderView.ids_ventas.includes(v.id)).map(v => renderVentaCard(v, true))}</div>}
-
-      {mode === 'months' && (
-        <div className="space-y-10">
-          {Object.entries(groupVentasByMonth()).map(([mes, lista]) => (
-            <div key={mes}>
-              <div className="flex items-center gap-4 mb-4">
-                <Calendar className="text-orange-400" size={20}/>
-                <h3 className="text-xl font-black italic uppercase">{mes}</h3>
-                <span className="bg-orange-50 text-orange-500 font-black text-[10px] px-3 py-1 rounded-full">{Utils.currency(lista.reduce((s,v)=>s+v.total,0))}</span>
-              </div>
-              <div className="space-y-4">{lista.map(v => renderVentaCard(v))}</div>
-            </div>
-          ))}
-        </div>
-      )}
+      </div>
+      <div className="mb-10 relative"><Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={20}/><input type="text" placeholder="Buscar por nombre o número de orden..." className="w-full pl-14 pr-8 py-5 bg-white rounded-[2rem] shadow-xl outline-none font-bold text-slate-600 focus:ring-4 ring-[#F79598]/10 transition-all" value={filtro} onChange={(e) => setFiltro(e.target.value)} /></div>
+      <div className="grid grid-cols-1 gap-8">{filtradas.map(v => renderVentaCard(v))}</div>
     </div>
   );
 };
 
 // ==========================================
-// 6. FORMULARIO COTIZACIÓN E INICIO
+// 6. COMPONENTE FORMULARIO
 // ==========================================
 
 const FormularioCotizacion = ({ alGuardar }) => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ nombre: '', telefono: '', provincia: '', canton: '', items: [{ id: Utils.generateId(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 1 }] });
-  const total = formData.items.reduce((s, i) => s + (i.cant * i.precio), 0);
-  const nombreValido = Utils.validateName(formData.nombre);
-  const telefonoValido = formData.telefono.replace(/\D/g, '').length === 8;
-  const formularioValido = nombreValido && telefonoValido && formData.provincia !== '' && formData.canton !== '' && formData.items.every(i => i.cat !== '' && i.tema !== '');
+  const [nombre, setNombre] = useState('');
+  const [tel, setTel] = useState('');
+  const [provincia, setProvincia] = useState("");
+  const [direccion, setDireccion] = useState("");
+  const [items, setItems] = useState([{ id: Date.now(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 0 }]);
+  const total = items.reduce((acc, i) => acc + (i.cant * i.precio), 0);
+  const esValido = Utils.validateName(nombre) && tel.replace(/\D/g, '').length === 8 && items.length > 0 && items.every(i => i.cat && i.tema);
 
-  const handleUpdate = (id, field, value) => {
-    setFormData(prev => ({ ...prev, items: prev.items.map(item => {
-      if (item.id === id) {
-        if (field === 'cant') { const v = Math.max(1, value); return { ...item, cant: v, pendiente: v }; }
-        if (field === 'pendiente') return { ...item, pendiente: Math.max(0, Math.min(item.cant, value)) };
-        if (field === 'cat') return { ...item, cat: value, precio: PRODUCTOS_PRECIOS[value] || 0 };
-        return { ...item, [field]: value };
+  const agregarLinea = () => setItems([...items, { id: Date.now(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 0 }]);
+  const borrarLinea = (id) => setItems(items.filter(i => i.id !== id));
+  const updItem = (id, field, val) => {
+    setItems(items.map(i => {
+      if (i.id === id) {
+        if (field === 'cat') return { ...i, cat: val, precio: PRODUCTOS_PRECIOS[val] || 0 };
+        if (field === 'cant') return { ...i, cant: val, pendiente: 0 };
+        return { ...i, [field]: val };
       }
-      return item;
-    })}));
+      return i;
+    }));
   };
 
-  const ejecutarGuardado = async () => {
-    const nuevaVenta = { id: Utils.generateId(), nombre: formData.nombre, telefono: formData.telefono, direccion: `${formData.provincia}, ${formData.canton}`, fecha: new Date().toLocaleDateString('es-CR'), total: total, items: formData.items };
-    await alGuardar(nuevaVenta);
+  const guardar = async () => {
+    if (!esValido) return;
+    const nueva = { 
+      id: Utils.generateId(),
+      nombre, 
+      telefono: tel, 
+      direccion: (provincia ? provincia + ", " : "") + direccion, 
+      items, 
+      total, 
+      fecha: new Date().toLocaleDateString(), 
+      created_at: new Date().toISOString() 
+    };
+    await alGuardar(nueva);
     navigate('/ventas');
   };
 
   return (
-    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 text-slate-800">
-      <div className="bg-white rounded-[2rem] lg:rounded-[3rem] p-6 lg:p-12 shadow-2xl">
-        <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-10"><h2 className="text-3xl lg:text-4xl font-black italic text-slate-800 uppercase">Cotizar Nuevo</h2><h3 className="text-3xl lg:text-5xl font-black italic text-[#BCC962]">{Utils.currency(total)}</h3></header>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10 text-slate-800">
-          <div className="space-y-4">
-            <input className={`w-full p-5 bg-slate-50 rounded-2xl font-bold border-2 outline-none transition-all ${formData.nombre && !nombreValido ? 'border-red-200' : 'border-transparent focus:border-[#8ED4BE]'}`} placeholder="Nombre + 2 Apellidos" value={formData.nombre} onChange={e => setFormData({...formData, nombre: Utils.capitalize(e.target.value)})} />
-            <input className={`w-full p-5 bg-slate-50 rounded-2xl font-bold border-2 outline-none transition-all ${formData.telefono && !telefonoValido ? 'border-red-200' : 'border-transparent focus:border-[#8ED4BE]'}`} placeholder="Teléfono 0000-0000" value={formData.telefono} onChange={e => setFormData({...formData, telefono: Utils.formatPhone(e.target.value)})} />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <select className="p-5 bg-slate-50 rounded-2xl font-bold border-2 border-transparent focus:border-[#8ED4BE] outline-none" value={formData.provincia} onChange={e => setFormData({...formData, provincia: e.target.value, canton: ''})}><option value="">Provincia...</option>{Object.keys(UBICACIONES_CR).map(p => <option key={p} value={p}>{p}</option>)}</select>
-            {formData.provincia && <select className="p-5 bg-slate-50 rounded-2xl font-bold border-2 border-transparent focus:border-[#8ED4BE] outline-none" value={formData.canton} onChange={e => setFormData({...formData, canton: e.target.value})}><option value="">Cantón...</option>{UBICACIONES_CR[formData.provincia].map(c => <option key={c} value={c}>{c}</option>)}</select>}
-          </div>
+    <div className="p-4 lg:p-10 max-w-5xl mx-auto pb-32 animate-in slide-in-from-bottom duration-500">
+      <div className="bg-white rounded-[4rem] shadow-2xl overflow-hidden border border-slate-50">
+        <div className="p-8 lg:p-12 bg-slate-900 text-white flex flex-col lg:flex-row justify-between items-center gap-6">
+          <div className="text-center lg:text-left"><h2 className="text-4xl font-black italic uppercase tracking-tighter">Nueva Cotización<span className="text-[#8ED4BE]">.</span></h2><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2">Completa los datos para generar el pedido</p></div>
+          <div className="flex items-center gap-4 bg-white/5 p-4 rounded-[2rem] border border-white/10"><div className="text-right"><p className="text-[9px] font-black uppercase text-slate-400">Total Estimado</p><p className="text-3xl font-black italic text-[#8ED4BE]">{Utils.currency(total)}</p></div><div className="w-12 h-12 bg-[#8ED4BE] rounded-2xl flex items-center justify-center text-slate-900 shadow-lg shadow-[#8ED4BE]/20"><Package size={24}/></div></div>
         </div>
-        <div className="overflow-x-auto"><table className="w-full min-w-[850px]"><thead><tr className="text-left text-[11px] font-black text-slate-300 uppercase border-b pb-4"><th>Cant.</th><th>Categoría*</th><th>Tema*</th><th className="text-center">Pnd.</th><th className="text-right">Subtotal</th><th></th></tr></thead><tbody>{formData.items.map(item => (<tr key={item.id} className="border-b border-slate-50"><td className="py-4"><QuantityControls value={item.cant} onChange={(v) => handleUpdate(item.id, 'cant', v)} /></td><td className="py-4 px-2"><input list="productos-list" className={`w-full p-4 border-2 rounded-xl font-bold outline-none transition-all ${item.cat === "OTROS..." ? 'border-purple-300 text-purple-600 bg-purple-50' : 'bg-white border-slate-100 focus:border-[#8ED4BE]'}`} value={item.cat} placeholder="Seleccione..." onChange={e => handleUpdate(item.id, 'cat', e.target.value)} /></td><td className="py-4 px-2"><input list="temas-list" className={`w-full p-4 border-2 rounded-xl font-bold outline-none transition-all ${Utils.getThemeColorClass(item.tema)}`} value={item.tema} placeholder="Tema..." onChange={e => handleUpdate(item.id, 'tema', e.target.value)} /></td><td className="py-4"><QuantityControls value={item.pendiente} colorClass="bg-red-50" textClass="text-red-500" onChange={(v) => handleUpdate(item.id, 'pendiente', v)} /></td><td className="py-4 px-2 text-right font-black">{item.cat === "OTROS..." ? (<div className="flex items-center justify-end gap-1"><span className="text-purple-600 italic text-[10px]">C</span><input type="number" className="bg-purple-50 border-2 border-purple-200 rounded-lg p-2 w-28 text-right outline-none text-purple-600" value={item.precio} onChange={e => handleUpdate(item.id, 'precio', parseInt(e.target.value) || 0)} /></div>) : Utils.currency(item.cant * item.precio)}</td><td className="py-4 text-center"><button onClick={() => setFormData({...formData, items: formData.items.filter(i => i.id !== item.id)})} className="text-red-300 hover:text-red-500"><Trash2 size={22}/></button></td></tr>))}</tbody></table></div>
-        <button onClick={() => setFormData({...formData, items: [...formData.items, {id: Utils.generateId(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 1}]})} className="mt-8 px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase flex items-center gap-2 transition-transform active:scale-95"><Plus size={16}/> Agregar Línea</button>
-        <div className="mt-10 flex flex-col items-end gap-3">{!formularioValido && <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest italic animate-pulse">* Complete campos requeridos</p>}<button disabled={!formularioValido} onClick={ejecutarGuardado} className="px-16 py-5 bg-[#8ED4BE] text-white font-black text-xl rounded-3xl shadow-2xl disabled:opacity-20 transition-all hover:scale-105 active:scale-95">Guardar Pedido</button></div>
+        <div className="p-8 lg:p-12 space-y-10">
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2"><User size={14}/> Nombre Completo</label><input type="text" className={`w-full p-6 bg-slate-50 rounded-[2rem] font-bold text-slate-700 outline-none border-2 transition-all ${nombre && !Utils.validateName(nombre) ? 'border-red-100 bg-red-50/30' : 'border-transparent focus:border-[#8ED4BE]'}`} placeholder="Buscando cliente..." value={nombre} onChange={e => setNombre(Utils.capitalize(e.target.value))} /></div>
+            <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2"><Clock size={14}/> Teléfono (8 dígitos)</label><input type="text" className="w-full p-6 bg-slate-50 rounded-[2rem] font-bold text-slate-700 outline-none border-2 border-transparent focus:border-[#8ED4BE] transition-all" placeholder="0000-0000" value={tel} onChange={e => setTel(Utils.formatPhone(e.target.value))} /></div>
+          </section>
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
+            <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-400 ml-4">Provincia</label><select className="w-full p-5 bg-white rounded-2xl font-black uppercase text-xs outline-none shadow-sm" value={provincia} onChange={e => {setProvincia(e.target.value); setDireccion("");}}><option value="" disabled>Seleccione...</option>{Object.keys(UBICACIONES_CR).map(p => <option key={p} value={p}>{p}</option>)}</select></div>
+            <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-400 ml-4">Ubicación Específica</label><select className="w-full p-5 bg-white rounded-2xl font-black uppercase text-xs outline-none shadow-sm" value={direccion} onChange={e => setDireccion(e.target.value)}><option value="" disabled>Seleccione...</option>{provincia && UBICACIONES_CR[provincia].map(loc => <option key={loc} value={loc}>{loc}</option>)}</select></div>
+          </section>
+          <section className="space-y-6">
+            <div className="flex justify-between items-center px-4"><h4 className="font-black italic uppercase text-slate-800 flex items-center gap-2 text-sm"><ShoppingBag size={18} className="text-[#8ED4BE]"/> Desglose de Productos</h4><button onClick={agregarLinea} className="p-3 bg-slate-900 text-white rounded-xl hover:scale-110 transition-all shadow-xl shadow-slate-900/20"><Plus size={20}/></button></div>
+            <div className="space-y-4">
+              {items.map((item, idx) => (
+                <div key={item.id} className="group flex flex-col lg:flex-row items-center gap-6 p-6 bg-white border-2 border-slate-100 rounded-[2.5rem] hover:border-[#8ED4BE] transition-all">
+                  <span className="font-black italic text-slate-200 text-2xl lg:text-3xl w-10">#{idx+1}</span>
+                  <div className="flex-1 w-full grid grid-cols-1 gap-4">
+                    <input list="productos-list" className="w-full p-4 bg-slate-50 rounded-2xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE]" placeholder="Buscar categoría..." value={item.cat} onChange={e => updItem(item.id, 'cat', e.target.value)} />
+                    <input list="temas-list" className="w-full p-4 bg-slate-50 rounded-2xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE]" placeholder="Buscar tema..." value={item.tema} onChange={e => updItem(item.id, 'tema', e.target.value)} />
+                  </div>
+                  <div className="w-full lg:w-auto flex flex-col sm:flex-row justify-around items-center gap-6 pt-4 lg:pt-0 border-t lg:border-t-0">
+                    <div className="flex flex-col items-center flex-1">
+                       <span className="text-[9px] font-black text-slate-400 uppercase mb-2">Cant.</span>
+                       <QuantityControls value={item.cant} onChange={v => updItem(item.id, 'cant', v)} max={99} />
+                    </div>
+                    <div className="flex flex-col items-center flex-1">
+                       <span className="text-[9px] font-black text-slate-400 uppercase mb-2">Pend.</span>
+                       <QuantityControls value={item.pendiente} onChange={v => updItem(item.id, 'pendiente', v)} max={item.cant} colorClass="bg-red-50" textClass="text-red-500" />
+                    </div>
+                    <div className="min-w-[80px] text-right flex-1">
+                       <p className="text-[9px] font-black text-slate-300 uppercase">Subtotal</p>
+                       <p className="font-black italic text-slate-800 text-sm">{Utils.currency(item.cant * item.precio)}</p>
+                    </div>
+                    {items.length > 1 && <button onClick={() => borrarLinea(item.id)} className="p-3 bg-red-50 text-red-400 rounded-2xl hover:bg-red-500 hover:text-white transition-all"><Trash2 size={16}/></button>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+          <button disabled={!esValido} onClick={guardar} className={`w-full p-8 rounded-[2.5rem] font-black italic uppercase text-xl shadow-2xl transition-all flex items-center justify-center gap-4 ${esValido ? 'bg-slate-900 text-[#8ED4BE] hover:scale-[1.02] shadow-slate-200' : 'bg-slate-100 text-slate-300 cursor-not-allowed'}`}><Check size={32}/> {esValido ? 'Confirmar y Guardar Pedido' : 'Complete los datos'}</button>
+        </div>
       </div>
-    </div>
-  );
-};
-
-const DashboardHome = ({ historial }) => {
-  const stats = useMemo(() => {
-    const ing = historial.reduce((a, v) => a + (v.total || 0), 0);
-    const pnd = historial.reduce((a, v) => a + (v.items?.reduce((s, i) => s + (i.pendiente || 0), 0) || 0), 0);
-    return { ing, pnd, total: historial.length };
-  }, [historial]);
-  return (
-    <div className="p-6 lg:p-12 max-w-7xl mx-auto pb-32 text-slate-800">
-      <header className="mb-16 text-center lg:text-left"><h1 className="text-5xl lg:text-8xl font-black italic tracking-tighter uppercase leading-[0.9]">Panel<br/><span className="text-[#8ED4BE]">Alekey.</span></h1></header>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-20">
-        <div className="bg-[#8ED4BE] p-10 rounded-[3rem] text-white shadow-2xl flex flex-col justify-center transition-transform hover:scale-105 min-h-[220px]"><p className="text-xs font-black uppercase mb-3 opacity-80">Ingresos Totales</p><h3 className="text-4xl lg:text-5xl font-black italic leading-none truncate">{Utils.currency(stats.ing)}</h3></div>
-        <div className="bg-[#F79598] p-10 rounded-[3rem] text-white shadow-2xl flex flex-col justify-center transition-transform hover:scale-105 min-h-[220px]"><p className="text-xs font-black uppercase mb-3 opacity-80">Pendientes</p><h3 className="text-4xl lg:text-6xl font-black italic leading-none">{stats.pnd} <span className="text-2xl opacity-60">Pzs</span></h3></div>
-        <div className="bg-[#C0C976] p-10 rounded-[3rem] text-white shadow-2xl flex flex-col justify-center transition-transform hover:scale-105 min-h-[220px]"><p className="text-xs font-black uppercase mb-3 opacity-80">Órdenes</p><h3 className="text-4xl lg:text-6xl font-black italic leading-none">{stats.total}</h3></div>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8"><Link to="/cotizar" className="p-10 bg-white rounded-[3rem] flex items-center justify-between border-4 border-slate-50 hover:border-[#8ED4BE] transition-all shadow-xl group"><div><h4 className="text-3xl font-black italic uppercase">Cotizar</h4><p className="text-xs font-bold opacity-40 uppercase">Nuevo Pedido</p></div><Plus size={32} className="group-hover:rotate-90 transition-all text-[#8ED4BE]"/></Link><Link to="/ventas" className="p-10 bg-white rounded-[3rem] flex items-center justify-between border-4 border-slate-50 hover:border-[#F79598] transition-all shadow-xl group"><div><h4 className="text-3xl font-black italic uppercase">Ventas</h4><p className="text-xs font-bold opacity-40 uppercase">Historial</p></div><ShoppingBag size={32} className="group-hover:scale-110 transition-all text-[#F79598]"/></Link></div>
     </div>
   );
 };
 
 // ==========================================
-// 7. APP PRINCIPAL
+// 7. COMPONENTE DASHBOARD (HOME)
+// ==========================================
+
+const DashboardHome = ({ historial }) => {
+  const navigate = useNavigate();
+  const summary = useMemo(() => {
+    const pend = (historial || []).reduce((acc, v) => acc + (v.items?.reduce((s, i) => s + (i.pendiente || 0), 0) || 0), 0);
+    const total = (historial || []).reduce((acc, v) => acc + (v.total || 0), 0);
+    return { pend, total, count: (historial || []).length };
+  }, [historial]);
+  return (
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 animate-in fade-in duration-700">
+      <header className="mb-12 flex flex-col lg:flex-row justify-between items-center gap-8 bg-white p-10 rounded-[4rem] shadow-xl border border-slate-50">
+        <div className="flex items-center gap-8 flex-col sm:flex-row text-center sm:text-left">
+          <div className="w-24 h-24 bg-slate-900 rounded-[2.5rem] flex items-center justify-center shadow-2xl rotate-3 transition-transform hover:rotate-0"><img src={logoAlekey} alt="Logo" className="w-16 h-16 object-contain rounded-xl" /></div>
+          <div><h1 className="text-4xl lg:text-5xl font-black italic uppercase tracking-tighter text-slate-800">Hola, Alekey<span className="text-[#8ED4BE]">.</span></h1><p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Gestión Administrativa {new Date().getFullYear()}</p></div>
+        </div>
+        <div className="flex gap-4">
+          <div className="bg-slate-50 p-6 rounded-[2.5rem] text-center border-b-4 border-[#8ED4BE]"><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Hoy es</p><p className="font-black italic text-slate-800">{new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}</p></div>
+        </div>
+      </header>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+        <StatCard icon={<TrendingUp size={28} className="text-[#8ED4BE]"/>} label="Ventas Totales" val={Utils.currency(summary.total)} borderColor="border-[#8ED4BE]"/>
+        <StatCard icon={<AlertCircle size={28} className="text-[#F79598]"/>} label="Piezas Pendientes" val={summary.pend} borderColor="border-[#F79598]"/>
+        <StatCard icon={<ShoppingBag size={28} className="text-[#C0C976]"/>} label="Pedidos Realizados" val={summary.count} borderColor="border-[#C0C976]"/>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <button onClick={() => navigate('/cotizar')} className="group p-10 bg-slate-900 rounded-[4rem] text-white flex items-center justify-between hover:scale-[1.02] transition-all shadow-2xl shadow-slate-400 relative overflow-hidden">
+          <div className="z-10 text-left"><h4 className="text-3xl font-black italic uppercase mb-2">Nueva Venta</h4><p className="text-slate-500 font-bold uppercase text-xs tracking-widest">Crear cotización y factura</p></div>
+          <div className="w-20 h-20 bg-[#8ED4BE] rounded-[2rem] flex items-center justify-center text-slate-900 shadow-xl group-hover:rotate-12 transition-transform"><Plus size={40}/></div>
+          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white/5 rounded-full blur-3xl"></div>
+        </button>
+        <button onClick={() => navigate('/ventas')} className="group p-10 bg-white rounded-[4rem] text-slate-800 flex items-center justify-between hover:scale-[1.02] transition-all shadow-2xl border border-slate-50 relative overflow-hidden">
+          <div className="z-10 text-left"><h4 className="text-3xl font-black italic uppercase mb-2">Historial</h4><p className="text-slate-400 font-bold uppercase text-xs tracking-widest">Ver reportes y estados</p></div>
+          <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center text-slate-400 group-hover:bg-slate-900 group-hover:text-white transition-all"><Search size={40}/></div>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ==========================================
+// 8. COMPONENTE PRINCIPAL (APP)
 // ==========================================
 
 export default function App() {
   const [ventas, setVentas] = useState([]);
-  useEffect(() => { const f = async () => { const { data } = await supabase.from('ventas').select('*').order('created_at', { ascending: false }); if (data) setVentas(data); }; f(); }, []);
-  const alGuardarEnNube = async (nv) => { const { data, error } = await supabase.from('ventas').insert([nv]).select(); if (!error && data) setVentas([data[0], ...ventas]); };
-  const alEliminar = async (id) => { Swal.fire({ title: '¿Eliminar?', icon: 'warning', showCancelButton: true }).then(async r => { if (r.isConfirmed) { await supabase.from('ventas').delete().eq('id', id); setVentas(ventas.filter(v => v.id !== id)); } }); };
-  const alActualizar = async (id, va) => { const { created_at, ...ud } = va; await supabase.from('ventas').update(ud).eq('id', id); setVentas(ventas.map(v => v.id === id ? va : v)); };
+  useEffect(() => { fetchVentas(); }, []);
+
+  async function fetchVentas() {
+    const { data } = await supabase.from('ventas').select('*').order('created_at', { ascending: false });
+    if (data) setVentas(data);
+  }
+
+  const alGuardarEnNube = async (nuevaVenta) => {
+    const { data, error } = await supabase.from('ventas').insert([nuevaVenta]).select();
+    if (error) {
+      console.error(error);
+      return Swal.fire('Error', error.message, 'error');
+    }
+    // Sincronización inmediata
+    if (data && data.length > 0) setVentas([data[0], ...ventas]);
+    else await fetchVentas();
+    
+    Swal.fire({ title: '¡Pedido Guardado!', icon: 'success', confirmButtonColor: '#8ED4BE', customClass: { popup: 'rounded-[3rem] font-black italic' } });
+  };
+
+  const alEliminar = async (id) => {
+    const res = await Swal.fire({ title: '¿Eliminar Venta?', text: "Esta acción no se puede revertir", icon: 'warning', showCancelButton: true, confirmButtonColor: '#F79598', cancelButtonColor: '#cbd5e1' });
+    if (res.isConfirmed) {
+      await supabase.from('ventas').delete().eq('id', id);
+      setVentas(ventas.filter(v => v.id !== id));
+    }
+  };
+
+  const alActualizar = async (id, dataEditada) => {
+    const { error } = await supabase.from('ventas').update(dataEditada).eq('id', id);
+    if (error) return Swal.fire('Error', error.message, 'error');
+    setVentas(ventas.map(v => v.id === id ? { ...v, ...dataEditada } : v));
+    Swal.fire({ title: '¡Actualizado!', icon: 'success', timer: 1500, showConfirmButton: false });
+  };
 
   return (
     <Router>
       <ScrollToTop />
-      <div className="flex flex-col lg:flex-row h-screen bg-[#F8FAFC] overflow-hidden">
-        <aside className="fixed bottom-0 left-0 w-full lg:relative lg:w-80 bg-white border-t lg:border-r p-4 lg:p-12 flex flex-row lg:flex-col justify-between z-50 shadow-xl">
-          <div className="flex lg:flex-col items-center lg:items-start justify-between w-full lg:space-y-16"><div className="hidden lg:block text-4xl font-black italic text-slate-800 tracking-tighter">ALEKEY<span className="text-[#8ED4BE]">.</span></div><nav className="flex flex-row lg:flex-col gap-1 lg:gap-4 w-full justify-around lg:justify-start"><NavLink to="/" icon={<Home size={20}/>} label="Inicio" /><NavLink to="/cotizar" icon={<Plus size={20}/>} label="Cotizar" /><NavLink to="/ventas" icon={<ShoppingBag size={20}/>} label="Ventas" /><NavLink to="/stats" icon={<BarChart3 size={20}/>} label="Stats" /></nav></div><div className="hidden lg:flex p-6 bg-slate-900 rounded-[2rem] text-white items-center gap-4 italic font-black text-xs shadow-xl"><div className="w-8 h-8 bg-[#8ED4BE] rounded-xl flex items-center justify-center font-bold text-slate-800">IV</div> Admin Alekey</div>
+      <div className="flex flex-col lg:flex-row h-screen bg-slate-50 font-sans overflow-hidden">
+        
+        <aside className="hidden lg:flex w-32 bg-white border-r border-slate-100 flex-col items-center py-10 gap-8 z-50">
+          <div className="w-16 h-16 bg-[#8ED4BE] rounded-[1.8rem] items-center justify-center shadow-lg shadow-[#8ED4BE]/30 mb-6 flex"><Package className="text-slate-800" size={28}/></div>
+          <nav className="flex flex-col gap-8 justify-center w-full">
+            <NavLink to="/" icon={<Home size={24}/>} label="Home" isMobile={false} />
+            <NavLink to="/cotizar" icon={<Plus size={24}/>} label="Nueva" isMobile={false} />
+            <NavLink to="/ventas" icon={<Clock size={24}/>} label="Ventas" isMobile={false} />
+            <NavLink to="/stats" icon={<BarChart3 size={24}/>} label="Stats" isMobile={false} />
+          </nav>
+          <div className="mt-auto p-4 flex flex-col items-center gap-2">
+            <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center font-bold text-[#8ED4BE] text-xs">IV</div>
+          </div>
         </aside>
+
         <main className="flex-1 overflow-y-auto bg-slate-50/30">
           <Routes>
             <Route path="/" element={<DashboardHome historial={ventas} />} />
@@ -628,14 +756,31 @@ export default function App() {
             <Route path="/stats" element={<Estadisticas ventas={ventas} />} />
           </Routes>
         </main>
+
+        <footer className="lg:hidden w-full bg-white border-t border-slate-100 flex items-center justify-around py-4 px-2 z-50">
+          <nav className="flex w-full justify-around items-center">
+            <NavLink to="/" icon={<Home size={22}/>} label="Home" isMobile={true} />
+            <NavLink to="/cotizar" icon={<Plus size={22}/>} label="Nueva" isMobile={true} />
+            <NavLink to="/ventas" icon={<Clock size={22}/>} label="Ventas" isMobile={true} />
+            <NavLink to="/stats" icon={<BarChart3 size={22}/>} label="Stats" isMobile={true} />
+          </nav>
+        </footer>
       </div>
+
       <datalist id="productos-list">{Object.keys(PRODUCTOS_PRECIOS).map(p => <option key={p} value={p} />)}</datalist>
       <datalist id="temas-list">{TEMAS_PREDEFINIDOS.map(t => <option key={t} value={t} />)}</datalist>
     </Router>
   );
 }
 
-const NavLink = ({ to, icon, label }) => {
+const NavLink = ({ to, icon, label, isMobile }) => {
   const active = useLocation().pathname === to;
-  return (<Link to={to} className={`flex flex-col lg:flex-row items-center gap-1.5 lg:gap-6 p-2 lg:p-5 rounded-xl lg:rounded-[2rem] transition-all font-black italic uppercase text-[10px] lg:text-xs flex-1 lg:flex-none ${active ? 'bg-[#8ED4BE] text-white shadow-xl scale-105' : 'text-slate-300'}`}>{icon} <span className="lg:inline">{label}</span></Link>);
+  return (
+    <Link to={to} className={`flex flex-col items-center gap-1 group relative transition-all ${active ? 'text-[#8ED4BE]' : 'text-slate-300 hover:text-slate-500'}`}>
+      <div className={`p-3 rounded-2xl transition-all ${active ? 'bg-[#8ED4BE]/10 shadow-inner' : 'group-hover:bg-slate-50'}`}>{icon}</div>
+      <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest">{label}</span>
+      {active && !isMobile && <div className="absolute -left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#8ED4BE] rounded-full hidden lg:block"></div>}
+      {active && isMobile && <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-1 bg-[#8ED4BE] rounded-full"></div>}
+    </Link>
+  );
 };
