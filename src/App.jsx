@@ -106,9 +106,9 @@ const ScrollToTop = ({ trigger }) => {
   useEffect(() => {
     const mainContent = document.querySelector('main');
     if (mainContent) {
-      mainContent.scrollTo({ top: 0, behavior: 'smooth' });
+      mainContent.scrollTo({ top: 0, behavior: 'instant' });
     } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: 'instant' });
     }
   }, [pathname, trigger]);
   return null;
@@ -128,7 +128,7 @@ const QuantityControls = ({ value, onChange, max = 99, colorClass = "bg-white", 
   <div className="flex items-center gap-1 justify-center">
     <input 
       type="number" 
-      className={`w-12 h-10 sm:w-14 sm:h-12 border-2 rounded-xl font-black text-center outline-none transition-all focus:border-cyan-400 ${colorClass} ${textClass}`} 
+      className={`w-11 h-10 sm:w-14 sm:h-12 border-2 rounded-xl font-black text-center outline-none transition-all focus:border-cyan-400 ${colorClass} ${textClass}`} 
       value={value} 
       onChange={(e) => { 
         const v = parseInt(e.target.value) || 0; 
@@ -136,8 +136,8 @@ const QuantityControls = ({ value, onChange, max = 99, colorClass = "bg-white", 
       }} 
     />
     <div className="flex flex-col gap-0.5">
-      <button onClick={() => onChange(Math.min(max, value + 1))} className="p-1 sm:p-1.5 bg-cyan-100 rounded-md text-cyan-600"><ChevronUp size={14}/></button>
-      <button onClick={() => onChange(Math.max(0, value - 1))} className="p-1 sm:p-1.5 bg-cyan-100 rounded-md text-cyan-600"><ChevronDown size={14}/></button>
+      <button onClick={() => onChange(Math.min(max, value + 1))} className="p-1 bg-cyan-100 rounded-md text-cyan-600"><ChevronUp size={12}/></button>
+      <button onClick={() => onChange(Math.max(0, value - 1))} className="p-1 bg-cyan-100 rounded-md text-cyan-600"><ChevronDown size={12}/></button>
     </div>
   </div>
 );
@@ -204,7 +204,7 @@ const Estadisticas = ({ ventas }) => {
   if (!stats) return <div className="p-20 text-center font-black italic opacity-20 text-4xl uppercase text-slate-800">Cargando Datos...</div>;
 
   if (view === 'temas') return (
-    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 animate-in slide-in-from-left duration-300 text-slate-800">
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-10 animate-in slide-in-from-left duration-300 text-slate-800">
       <ScrollToTop trigger={view} />
       <button onClick={() => setView('general')} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all"><Plus className="rotate-45" size={20}/> Volver Atrás</button>
       <div className="bg-white p-10 rounded-[3.5rem] shadow-2xl">
@@ -215,7 +215,7 @@ const Estadisticas = ({ ventas }) => {
   );
 
   if (view === 'flujo') return (
-    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 animate-in slide-in-from-left duration-300 text-slate-800">
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-10 animate-in slide-in-from-left duration-300 text-slate-800">
       <ScrollToTop trigger={view} />
       <button onClick={() => setView('general')} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all"><Plus className="rotate-45" size={20}/> Volver Atrás</button>
       <div className="bg-white p-6 lg:p-10 rounded-[3.5rem] shadow-2xl">
@@ -239,7 +239,8 @@ const Estadisticas = ({ ventas }) => {
   );
 
   return (
-    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 animate-in fade-in duration-500 text-slate-800">
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-10 animate-in fade-in duration-500 text-slate-800">
+      <ScrollToTop />
       <header className="mb-10 text-center lg:text-left"><h2 className="text-4xl font-black italic uppercase tracking-tighter">Métricas Alekey<span className="text-[#8ED4BE]">.</span></h2></header>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         <StatCard icon={<TrendingUp size={24} className="text-[#8ED4BE]"/>} label="Ingresos" val={Utils.currency(stats.totalDinero)} borderColor="border-[#8ED4BE]"/>
@@ -471,7 +472,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
   if (folderView) {
     const pedidos = ventas.filter(v => folderView.ids_ventas.includes(v.id));
     return (
-      <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 animate-in slide-in-from-bottom duration-300">
+      <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-10 animate-in slide-in-from-bottom duration-300">
         <ScrollToTop trigger={folderView} />
         <button onClick={() => setFolderView(null)} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all"><ArrowLeft size={20}/> Volver a Centros</button>
         <div className="mb-10 flex justify-between items-center"><h2 className="text-3xl font-black italic uppercase text-slate-800 tracking-tighter">{folderView.nombre} <span className="text-[#8ED4BE]">({pedidos.length})</span></h2></div>
@@ -481,7 +482,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
   }
 
   if (mode === 'carpetas') return (
-    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 animate-in fade-in duration-500">
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-10 animate-in fade-in duration-500">
       <ScrollToTop trigger={mode} />
       <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-12">
         <div className="text-center sm:text-left"><h2 className="text-4xl font-black italic uppercase tracking-tighter text-slate-800">Centros Educativos<span className="text-[#8ED4BE]">.</span></h2><p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Organiza tus pedidos por instituciones</p></div>
@@ -516,7 +517,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
   const filtradas = ventas.filter(v => (v.nombre || "").toLowerCase().includes(filtro.toLowerCase()) || (v.id || "").toString().includes(filtro));
 
   return (
-    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 animate-in fade-in duration-500">
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-10 animate-in fade-in duration-500">
       <ScrollToTop trigger={mode} />
       <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-12">
         <div className="text-center sm:text-left"><h2 className="text-4xl font-black italic uppercase tracking-tighter text-slate-800">Historial de Ventas<span className="text-[#F79598]">.</span></h2><p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Control total de pedidos y entregas</p></div>
@@ -575,7 +576,8 @@ const FormularioCotizacion = ({ alGuardar }) => {
   };
 
   return (
-    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 animate-in slide-in-from-bottom duration-500">
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-10 animate-in slide-in-from-bottom duration-500">
+      <ScrollToTop />
       <div className="bg-white rounded-[4rem] shadow-2xl overflow-hidden border border-slate-50">
         <div className="p-8 lg:p-12 bg-slate-900 text-white flex flex-col lg:flex-row justify-between items-center gap-6">
           <div className="text-center lg:text-left"><h2 className="text-4xl font-black italic uppercase tracking-tighter">Nueva Cotización<span className="text-[#8ED4BE]">.</span></h2><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2">Completa los datos para generar el pedido</p></div>
@@ -594,26 +596,32 @@ const FormularioCotizacion = ({ alGuardar }) => {
             <div className="flex justify-between items-center px-4"><h4 className="font-black italic uppercase text-slate-800 flex items-center gap-2 text-sm"><ShoppingBag size={18} className="text-[#8ED4BE]"/> Desglose de Productos</h4><button onClick={agregarLinea} className="p-3 bg-slate-900 text-white rounded-xl hover:scale-110 transition-all shadow-xl shadow-slate-900/20"><Plus size={20}/></button></div>
             <div className="space-y-4">
               {items.map((item, idx) => (
-                <div key={item.id} className="group flex flex-col items-stretch lg:flex-row lg:items-center gap-6 p-6 bg-white border-2 border-slate-100 rounded-[2.5rem] hover:border-[#8ED4BE] transition-all">
+                <div key={item.id} className="group flex flex-col items-stretch lg:flex-row lg:items-center gap-6 p-6 bg-white border-2 border-slate-100 rounded-[2.5rem] hover:border-[#8ED4BE] transition-all relative">
                   <span className="font-black italic text-slate-200 text-2xl lg:text-3xl w-10 text-center lg:text-left">#{idx+1}</span>
                   <div className="flex-1 w-full grid grid-cols-1 gap-4">
                     <input list="productos-list" className="w-full p-4 bg-slate-50 rounded-2xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE]" placeholder="Buscar categoría..." value={item.cat} onChange={e => updItem(item.id, 'cat', e.target.value)} />
                     <input list="temas-list" className="w-full p-4 bg-slate-50 rounded-2xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE]" placeholder="Buscar tema..." value={item.tema} onChange={e => updItem(item.id, 'tema', e.target.value)} />
                   </div>
-                  <div className="flex flex-row justify-between items-center gap-6 pt-4 lg:pt-0 border-t lg:border-t-0">
-                    <div className="flex flex-col items-center flex-1">
-                       <span className="text-[9px] font-black text-slate-400 uppercase mb-2">Cant.</span>
+                  
+                  {/* DISEÑO MEJORADO PARA MÓVIL (EVITA DESBORDAMIENTO) */}
+                  <div className="grid grid-cols-3 items-center gap-2 sm:gap-6 pt-4 lg:pt-0 border-t lg:border-t-0">
+                    <div className="flex flex-col items-center">
+                       <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase mb-2">Cant.</span>
                        <QuantityControls value={item.cant} onChange={v => updItem(item.id, 'cant', v)} max={99} />
                     </div>
-                    <div className="flex flex-col items-center flex-1">
-                       <span className="text-[9px] font-black text-slate-400 uppercase mb-2">Pend.</span>
+                    <div className="flex flex-col items-center">
+                       <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase mb-2">Pend.</span>
                        <QuantityControls value={item.pendiente} onChange={v => updItem(item.id, 'pendiente', v)} max={item.cant} colorClass="bg-red-50" textClass="text-red-500" />
                     </div>
-                    <div className="min-w-[100px] text-right flex-1">
-                       <p className="text-[9px] font-black text-slate-300 uppercase">Subtotal</p>
-                       <p className="font-black italic text-slate-800 text-lg">{Utils.currency(item.cant * item.precio)}</p>
+                    <div className="flex flex-col items-end pr-2">
+                       <p className="text-[8px] sm:text-[9px] font-black text-slate-300 uppercase">Subtotal</p>
+                       <p className="font-black italic text-slate-800 text-sm sm:text-lg truncate">{Utils.currency(item.cant * item.precio)}</p>
                     </div>
-                    {items.length > 1 && <button onClick={() => borrarLinea(item.id)} className="p-3 bg-red-50 text-red-400 rounded-2xl hover:bg-red-500 hover:text-white transition-all"><Trash2 size={16}/></button>}
+                    {items.length > 1 && (
+                      <div className="absolute top-4 right-4 lg:static">
+                        <button onClick={() => borrarLinea(item.id)} className="p-2 bg-red-50 text-red-400 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 size={14}/></button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -638,7 +646,8 @@ const DashboardHome = ({ historial }) => {
     return { pend, total, count: (historial || []).length };
   }, [historial]);
   return (
-    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 animate-in fade-in duration-700">
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-10 animate-in fade-in duration-700">
+      <ScrollToTop />
       <header className="mb-12 flex flex-col lg:flex-row justify-between items-center gap-8 bg-white p-10 rounded-[4rem] shadow-xl border border-slate-50">
         <div className="flex items-center gap-8 flex-col sm:flex-row text-center sm:text-left">
           <div className="w-24 h-24 bg-slate-900 rounded-[2.5rem] flex items-center justify-center shadow-2xl rotate-3 transition-transform hover:rotate-0"><img src={logoAlekey} alt="Logo" className="w-16 h-16 object-contain rounded-xl" /></div>
@@ -683,10 +692,7 @@ export default function App() {
 
   const alGuardarEnNube = async (nuevaVenta) => {
     const { data, error } = await supabase.from('ventas').insert([nuevaVenta]).select();
-    if (error) {
-      console.error(error);
-      return Swal.fire('Error', error.message, 'error');
-    }
+    if (error) return Swal.fire('Error', error.message, 'error');
     if (data && data.length > 0) setVentas([data[0], ...ventas]);
     else await fetchVentas();
     Swal.fire({ title: '¡Pedido Guardado!', icon: 'success', confirmButtonColor: '#8ED4BE', customClass: { popup: 'rounded-[3rem] font-black italic' } });
@@ -709,7 +715,6 @@ export default function App() {
 
   return (
     <Router>
-      <ScrollToTop />
       <div className="flex flex-col lg:flex-row h-screen bg-slate-50 font-sans overflow-hidden">
         
         <aside className="hidden lg:flex w-32 bg-white border-r border-slate-100 flex-col items-center py-10 gap-8 z-50">
