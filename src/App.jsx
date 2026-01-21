@@ -46,7 +46,7 @@ const TEMAS_PREDEFINIDOS = [
   "Colores arcoiris navidad","Colores arcoiris pastel","Confeti café","Confeti colores","Confeti negro","Crayola","Crayola Niños","Crayola Pastel","Cumpleaños","Deporte","Dino Baby",
   "Dinosaurio","Elefante","Escolar","Espacio","Espacio Azul","Espantapajaros","Feria Cientifica","Flor café","Fucsia","Gato","Granja 1","Granja 2","Granja Acuarela","Granja New","Granjeros",
   "Harry Potter","Insectos","Intensamente","Jirafa","Kirby","Koala","Leones","Leones Pareja","Llama","Mar","Mar fondo blanco","Mar New","Margarita","Mario Bros","Mariquita","Mariquita Educlip",
-  "Mariquita insecto","Medio Ambiente","Melonheadz","Menta","Mickey","Mickey Safari","Mono","Monster Inc","Monstruos 1","Monstruos 2","Monstruos 3","Morado","Música","Naranja","Navidad",
+  "Mariquita insecto","Medio Ambiente","Melonheadz","Menta","Mickey","Mickey Safari","Mono","Monster Inc","Monstruos 1","Monstruos 2","Monstruos 3","Morado", "Motivación","Música","Naranja","Navidad",
   "Negro","Niños Corazón 1","Niños Corazón 2","Niños Jovenes","OFERTA","Oso Cariñoso","Oso Miel","Oso Sandia","Oso Teddy","Oso the Pond","Pacman","Pajaro Acuarela","Pajaro Educlip",
   "Panda","Panda Cute","Patrio Desfile","Patrio Niños Campesinos","Perro","Pingüino","Pirata","Pirata Meryta","Plaza Sesamo","Principito","Puntos Amarillos","Puntos Azul","Puntos Celeste",
   "Puntos colores fondo blanco","Puntos colores fondo negro","Puntos Fucsia","Puntos Naranja","Puntos Negro","Puntos Rainbow","Puntos Rojo","Puntos Rosado","Puntos Turquesa","Puntos Verde",
@@ -153,7 +153,7 @@ const exportToPDF = async (venta) => {
 
 const Estadisticas = ({ ventas }) => {
   const [view, setView] = useState('general'); 
-  const [sortFlujo, setSortFlujo] = useState('top'); // CAMBIADO A TOP POR DEFECTO
+  const [sortFlujo, setSortFlujo] = useState('top'); 
 
   useEffect(() => {
     const mainContent = document.querySelector('main');
@@ -271,7 +271,7 @@ const Estadisticas = ({ ventas }) => {
 };
 
 // ==========================================
-// 5. COMPONENTE VENTAS
+// 5. COMPONENTE VENTAS (VERSIÓN CORREGIDA)
 // ==========================================
 
 const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
@@ -283,23 +283,51 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
   const [folderView, setFolderView] = useState(null);
 
   useEffect(() => { obtenerCarpetas(); }, []);
-  useEffect(() => { const mainContent = document.querySelector('main'); if (mainContent) mainContent.scrollTo(0, 0); }, [folderView]);
 
-  const obtenerCarpetas = async () => { const { data } = await supabase.from('carpetas_centros').select('*'); if (data) setCarpetas(data); };
+  const obtenerCarpetas = async () => { 
+    const { data } = await supabase.from('carpetas_centros').select('*').order('orden', { ascending: true }); 
+    if (data) setCarpetas(data); 
+  };
   
   const crearCarpeta = async () => {
     const { value: nombre } = await Swal.fire({ title: 'Nuevo Centro Educativo', input: 'text', inputPlaceholder: 'Ej: Escuelita 2026', showCancelButton: true, confirmButtonColor: '#8ED4BE' });
-    if (nombre) { const { data } = await supabase.from('carpetas_centros').insert([{ nombre, ids_ventas: [] }]).select(); if (data) setCarpetas([...carpetas, data[0]]); }
+    if (nombre) { 
+      const nuevoOrden = carpetas.length > 0 ? Math.max(...carpetas.map(c => c.orden || 0)) + 1 : 0;
+      const { data } = await supabase.from('carpetas_centros').insert([{ nombre, ids_ventas: [], orden: nuevoOrden }]).select(); 
+      if (data) setCarpetas([...carpetas, data[0]]); 
+    }
   };
 
-  const eliminarCarpeta = async (id, nombre) => {
-    const result = await Swal.fire({ title: `¿Eliminar?`, text: `Se borrará "${nombre}". Los pedidos NO se borran.`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#F79598' });
+  const eliminarCarpeta = async (id, nombre, e) => {
+    if (e) e.stopPropagation();
+    const result = await Swal.fire({ title: `¿Eliminar centro?`, text: `Se borrará "${nombre}". Los pedidos NO se borran del historial general.`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#F79598' });
     if (result.isConfirmed) { await supabase.from('carpetas_centros').delete().eq('id', id); obtenerCarpetas(); setFolderView(null); }
   };
 
+  const editarNombreCarpeta = async (id, actual, e) => {
+    if (e) e.stopPropagation();
+    const { value: nombre } = await Swal.fire({ title: 'Editar Nombre', input: 'text', inputValue: actual, showCancelButton: true });
+    if (nombre) { await supabase.from('carpetas_centros').update({ nombre }).eq('id', id); obtenerCarpetas(); }
+  };
+
+  const moverCarpeta = async (id, direccion, e) => {
+    if (e) e.stopPropagation();
+    const index = carpetas.findIndex(c => c.id === id);
+    if (direccion === 'izq' && index === 0) return;
+    if (direccion === 'der' && index === carpetas.length - 1) return;
+
+    const nuevas = [...carpetas];
+    const targetIdx = direccion === 'izq' ? index - 1 : index + 1;
+    [nuevas[index], nuevas[targetIdx]] = [nuevas[targetIdx], nuevas[index]];
+
+    setCarpetas(nuevas);
+    const updates = nuevas.map((c, i) => supabase.from('carpetas_centros').update({ orden: i }).eq('id', c.id));
+    await Promise.all(updates);
+  };
+
   const agregarACarpeta = async (ventaId) => {
-    if (!carpetas.length) return Swal.fire('Error', 'Primero crea una carpeta', 'error');
-    const { value: folderId } = await Swal.fire({ title: 'Seleccionar Carpeta', input: 'select', inputOptions: Object.fromEntries(carpetas.map(c => [c.id, c.nombre])), showCancelButton: true });
+    if (!carpetas.length) return Swal.fire('Error', 'Primero crea un centro', 'error');
+    const { value: folderId } = await Swal.fire({ title: 'Seleccionar Centro', input: 'select', inputOptions: Object.fromEntries(carpetas.map(c => [c.id, c.nombre])), showCancelButton: true });
     if (folderId) {
       const folder = carpetas.find(c => c.id === parseInt(folderId));
       if (!folder.ids_ventas.includes(ventaId)) {
@@ -335,68 +363,64 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
     const editing = editId === v.id;
     const data = editing ? editCache : v;
     const tienePendientes = data.items.some(i => i.pendiente > 0);
-    const [provActual, cantActual] = (data.direccion || "").split(', ');
     const editValido = Utils.validateName(data.nombre || "") && (data.telefono || "").replace(/\D/g, '').length === 8;
 
     return (
-      <div key={v.id} className={`bg-white rounded-[2.5rem] p-6 lg:p-10 shadow-xl border-l-[12px] transition-all duration-500 ${tienePendientes ? 'border-red-400' : 'border-[#8ED4BE]'}`}>
-        <div className="flex flex-col lg:flex-row justify-between items-start gap-4 mb-6">
-          <div className="flex-1 w-full text-slate-800">
-            {editing ? (
-              <div className="space-y-4">
-                <input className={`text-xl lg:text-2xl font-black italic border-b-2 outline-none w-full bg-slate-50 p-2 ${!Utils.validateName(data.nombre) ? 'border-red-300' : 'border-[#8ED4BE]'}`} value={data.nombre} onChange={e => setEditCache({...editCache, nombre: Utils.capitalize(e.target.value)})} />
-                <div className="flex flex-wrap gap-3">
-                    <input className="text-sm font-bold border-b outline-none w-32 bg-transparent" value={data.telefono} onChange={e => setEditCache({...editCache, telefono: Utils.formatPhone(e.target.value)})} />
-                    <select className="text-sm font-bold border-b outline-none bg-transparent" value={provActual || ""} onChange={e => setEditCache({...editCache, direccion: `${e.target.value}, `})}>{Object.keys(UBICACIONES_CR).map(p => <option key={p} value={p}>{p}</option>)}</select>
-                    <select className="text-sm font-bold border-b outline-none bg-transparent" value={cantActual || ""} onChange={e => setEditCache({...editCache, direccion: `${provActual}, ${e.target.value}`})}>{provActual && UBICACIONES_CR[provActual]?.map(c => <option key={c} value={c}>{c}</option>)}</select>
+      <div key={v.id} className={`bg-white rounded-[2.5rem] shadow-xl border-l-[12px] flex flex-col overflow-hidden ${tienePendientes ? 'border-red-400' : 'border-[#8ED4BE]'}`}>
+        <div className="p-6 lg:p-8 border-b border-slate-50 bg-white z-10">
+          <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
+            <div className="flex-1 w-full text-slate-800">
+              {editing ? (
+                <div className="space-y-4">
+                  <input className={`text-xl font-black border-b-2 outline-none w-full bg-slate-50 p-2 ${!Utils.validateName(data.nombre) ? 'border-red-300' : 'border-[#8ED4BE]'}`} value={data.nombre} onChange={e => setEditCache({...editCache, nombre: Utils.capitalize(e.target.value)})} />
+                  <input className="text-sm font-bold border-b outline-none w-32 bg-transparent" value={data.telefono} onChange={e => setEditCache({...editCache, telefono: Utils.formatPhone(e.target.value)})} />
                 </div>
-              </div>
-            ) : (<><h3 className="text-xl lg:text-2xl font-black italic">{data.nombre}</h3><p className="text-xs lg:text-sm font-bold text-slate-400 uppercase tracking-widest">{data.fecha} • {data.telefono} • {data.direccion}</p></>)}
-          </div>
-          <div className="grid grid-cols-2 gap-2 w-full lg:flex lg:w-auto lg:gap-2">
-            {editing ? (
-              <button disabled={!editValido} onClick={() => {onUpdate(v.id, editCache); setEditId(null);}} className="col-span-2 p-4 bg-emerald-500 text-white rounded-2xl shadow-lg active:scale-95 flex justify-center"><Check size={24}/></button>
-            ) : (
-              <>
-                <button onClick={() => {setEditId(v.id); setEditCache(JSON.parse(JSON.stringify(v)));}} className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-slate-900 hover:text-white transition-all flex justify-center items-center"><Edit2 size={20}/></button>
-                {inFolder ? (
-                  <button onClick={() => deseleccionarDeCarpeta(v.id, folderView)} className="p-4 bg-orange-50 text-orange-500 rounded-2xl hover:bg-orange-500 hover:text-white transition-all flex justify-center items-center"><FolderMinus size={20}/></button>
-                ) : (
-                  <button onClick={() => agregarACarpeta(v.id)} className="p-4 bg-purple-50 text-purple-500 rounded-2xl hover:bg-purple-500 hover:text-white transition-all flex justify-center items-center"><FolderPlus size={20}/></button>
-                )}
-                <button onClick={() => exportToPDF(v)} className="p-4 bg-blue-50 text-blue-500 rounded-2xl hover:bg-blue-600 hover:text-white transition-all flex justify-center items-center"><Printer size={20}/></button>
-                <button onClick={() => onDelete(v.id)} className="p-4 bg-red-50 text-red-300 rounded-2xl hover:bg-red-500 hover:text-white transition-all flex justify-center items-center"><Trash2 size={20}/></button>
-              </>
-            )}
+              ) : (
+                <div>
+                  <h3 className="text-xl lg:text-2xl font-black italic">{data.nombre}</h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{data.fecha} • {data.telefono} • {data.direccion}</p>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-2 w-full lg:w-auto">
+              {editing ? (
+                <button disabled={!editValido} onClick={() => {onUpdate(v.id, editCache); setEditId(null);}} className="flex-1 p-4 bg-emerald-500 text-white rounded-2xl flex justify-center"><Check size={24}/></button>
+              ) : (
+                <>
+                  <button onClick={() => {setEditId(v.id); setEditCache(JSON.parse(JSON.stringify(v)));}} className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:bg-slate-900 hover:text-white transition-all"><Edit2 size={18}/></button>
+                  {inFolder ? <button onClick={() => deseleccionarDeCarpeta(v.id, folderView)} className="p-3 bg-orange-50 text-orange-500 rounded-xl hover:bg-orange-500 hover:text-white transition-all"><FolderMinus size={18}/></button> : <button onClick={() => agregarACarpeta(v.id)} className="p-3 bg-purple-50 text-purple-500 rounded-xl hover:bg-purple-500 hover:text-white transition-all"><FolderPlus size={18}/></button>}
+                  <button onClick={() => exportToPDF(v)} className="p-3 bg-blue-50 text-blue-500 rounded-xl hover:bg-blue-600 hover:text-white transition-all"><Printer size={18}/></button>
+                  <button onClick={() => onDelete(v.id)} className="p-3 bg-red-50 text-red-300 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 size={18}/></button>
+                </>
+              )}
+            </div>
           </div>
         </div>
-        <div className="overflow-x-auto bg-slate-50/50 rounded-[2rem] p-4 lg:p-6 text-slate-800">
-          <table className="w-full min-w-[700px]">
-            <thead><tr className="text-left text-[10px] font-black text-slate-300 uppercase border-b pb-2"><th className="pb-2 w-[130px]">Cant.</th><th className="pb-2">Descripción*</th><th className="pb-2 text-center w-[130px]">Pendientes</th><th className="pb-2 text-right">Subtotal</th><th className="w-10"></th></tr></thead>
+
+        <div className="overflow-x-auto max-h-[300px] overflow-y-auto bg-slate-50/40 p-4 scrollbar-thin">
+          <table className="w-full min-w-[600px]">
+            <thead className="text-[10px] font-black text-slate-300 uppercase">
+                <tr><th className="text-left pb-2">Cant.</th><th className="text-left pb-2">Descripción</th><th className="text-center pb-2">Pend.</th><th className="text-right pb-2">Subtotal</th></tr>
+            </thead>
             <tbody>
               {data.items.map(item => (
-                <tr key={item.id}>
-                  <td className="py-4">{editing ? <QuantityControls value={item.cant} onChange={(val) => handleEditItem(item.id, 'cant', val)} /> : <span className="font-black text-slate-600 ml-4">{item.cant}</span>}</td>
-                  <td className="py-4 text-[11px] font-black uppercase">{editing ? (<div className="flex gap-2"><input list="productos-list" className={`border-2 rounded p-1 w-1/2 ${item.cat === "OTROS..." ? 'text-purple-600 border-purple-200' : ''}`} value={item.cat} onChange={e => handleEditItem(item.id, 'cat', e.target.value)} /><input list="temas-list" className="border-2 rounded p-1 w-1/2" value={item.tema} onChange={e => handleEditItem(item.id, 'tema', e.target.value)} /></div>) : `${item.cat} - ${item.tema}`}</td>
-                  <td className="py-4"><div className="flex justify-center">{editing ? <QuantityControls value={item.pendiente} colorClass="bg-red-50" textClass="text-red-500" onChange={(val) => handleEditItem(item.id, 'pendiente', val)} /> : <span className={`px-4 py-1.5 rounded-full text-[10px] font-black ${item.pendiente > 0 ? 'bg-red-100 text-red-500' : 'bg-emerald-100 text-emerald-600'}`}>{item.pendiente > 0 ? item.pendiente : 'Entregado'}</span>}</div></td>
-                  <td className="py-4 text-right font-black">{editing && item.cat === "OTROS..." ? (<input type="number" className="w-24 text-right border rounded p-1 text-purple-600" value={item.precio} onChange={e => handleEditItem(item.id, 'precio', parseInt(e.target.value) || 0)} />) : Utils.currency(item.cant * item.precio)}</td>
-                  <td>{editing && <button onClick={() => setEditCache({...editCache, items: editCache.items.filter(i => i.id !== item.id)})} className="text-red-300 ml-2"><Trash2 size={16}/></button>}</td>
+                <tr key={item.id} className="border-b border-slate-100 last:border-0">
+                  <td className="py-3">{editing ? <QuantityControls value={item.cant} onChange={(val) => handleEditItem(item.id, 'cant', val)} /> : <span className="font-black text-slate-600">{item.cant}</span>}</td>
+                  <td className="py-3 text-[11px] font-black uppercase text-slate-700">{editing ? <input className="border rounded p-1 w-full" value={item.cat} onChange={e => handleEditItem(item.id, 'cat', e.target.value)} /> : `${item.cat} - ${item.tema}`}</td>
+                  <td className="py-3 text-center"><span className={`px-3 py-1.5 rounded-full text-[9px] font-black ${item.pendiente > 0 ? 'bg-red-100 text-red-500' : 'bg-emerald-100 text-emerald-600'}`}>{item.pendiente > 0 ? item.pendiente : 'OK'}</span></td>
+                  <td className="py-3 text-right font-black">{Utils.currency(item.cant * item.precio)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
 
-          {/* TOTAL FINAL DE LA VENTA RESPONSIVE */}
-          <div className="mt-6 flex justify-center lg:justify-end border-t border-slate-200 pt-6">
-            <div className="bg-slate-900 px-6 py-4 lg:px-8 lg:py-4 rounded-[2rem] shadow-xl transition-transform hover:scale-105 w-full sm:w-auto text-center lg:text-right">
-              <p className="text-[9px] lg:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Pedido</p>
-              <h4 className="text-xl lg:text-2xl font-black italic text-[#C0C976]">
-                {Utils.currency(data.items.reduce((s, i) => s + (i.cant * i.precio), 0))}
-              </h4>
-            </div>
+        <div className="p-6 bg-white border-t flex justify-center lg:justify-end">
+          <div className="bg-slate-900 px-6 py-3 rounded-2xl shadow-xl w-full sm:w-auto">
+            <p className="text-[9px] font-black text-slate-400 uppercase text-center">Total Pedido</p>
+            <h4 className="text-xl font-black italic text-[#C0C976] text-center">{Utils.currency(data.items.reduce((s, i) => s + (i.cant * i.precio), 0))}</h4>
           </div>
         </div>
-        {editing && <button onClick={() => setEditCache({...editCache, items: [...editCache.items, { id: Utils.generateId(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 1 }]})} className="mt-4 px-4 py-2 border-2 border-dashed border-emerald-200 text-emerald-500 font-black rounded-xl text-[10px] uppercase">+ Agregar Producto Extra</button>}
       </div>
     );
   };
@@ -413,17 +437,96 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
   return (
     <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 text-slate-800">
       <header className="flex flex-col lg:flex-row justify-between items-center gap-6 mb-10">
-        <div className="flex items-center gap-4">{folderView && <button onClick={() => setFolderView(null)} className="p-3 bg-white rounded-full shadow-md"><ArrowLeft size={20}/></button>}<h2 className="text-3xl lg:text-4xl font-black italic uppercase tracking-tighter leading-none">{folderView ? folderView.nombre : (mode === 'normal' ? 'Historial' : mode === 'folders' ? 'Centros' : 'Por Meses')}</h2>{folderView && <button onClick={() => eliminarCarpeta(folderView.id, folderView.nombre)} className="p-3 bg-red-50 text-red-400 rounded-full hover:bg-red-500 hover:text-white transition-all"><Trash2 size={18}/></button>}</div>
-        <div className="flex flex-wrap gap-2">
-           <button onClick={() => {setMode('normal'); setFolderView(null);}} className={`px-6 py-3 rounded-2xl font-black text-[10px] uppercase transition-all ${mode === 'normal' ? 'bg-[#8ED4BE] text-white shadow-lg' : 'bg-white text-slate-400 shadow-sm'}`}>Listado</button>
-           <button onClick={() => {setMode('folders'); setFolderView(null);}} className={`px-6 py-3 rounded-2xl font-black text-[10px] uppercase transition-all ${mode === 'folders' ? 'bg-purple-400 text-white shadow-lg' : 'bg-white text-slate-400 shadow-sm'}`}>Centros</button>
-           <button onClick={() => {setMode('months'); setFolderView(null);}} className={`px-6 py-3 rounded-2xl font-black text-[10px] uppercase transition-all ${mode === 'months' ? 'bg-orange-400 text-white shadow-lg' : 'bg-white text-slate-400 shadow-sm'}`}>Meses</button>
+        <div className="flex items-center gap-4">
+          {folderView && <button onClick={() => setFolderView(null)} className="p-3 bg-white rounded-full shadow-md"><ArrowLeft size={20}/></button>}
+          <h2 className="text-3xl font-black italic uppercase tracking-tighter">{folderView ? folderView.nombre : (mode === 'normal' ? 'Historial' : mode === 'folders' ? 'Centros' : 'Meses')}</h2>
+        </div>
+        <div className="flex bg-white p-1.5 rounded-2xl shadow-sm">
+           <button onClick={() => {setMode('normal'); setFolderView(null);}} className={`px-4 py-2 rounded-xl font-black text-[10px] uppercase ${mode === 'normal' && !folderView ? 'bg-[#8ED4BE] text-white' : 'text-slate-400'}`}>Listado</button>
+           <button onClick={() => {setMode('folders'); setFolderView(null);}} className={`px-4 py-2 rounded-xl font-black text-[10px] uppercase ${mode === 'folders' && !folderView ? 'bg-purple-400 text-white' : 'text-slate-400'}`}>Centros</button>
+           <button onClick={() => {setMode('months'); setFolderView(null);}} className={`px-4 py-2 rounded-xl font-black text-[10px] uppercase ${mode === 'months' && !folderView ? 'bg-orange-400 text-white' : 'text-slate-400'}`}>Meses</button>
         </div>
       </header>
-      {mode === 'normal' && !folderView && (<div className="space-y-8 animate-in fade-in"><div className="relative w-full max-w-md"><Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18}/><input className="w-full pl-12 pr-6 py-4 bg-white rounded-[2rem] shadow-sm font-bold outline-none focus:border-[#8ED4BE] border-2 border-transparent" placeholder="Buscar cliente..." onChange={e => setFiltro(e.target.value)} /></div>{ventas.filter(v => v.nombre.toLowerCase().includes(filtro.toLowerCase()) || v.telefono.includes(filtro)).map(v => renderVentaCard(v, false))}</div>)}
-      {mode === 'folders' && !folderView && (<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in zoom-in-95"><button onClick={crearCarpeta} className="h-48 border-4 border-dashed border-slate-200 rounded-[3rem] flex flex-col items-center justify-center text-slate-300 hover:border-purple-300 hover:text-purple-300 transition-all group"><FolderPlus size={40} className="mb-2 group-hover:scale-110 transition-transform"/> <span className="font-black uppercase text-xs">Nuevo Centro</span></button>{carpetas.map(c => { const vF = ventas.filter(v => c.ids_ventas.includes(v.id)); return (<div key={c.id} onClick={() => setFolderView(c)} className="h-48 bg-white p-8 rounded-[3rem] shadow-xl border-b-8 border-purple-400 flex flex-col justify-between cursor-pointer hover:scale-105 transition-all"><div className="flex justify-between items-start"><Folder className="text-purple-400" size={32}/><span className="font-black text-[9px] bg-purple-50 text-purple-500 px-3 py-1 rounded-full uppercase">{vF.length} Pedidos</span></div><div><h4 className="font-black italic uppercase text-lg leading-tight truncate">{c.nombre}</h4><p className="font-black text-purple-600 mt-1">{Utils.currency(vF.reduce((s,v)=>s+v.total,0))}</p></div></div>);})}</div>)}
-      {folderView && <div className="space-y-8 animate-in slide-in-from-bottom-4">{ventas.filter(v => folderView.ids_ventas.includes(v.id)).map(v => renderVentaCard(v, true))}</div>}
-      {mode === 'months' && (<div className="space-y-12">{Object.entries(groupVentasByMonth()).map(([mes, lista]) => (<div key={mes}><div className="flex items-center gap-4 mb-6"><Calendar className="text-orange-400" size={24}/><h3 className="text-2xl font-black italic uppercase text-slate-600">{mes}</h3><div className="h-[2px] flex-1 bg-slate-100"></div><span className="bg-orange-50 text-orange-500 font-black text-xs px-4 py-2 rounded-full">{Utils.currency(lista.reduce((s,v)=>s+v.total,0))}</span></div><div className="space-y-6">{lista.map(v => renderVentaCard(v, false))}</div></div>))}</div>)}
+
+      {mode === 'normal' && !folderView && (
+        <div className="space-y-6">
+            <div className="relative max-w-md"><Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18}/><input className="w-full pl-12 pr-6 py-4 bg-white rounded-2xl shadow-sm outline-none" placeholder="Buscar cliente..." onChange={e => setFiltro(e.target.value)} /></div>
+            {ventas.filter(v => v.nombre.toLowerCase().includes(filtro.toLowerCase())).map(v => renderVentaCard(v))}
+        </div>
+      )}
+
+      {mode === 'folders' && !folderView && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in zoom-in-95">
+          <button onClick={crearCarpeta} className="h-52 border-4 border-dashed border-slate-200 rounded-[2.5rem] flex flex-col items-center justify-center text-slate-300 hover:text-purple-400 hover:border-purple-200 transition-all group bg-white/50">
+            <FolderPlus size={40} className="mb-2 group-hover:scale-110 transition-transform"/>
+            <span className="font-black uppercase text-[10px]">Nuevo Centro</span>
+          </button>
+          
+          {carpetas.map((c) => {
+            const vF = ventas.filter(v => c.ids_ventas.includes(v.id));
+            const totalCarpeta = vF.reduce((s, v) => s + (v.total || 0), 0);
+
+            return (
+              <div key={c.id} onClick={() => setFolderView(c)} className="relative h-52 bg-white p-6 rounded-[2.5rem] shadow-xl border-b-8 border-purple-400 flex flex-col justify-between cursor-pointer hover:translate-y-[-4px] transition-all group">
+                
+                {/* CABECERA: ICONO Y BOTONES DE CONTROL (ARRIBA) */}
+                <div className="flex justify-between items-start">
+                  <div className="p-3 bg-purple-50 rounded-2xl">
+                    <Folder className="text-purple-500" size={28}/>
+                  </div>
+                  
+                  {/* PANEL DE ACCIONES CON FONDO PROPIO PARA NO MEZCLARSE */}
+                  <div className="flex gap-1 bg-slate-50 p-1.5 rounded-xl border border-slate-100" onClick={(e) => e.stopPropagation()}>
+                    <button onClick={(e) => moverCarpeta(c.id, 'izq', e)} className="p-1.5 text-slate-400 hover:text-purple-500 transition-all"><ChevronUp size={14} className="-rotate-90"/></button>
+                    <button onClick={(e) => moverCarpeta(c.id, 'der', e)} className="p-1.5 text-slate-400 hover:text-purple-500 transition-all"><ChevronDown size={14} className="-rotate-90"/></button>
+                    <div className="w-[1px] bg-slate-200 mx-1 my-1" />
+                    <button onClick={(e) => editarNombreCarpeta(c.id, c.nombre, e)} className="p-1.5 text-blue-400 hover:bg-white rounded-md transition-all"><Edit2 size={14}/></button>
+                    <button onClick={(e) => eliminarCarpeta(c.id, c.nombre, e)} className="p-1.5 text-red-300 hover:bg-red-500 hover:text-white rounded-md transition-all"><Trash2 size={14}/></button>
+                  </div>
+                </div>
+
+                {/* CUERPO: NOMBRE */}
+                <div className="mt-2">
+                  <h4 className="font-black italic uppercase text-lg leading-tight text-slate-800 line-clamp-2">
+                    {c.nombre}
+                  </h4>
+                </div>
+
+                {/* PIE: INFO DE DINERO Y BADGE DE PEDIDOS (ABAJO) */}
+                <div className="flex justify-between items-end pt-3 border-t border-slate-50">
+                  <div className="flex flex-col">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Acumulado</span>
+                    <p className="font-black text-purple-600 text-base leading-none mt-1">{Utils.currency(totalCarpeta)}</p>
+                  </div>
+
+                  <div className="bg-purple-500 text-white px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-md shadow-purple-100">
+                    <span className="font-black text-[11px] leading-none">{vF.length}</span>
+                    <span className="font-bold text-[8px] uppercase opacity-80 leading-none">Pedidos</span>
+                  </div>
+                </div>
+
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {folderView && <div className="space-y-6">{ventas.filter(v => folderView.ids_ventas.includes(v.id)).map(v => renderVentaCard(v, true))}</div>}
+
+      {mode === 'months' && (
+        <div className="space-y-10">
+          {Object.entries(groupVentasByMonth()).map(([mes, lista]) => (
+            <div key={mes}>
+              <div className="flex items-center gap-4 mb-4">
+                <Calendar className="text-orange-400" size={20}/>
+                <h3 className="text-xl font-black italic uppercase">{mes}</h3>
+                <span className="bg-orange-50 text-orange-500 font-black text-[10px] px-3 py-1 rounded-full">{Utils.currency(lista.reduce((s,v)=>s+v.total,0))}</span>
+              </div>
+              <div className="space-y-4">{lista.map(v => renderVentaCard(v))}</div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -476,8 +579,6 @@ const FormularioCotizacion = ({ alGuardar }) => {
         <button onClick={() => setFormData({...formData, items: [...formData.items, {id: Utils.generateId(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 1}]})} className="mt-8 px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase flex items-center gap-2 transition-transform active:scale-95"><Plus size={16}/> Agregar Línea</button>
         <div className="mt-10 flex flex-col items-end gap-3">{!formularioValido && <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest italic animate-pulse">* Complete campos requeridos</p>}<button disabled={!formularioValido} onClick={ejecutarGuardado} className="px-16 py-5 bg-[#8ED4BE] text-white font-black text-xl rounded-3xl shadow-2xl disabled:opacity-20 transition-all hover:scale-105 active:scale-95">Guardar Pedido</button></div>
       </div>
-      <datalist id="productos-list">{Object.keys(PRODUCTOS_PRECIOS).map(p => <option key={p} value={p} />)}</datalist>
-      <datalist id="temas-list">{TEMAS_PREDEFINIDOS.map(t => <option key={t} value={t} />)}</datalist>
     </div>
   );
 };
