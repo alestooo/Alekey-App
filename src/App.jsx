@@ -75,6 +75,13 @@ const Utils = {
     return words.length >= 3 && !hasNumbers;
   },
   generateId: () => `ALK-${Math.random().toString(36).substr(2, 5).toUpperCase()}`,
+  getThemeColorClass: (tema) => {
+    if (tema === "LAMINADO...") return "bg-blue-50 border-blue-200 text-blue-600";
+    if (tema === "ENVIO...") return "bg-green-50 border-green-200 text-green-600";
+    if (tema === "FALTA...") return "bg-red-50 border-red-200 text-red-600";
+    if (tema === "OTROS...") return "bg-purple-50 border-purple-200 text-purple-600";
+    return "bg-white border-slate-100 focus:border-[#8ED4BE]";
+  },
   getBase64: (url) => {
     return new Promise((resolve) => {
       const img = new Image();
@@ -87,13 +94,6 @@ const Utils = {
       };
       img.src = url;
     });
-  },
-  getThemeColorClass: (tema) => {
-    if (tema === "LAMINADO...") return "bg-blue-50 border-blue-200 text-blue-600";
-    if (tema === "ENVIO...") return "bg-green-50 border-green-200 text-green-600";
-    if (tema === "FALTA...") return "bg-red-50 border-red-200 text-red-600";
-    if (tema === "OTROS...") return "bg-purple-50 border-purple-200 text-purple-600";
-    return "bg-white border-slate-100 focus:border-[#8ED4BE]";
   }
 };
 
@@ -101,13 +101,16 @@ const Utils = {
 // 3. COMPONENTES COMPARTIDOS
 // ==========================================
 
-const ScrollToTop = () => {
+const ScrollToTop = ({ trigger }) => {
   const { pathname } = useLocation();
   useEffect(() => {
     const mainContent = document.querySelector('main');
-    if (mainContent) mainContent.scrollTo(0, 0);
-    else window.scrollTo(0, 0);
-  }, [pathname]);
+    if (mainContent) {
+      mainContent.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [pathname, trigger]);
   return null;
 };
 
@@ -122,10 +125,10 @@ const StatCard = ({ icon, label, val, borderColor, isClient }) => (
 );
 
 const QuantityControls = ({ value, onChange, max = 99, colorClass = "bg-white", textClass = "text-slate-800" }) => (
-  <div className="flex items-center gap-1 justify-center scale-90 sm:scale-100">
+  <div className="flex items-center gap-1 justify-center">
     <input 
       type="number" 
-      className={`w-12 sm:w-14 h-10 sm:h-12 border-2 rounded-xl font-black text-center outline-none transition-all focus:border-cyan-400 ${colorClass} ${textClass}`} 
+      className={`w-12 h-10 sm:w-14 sm:h-12 border-2 rounded-xl font-black text-center outline-none transition-all focus:border-cyan-400 ${colorClass} ${textClass}`} 
       value={value} 
       onChange={(e) => { 
         const v = parseInt(e.target.value) || 0; 
@@ -168,11 +171,6 @@ const Estadisticas = ({ ventas }) => {
   const [view, setView] = useState('general');
   const [sortFlujo, setSortFlujo] = useState('top'); 
 
-  useEffect(() => {
-    const mainContent = document.querySelector('main');
-    if (mainContent) mainContent.scrollTo(0, 0);
-  }, [view]);
-
   const stats = useMemo(() => {
     if (!ventas || !ventas.length) return null;
     const totalDinero = ventas.reduce((acc, v) => acc + (v.total || 0), 0);
@@ -206,7 +204,8 @@ const Estadisticas = ({ ventas }) => {
   if (!stats) return <div className="p-20 text-center font-black italic opacity-20 text-4xl uppercase text-slate-800">Cargando Datos...</div>;
 
   if (view === 'temas') return (
-    <div className="p-4 lg:p-10 max-w-5xl mx-auto pb-32 animate-in slide-in-from-left duration-300 text-slate-800">
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 animate-in slide-in-from-left duration-300 text-slate-800">
+      <ScrollToTop trigger={view} />
       <button onClick={() => setView('general')} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all"><Plus className="rotate-45" size={20}/> Volver Atrás</button>
       <div className="bg-white p-10 rounded-[3.5rem] shadow-2xl">
         <h2 className="text-3xl font-black italic uppercase mb-10">Todos los Temas</h2>
@@ -216,7 +215,8 @@ const Estadisticas = ({ ventas }) => {
   );
 
   if (view === 'flujo') return (
-    <div className="p-4 lg:p-10 max-w-5xl mx-auto pb-32 animate-in slide-in-from-left duration-300 text-slate-800">
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 animate-in slide-in-from-left duration-300 text-slate-800">
+      <ScrollToTop trigger={view} />
       <button onClick={() => setView('general')} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all"><Plus className="rotate-45" size={20}/> Volver Atrás</button>
       <div className="bg-white p-6 lg:p-10 rounded-[3.5rem] shadow-2xl">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-10">
@@ -234,32 +234,6 @@ const Estadisticas = ({ ventas }) => {
             </div>
           ))}
         </div>
-      </div>
-    </div>
-  );
-
-  if (view === 'categorias') return (
-    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 animate-in slide-in-from-left duration-300 text-slate-800">
-      <button onClick={() => setView('general')} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all"><Plus className="rotate-45" size={20}/> Volver Atrás</button>
-      <div className="bg-white p-6 lg:p-10 rounded-[3.5rem] shadow-2xl">
-        <h2 className="text-3xl font-black italic uppercase mb-10 tracking-tighter">Ranking Categorías</h2>
-        <div className="space-y-10">{stats.allCategorias.map(([cat, data], i) => (<div key={i} className="bg-slate-50 rounded-[3rem] p-6 lg:p-8 border-l-[15px] border-[#F79598]">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 border-b border-slate-200 pb-4 gap-2">
-            <div className="flex items-center gap-4">
-              <span className="font-black italic text-4xl lg:text-5xl text-slate-200"># {i+1}</span>
-              <span className="font-black uppercase text-base lg:text-2xl text-slate-700 tracking-tighter leading-tight">{cat}</span>
-            </div>
-            <span className="font-black text-lg lg:text-3xl text-slate-800">{data.total} <span className="text-[10px] lg:text-sm opacity-30 italic">pzs</span></span>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {Object.entries(data.temas).sort((a,b)=>b[1]-a[1]).map(([tema, c]) => (
-              <div key={tema} className="flex flex-col justify-center bg-white/60 p-4 rounded-2xl border border-white min-h-[60px]">
-                <span className="font-bold uppercase text-[8px] lg:text-[9px] text-slate-500 tracking-wider leading-tight mb-1 truncate">{tema}</span>
-                <span className="font-black text-[10px] lg:text-[11px] text-[#F79598]">{c} pzs</span>
-              </div>
-            ))}
-          </div>
-        </div>))}</div>
       </div>
     </div>
   );
@@ -497,7 +471,8 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
   if (folderView) {
     const pedidos = ventas.filter(v => folderView.ids_ventas.includes(v.id));
     return (
-      <div className="p-4 lg:p-10 max-w-5xl mx-auto pb-32 animate-in slide-in-from-bottom duration-300">
+      <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 animate-in slide-in-from-bottom duration-300">
+        <ScrollToTop trigger={folderView} />
         <button onClick={() => setFolderView(null)} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all"><ArrowLeft size={20}/> Volver a Centros</button>
         <div className="mb-10 flex justify-between items-center"><h2 className="text-3xl font-black italic uppercase text-slate-800 tracking-tighter">{folderView.nombre} <span className="text-[#8ED4BE]">({pedidos.length})</span></h2></div>
         <div className="grid grid-cols-1 gap-8">{pedidos.length ? pedidos.map(v => renderVentaCard(v, true)) : <div className="p-20 text-center border-4 border-dashed rounded-[3rem] opacity-20 font-black italic text-2xl uppercase">Carpeta Vacía</div>}</div>
@@ -507,6 +482,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
 
   if (mode === 'carpetas') return (
     <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 animate-in fade-in duration-500">
+      <ScrollToTop trigger={mode} />
       <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-12">
         <div className="text-center sm:text-left"><h2 className="text-4xl font-black italic uppercase tracking-tighter text-slate-800">Centros Educativos<span className="text-[#8ED4BE]">.</span></h2><p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Organiza tus pedidos por instituciones</p></div>
         <div className="flex gap-3">
@@ -517,7 +493,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {carpetas.map(c => (
           <div key={c.id} onClick={() => setFolderView(c)} className="group bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 cursor-pointer hover:shadow-2xl transition-all relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-6 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+            <div className="absolute top-0 right-0 p-4 flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all bg-white/60 lg:bg-transparent rounded-bl-3xl z-10">
               <button onClick={(e) => moverCarpeta(c.id, 'izq', e)} className="p-2 bg-slate-100 rounded-lg hover:bg-slate-200"><ChevronUp className="-rotate-90" size={14}/></button>
               <button onClick={(e) => moverCarpeta(c.id, 'der', e)} className="p-2 bg-slate-100 rounded-lg hover:bg-slate-200"><ChevronDown className="-rotate-90" size={14}/></button>
               <button onClick={(e) => editarNombreCarpeta(c.id, c.nombre, e)} className="p-2 bg-blue-50 text-blue-400 rounded-lg hover:bg-blue-400 hover:text-white"><Edit2 size={14}/></button>
@@ -526,7 +502,9 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
             <div className="w-16 h-16 bg-slate-50 rounded-[1.5rem] flex items-center justify-center mb-6 group-hover:bg-[#8ED4BE] transition-colors"><Folder size={32} className="text-slate-200 group-hover:text-white"/></div>
             <h4 className="font-black italic uppercase text-lg text-slate-800 leading-tight mb-2">{c.nombre}</h4>
             <div className="flex items-center gap-2">
-              <span className="bg-[#8ED4BE]/10 text-[#8ED4BE] px-3 py-1 rounded-full text-[10px] font-black uppercase">{c.ids_ventas?.length || 0} PEDIDOS</span>
+              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${c.ids_ventas?.length > 0 ? 'bg-[#8ED4BE]/10 text-[#8ED4BE]' : 'bg-slate-50 text-slate-300'}`}>
+                {c.ids_ventas?.length || 0} PEDIDOS
+              </span>
               <span className="text-[10px] font-bold text-slate-300 uppercase italic">Orden: #{c.orden}</span>
             </div>
           </div>
@@ -538,7 +516,8 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
   const filtradas = ventas.filter(v => (v.nombre || "").toLowerCase().includes(filtro.toLowerCase()) || (v.id || "").toString().includes(filtro));
 
   return (
-    <div className="p-4 lg:p-10 max-w-6xl mx-auto pb-32 animate-in fade-in duration-500">
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 animate-in fade-in duration-500">
+      <ScrollToTop trigger={mode} />
       <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-12">
         <div className="text-center sm:text-left"><h2 className="text-4xl font-black italic uppercase tracking-tighter text-slate-800">Historial de Ventas<span className="text-[#F79598]">.</span></h2><p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Control total de pedidos y entregas</p></div>
         <div className="flex gap-3">
@@ -596,7 +575,7 @@ const FormularioCotizacion = ({ alGuardar }) => {
   };
 
   return (
-    <div className="p-4 lg:p-10 max-w-5xl mx-auto pb-32 animate-in slide-in-from-bottom duration-500">
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 animate-in slide-in-from-bottom duration-500">
       <div className="bg-white rounded-[4rem] shadow-2xl overflow-hidden border border-slate-50">
         <div className="p-8 lg:p-12 bg-slate-900 text-white flex flex-col lg:flex-row justify-between items-center gap-6">
           <div className="text-center lg:text-left"><h2 className="text-4xl font-black italic uppercase tracking-tighter">Nueva Cotización<span className="text-[#8ED4BE]">.</span></h2><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2">Completa los datos para generar el pedido</p></div>
@@ -615,13 +594,13 @@ const FormularioCotizacion = ({ alGuardar }) => {
             <div className="flex justify-between items-center px-4"><h4 className="font-black italic uppercase text-slate-800 flex items-center gap-2 text-sm"><ShoppingBag size={18} className="text-[#8ED4BE]"/> Desglose de Productos</h4><button onClick={agregarLinea} className="p-3 bg-slate-900 text-white rounded-xl hover:scale-110 transition-all shadow-xl shadow-slate-900/20"><Plus size={20}/></button></div>
             <div className="space-y-4">
               {items.map((item, idx) => (
-                <div key={item.id} className="group flex flex-col lg:flex-row items-center gap-6 p-6 bg-white border-2 border-slate-100 rounded-[2.5rem] hover:border-[#8ED4BE] transition-all">
-                  <span className="font-black italic text-slate-200 text-2xl lg:text-3xl w-10">#{idx+1}</span>
+                <div key={item.id} className="group flex flex-col items-stretch lg:flex-row lg:items-center gap-6 p-6 bg-white border-2 border-slate-100 rounded-[2.5rem] hover:border-[#8ED4BE] transition-all">
+                  <span className="font-black italic text-slate-200 text-2xl lg:text-3xl w-10 text-center lg:text-left">#{idx+1}</span>
                   <div className="flex-1 w-full grid grid-cols-1 gap-4">
                     <input list="productos-list" className="w-full p-4 bg-slate-50 rounded-2xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE]" placeholder="Buscar categoría..." value={item.cat} onChange={e => updItem(item.id, 'cat', e.target.value)} />
                     <input list="temas-list" className="w-full p-4 bg-slate-50 rounded-2xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE]" placeholder="Buscar tema..." value={item.tema} onChange={e => updItem(item.id, 'tema', e.target.value)} />
                   </div>
-                  <div className="w-full lg:w-auto flex flex-col sm:flex-row justify-around items-center gap-6 pt-4 lg:pt-0 border-t lg:border-t-0">
+                  <div className="flex flex-row justify-between items-center gap-6 pt-4 lg:pt-0 border-t lg:border-t-0">
                     <div className="flex flex-col items-center flex-1">
                        <span className="text-[9px] font-black text-slate-400 uppercase mb-2">Cant.</span>
                        <QuantityControls value={item.cant} onChange={v => updItem(item.id, 'cant', v)} max={99} />
@@ -630,9 +609,9 @@ const FormularioCotizacion = ({ alGuardar }) => {
                        <span className="text-[9px] font-black text-slate-400 uppercase mb-2">Pend.</span>
                        <QuantityControls value={item.pendiente} onChange={v => updItem(item.id, 'pendiente', v)} max={item.cant} colorClass="bg-red-50" textClass="text-red-500" />
                     </div>
-                    <div className="min-w-[80px] text-right flex-1">
+                    <div className="min-w-[100px] text-right flex-1">
                        <p className="text-[9px] font-black text-slate-300 uppercase">Subtotal</p>
-                       <p className="font-black italic text-slate-800 text-sm">{Utils.currency(item.cant * item.precio)}</p>
+                       <p className="font-black italic text-slate-800 text-lg">{Utils.currency(item.cant * item.precio)}</p>
                     </div>
                     {items.length > 1 && <button onClick={() => borrarLinea(item.id)} className="p-3 bg-red-50 text-red-400 rounded-2xl hover:bg-red-500 hover:text-white transition-all"><Trash2 size={16}/></button>}
                   </div>
@@ -708,10 +687,8 @@ export default function App() {
       console.error(error);
       return Swal.fire('Error', error.message, 'error');
     }
-    // Sincronización inmediata
     if (data && data.length > 0) setVentas([data[0], ...ventas]);
     else await fetchVentas();
-    
     Swal.fire({ title: '¡Pedido Guardado!', icon: 'success', confirmButtonColor: '#8ED4BE', customClass: { popup: 'rounded-[3rem] font-black italic' } });
   };
 
