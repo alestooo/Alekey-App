@@ -124,7 +124,7 @@ const StatCard = ({ icon, label, val, borderColor, isClient }) => (
   </div>
 );
 
-const QuantityControls = ({ value, onChange, max = 99, colorClass = "bg-white", textClass = "text-slate-800" }) => (
+const QuantityControls = ({ value, onChange, min = 0, max = 99, colorClass = "bg-white", textClass = "text-slate-800" }) => (
   <div className="flex items-center gap-1 justify-center">
     <input 
       type="number" 
@@ -132,12 +132,12 @@ const QuantityControls = ({ value, onChange, max = 99, colorClass = "bg-white", 
       value={value} 
       onChange={(e) => { 
         const v = parseInt(e.target.value) || 0; 
-        onChange(Math.max(0, Math.min(max, v))); 
+        onChange(Math.max(min, Math.min(max, v))); 
       }} 
     />
     <div className="flex flex-col gap-0.5">
       <button onClick={() => onChange(Math.min(max, value + 1))} className="p-1 bg-cyan-100 rounded-md text-cyan-600"><ChevronUp size={12}/></button>
-      <button onClick={() => onChange(Math.max(0, value - 1))} className="p-1 bg-cyan-100 rounded-md text-cyan-600"><ChevronDown size={12}/></button>
+      <button onClick={() => onChange(Math.max(min, value - 1))} className="p-1 bg-cyan-100 rounded-md text-cyan-600"><ChevronDown size={12}/></button>
     </div>
   </div>
 );
@@ -204,7 +204,7 @@ const Estadisticas = ({ ventas }) => {
   if (!stats) return <div className="p-20 text-center font-black italic opacity-20 text-4xl uppercase text-slate-800">Cargando Datos...</div>;
 
   if (view === 'temas') return (
-    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-10 animate-in slide-in-from-left duration-300 text-slate-800">
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in slide-in-from-left duration-300 text-slate-800">
       <ScrollToTop trigger={view} />
       <button onClick={() => setView('general')} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all"><Plus className="rotate-45" size={20}/> Volver Atrás</button>
       <div className="bg-white p-10 rounded-[3.5rem] shadow-2xl">
@@ -215,7 +215,7 @@ const Estadisticas = ({ ventas }) => {
   );
 
   if (view === 'flujo') return (
-    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-10 animate-in slide-in-from-left duration-300 text-slate-800">
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in slide-in-from-left duration-300 text-slate-800">
       <ScrollToTop trigger={view} />
       <button onClick={() => setView('general')} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all"><Plus className="rotate-45" size={20}/> Volver Atrás</button>
       <div className="bg-white p-6 lg:p-10 rounded-[3.5rem] shadow-2xl">
@@ -238,8 +238,35 @@ const Estadisticas = ({ ventas }) => {
     </div>
   );
 
+  if (view === 'categorias') return (
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in slide-in-from-left duration-300 text-slate-800">
+      <ScrollToTop trigger={view} />
+      <button onClick={() => setView('general')} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all"><Plus className="rotate-45" size={20}/> Volver Atrás</button>
+      <div className="bg-white p-6 lg:p-10 rounded-[3.5rem] shadow-2xl">
+        <h2 className="text-3xl font-black italic uppercase mb-10 tracking-tighter">Ranking Categorías Detallado</h2>
+        <div className="space-y-10">{stats.allCategorias.map(([cat, data], i) => (<div key={i} className="bg-slate-50 rounded-[3rem] p-6 lg:p-8 border-l-[15px] border-[#F79598]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 border-b border-slate-200 pb-4 gap-2">
+            <div className="flex items-center gap-4">
+              <span className="font-black italic text-4xl lg:text-5xl text-slate-200"># {i+1}</span>
+              <span className="font-black uppercase text-base lg:text-2xl text-slate-700 tracking-tighter leading-tight">{cat}</span>
+            </div>
+            <span className="font-black text-lg lg:text-3xl text-slate-800">{data.total} <span className="text-[10px] lg:text-sm opacity-30 italic">pzs</span></span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {Object.entries(data.temas).sort((a,b)=>b[1]-a[1]).map(([tema, c]) => (
+              <div key={tema} className="flex flex-col justify-center bg-white/60 p-4 rounded-2xl border border-white min-h-[60px]">
+                <span className="font-bold uppercase text-[8px] lg:text-[9px] text-slate-500 tracking-wider leading-tight mb-1 truncate">{tema}</span>
+                <span className="font-black text-[10px] lg:text-[11px] text-[#F79598]">{c} pzs</span>
+              </div>
+            ))}
+          </div>
+        </div>))}</div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-10 animate-in fade-in duration-500 text-slate-800">
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in fade-in duration-500 text-slate-800">
       <ScrollToTop />
       <header className="mb-10 text-center lg:text-left"><h2 className="text-4xl font-black italic uppercase tracking-tighter">Métricas Alekey<span className="text-[#8ED4BE]">.</span></h2></header>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
@@ -334,7 +361,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
       const updatedItems = prev.items.map(item => {
         if (item.id === itemId) {
           if (field === 'cant') { 
-            const v = Math.max(0, Math.min(99, value)); 
+            const v = Math.max(1, Math.min(99, value)); 
             return { ...item, cant: v, pendiente: Math.min(item.pendiente, v) }; 
           }
           if (field === 'pendiente') return { ...item, pendiente: Math.max(0, Math.min(item.cant, value)) };
@@ -419,7 +446,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
                 <tr key={item.id} className="border-b border-slate-100 last:border-0">
                   <td className="py-3">
                     {editing ? (
-                      <QuantityControls value={item.cant} onChange={(val) => handleEditItem(item.id, 'cant', val)} max={99} />
+                      <QuantityControls value={item.cant} onChange={(val) => handleEditItem(item.id, 'cant', val)} min={1} max={99} />
                     ) : (
                       <span className="font-black text-slate-600">{item.cant}</span>
                     )}
@@ -439,7 +466,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
                   </td>
                   <td className="py-3">
                     {editing ? (
-                      <QuantityControls value={item.pendiente} onChange={(val) => handleEditItem(item.id, 'pendiente', val)} max={item.cant} colorClass="bg-red-50" textClass="text-red-500" />
+                      <QuantityControls value={item.pendiente} onChange={(val) => handleEditItem(item.id, 'pendiente', val)} min={0} max={item.cant} colorClass="bg-red-50" textClass="text-red-500" />
                     ) : (
                       <div className="flex justify-center">
                         <span className={`px-4 py-1.5 rounded-xl font-black text-[10px] ${item.pendiente > 0 ? 'bg-red-50 text-red-400' : 'bg-emerald-50 text-emerald-500'}`}>
@@ -472,7 +499,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
   if (folderView) {
     const pedidos = ventas.filter(v => folderView.ids_ventas.includes(v.id));
     return (
-      <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-10 animate-in slide-in-from-bottom duration-300">
+      <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in slide-in-from-bottom duration-300">
         <ScrollToTop trigger={folderView} />
         <button onClick={() => setFolderView(null)} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all"><ArrowLeft size={20}/> Volver a Centros</button>
         <div className="mb-10 flex justify-between items-center"><h2 className="text-3xl font-black italic uppercase text-slate-800 tracking-tighter">{folderView.nombre} <span className="text-[#8ED4BE]">({pedidos.length})</span></h2></div>
@@ -482,7 +509,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
   }
 
   if (mode === 'carpetas') return (
-    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-10 animate-in fade-in duration-500">
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in fade-in duration-500">
       <ScrollToTop trigger={mode} />
       <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-12">
         <div className="text-center sm:text-left"><h2 className="text-4xl font-black italic uppercase tracking-tighter text-slate-800">Centros Educativos<span className="text-[#8ED4BE]">.</span></h2><p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Organiza tus pedidos por instituciones</p></div>
@@ -517,7 +544,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
   const filtradas = ventas.filter(v => (v.nombre || "").toLowerCase().includes(filtro.toLowerCase()) || (v.id || "").toString().includes(filtro));
 
   return (
-    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-10 animate-in fade-in duration-500">
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in fade-in duration-500">
       <ScrollToTop trigger={mode} />
       <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-12">
         <div className="text-center sm:text-left"><h2 className="text-4xl font-black italic uppercase tracking-tighter text-slate-800">Historial de Ventas<span className="text-[#F79598]">.</span></h2><p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Control total de pedidos y entregas</p></div>
@@ -552,7 +579,11 @@ const FormularioCotizacion = ({ alGuardar }) => {
     setItems(items.map(i => {
       if (i.id === id) {
         if (field === 'cat') return { ...i, cat: val, precio: PRODUCTOS_PRECIOS[val] || 0 };
-        if (field === 'cant') return { ...i, cant: val, pendiente: 0 };
+        if (field === 'cant') {
+          const newCant = Math.max(1, Math.min(99, val));
+          return { ...i, cant: newCant, pendiente: Math.min(i.pendiente, newCant) };
+        }
+        if (field === 'pendiente') return { ...i, pendiente: Math.max(0, Math.min(i.cant, val)) };
         return { ...i, [field]: val };
       }
       return i;
@@ -576,7 +607,7 @@ const FormularioCotizacion = ({ alGuardar }) => {
   };
 
   return (
-    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-10 animate-in slide-in-from-bottom duration-500">
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in slide-in-from-bottom duration-500">
       <ScrollToTop />
       <div className="bg-white rounded-[4rem] shadow-2xl overflow-hidden border border-slate-50">
         <div className="p-8 lg:p-12 bg-slate-900 text-white flex flex-col lg:flex-row justify-between items-center gap-6">
@@ -603,23 +634,23 @@ const FormularioCotizacion = ({ alGuardar }) => {
                     <input list="temas-list" className="w-full p-4 bg-slate-50 rounded-2xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE]" placeholder="Buscar tema..." value={item.tema} onChange={e => updItem(item.id, 'tema', e.target.value)} />
                   </div>
                   
-                  {/* DISEÑO MEJORADO PARA MÓVIL (EVITA DESBORDAMIENTO) */}
-                  <div className="grid grid-cols-3 items-center gap-2 sm:gap-6 pt-4 lg:pt-0 border-t lg:border-t-0">
-                    <div className="flex flex-col items-center">
-                       <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase mb-2">Cant.</span>
-                       <QuantityControls value={item.cant} onChange={v => updItem(item.id, 'cant', v)} max={99} />
+                  {/* DISEÑO RESPONSIVE CORREGIDO PARA SUBTOTAL */}
+                  <div className="flex flex-row flex-wrap justify-between items-center gap-4 pt-4 lg:pt-0 border-t lg:border-t-0">
+                    <div className="flex flex-col items-center flex-1 min-w-[70px]">
+                       <span className="text-[9px] font-black text-slate-400 uppercase mb-2">Cant.</span>
+                       <QuantityControls value={item.cant} onChange={v => updItem(item.id, 'cant', v)} min={1} max={99} />
                     </div>
-                    <div className="flex flex-col items-center">
-                       <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase mb-2">Pend.</span>
-                       <QuantityControls value={item.pendiente} onChange={v => updItem(item.id, 'pendiente', v)} max={item.cant} colorClass="bg-red-50" textClass="text-red-500" />
+                    <div className="flex flex-col items-center flex-1 min-w-[70px]">
+                       <span className="text-[9px] font-black text-slate-400 uppercase mb-2">Pend.</span>
+                       <QuantityControls value={item.pendiente} onChange={v => updItem(item.id, 'pendiente', v)} min={0} max={item.cant} colorClass="bg-red-50" textClass="text-red-500" />
                     </div>
-                    <div className="flex flex-col items-end pr-2">
-                       <p className="text-[8px] sm:text-[9px] font-black text-slate-300 uppercase">Subtotal</p>
-                       <p className="font-black italic text-slate-800 text-sm sm:text-lg truncate">{Utils.currency(item.cant * item.precio)}</p>
+                    <div className="flex flex-col items-end flex-1 min-w-[90px]">
+                       <p className="text-[9px] font-black text-slate-300 uppercase">Subtotal</p>
+                       <p className="font-black italic text-slate-800 text-sm sm:text-lg whitespace-nowrap">{Utils.currency(item.cant * item.precio)}</p>
                     </div>
                     {items.length > 1 && (
                       <div className="absolute top-4 right-4 lg:static">
-                        <button onClick={() => borrarLinea(item.id)} className="p-2 bg-red-50 text-red-400 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 size={14}/></button>
+                        <button onClick={() => borrarLinea(item.id)} className="p-2 bg-red-50 text-red-400 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 size={16}/></button>
                       </div>
                     )}
                   </div>
@@ -646,7 +677,7 @@ const DashboardHome = ({ historial }) => {
     return { pend, total, count: (historial || []).length };
   }, [historial]);
   return (
-    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-10 animate-in fade-in duration-700">
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in fade-in duration-700">
       <ScrollToTop />
       <header className="mb-12 flex flex-col lg:flex-row justify-between items-center gap-8 bg-white p-10 rounded-[4rem] shadow-xl border border-slate-50">
         <div className="flex items-center gap-8 flex-col sm:flex-row text-center sm:text-left">
