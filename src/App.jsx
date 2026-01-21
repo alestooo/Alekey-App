@@ -346,9 +346,9 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
               <div className="space-y-4">
                 <input className={`text-xl lg:text-2xl font-black italic border-b-2 outline-none w-full bg-slate-50 p-2 ${!Utils.validateName(data.nombre) ? 'border-red-300' : 'border-[#8ED4BE]'}`} value={data.nombre} onChange={e => setEditCache({...editCache, nombre: Utils.capitalize(e.target.value)})} />
                 <div className="flex flex-wrap gap-3">
-                   <input className="text-sm font-bold border-b outline-none w-32 bg-transparent" value={data.telefono} onChange={e => setEditCache({...editCache, telefono: Utils.formatPhone(e.target.value)})} />
-                   <select className="text-sm font-bold border-b outline-none bg-transparent" value={provActual || ""} onChange={e => setEditCache({...editCache, direccion: `${e.target.value}, `})}>{Object.keys(UBICACIONES_CR).map(p => <option key={p} value={p}>{p}</option>)}</select>
-                   <select className="text-sm font-bold border-b outline-none bg-transparent" value={cantActual || ""} onChange={e => setEditCache({...editCache, direccion: `${provActual}, ${e.target.value}`})}>{provActual && UBICACIONES_CR[provActual]?.map(c => <option key={c} value={c}>{c}</option>)}</select>
+                    <input className="text-sm font-bold border-b outline-none w-32 bg-transparent" value={data.telefono} onChange={e => setEditCache({...editCache, telefono: Utils.formatPhone(e.target.value)})} />
+                    <select className="text-sm font-bold border-b outline-none bg-transparent" value={provActual || ""} onChange={e => setEditCache({...editCache, direccion: `${e.target.value}, `})}>{Object.keys(UBICACIONES_CR).map(p => <option key={p} value={p}>{p}</option>)}</select>
+                    <select className="text-sm font-bold border-b outline-none bg-transparent" value={cantActual || ""} onChange={e => setEditCache({...editCache, direccion: `${provActual}, ${e.target.value}`})}>{provActual && UBICACIONES_CR[provActual]?.map(c => <option key={c} value={c}>{c}</option>)}</select>
                 </div>
               </div>
             ) : (<><h3 className="text-xl lg:text-2xl font-black italic">{data.nombre}</h3><p className="text-xs lg:text-sm font-bold text-slate-400 uppercase tracking-widest">{data.fecha} • {data.telefono} • {data.direccion}</p></>)}
@@ -385,6 +385,16 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
               ))}
             </tbody>
           </table>
+
+          {/* TOTAL FINAL DE LA VENTA RESPONSIVE */}
+          <div className="mt-6 flex justify-center lg:justify-end border-t border-slate-200 pt-6">
+            <div className="bg-slate-900 px-6 py-4 lg:px-8 lg:py-4 rounded-[2rem] shadow-xl transition-transform hover:scale-105 w-full sm:w-auto text-center lg:text-right">
+              <p className="text-[9px] lg:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Pedido</p>
+              <h4 className="text-xl lg:text-2xl font-black italic text-[#C0C976]">
+                {Utils.currency(data.items.reduce((s, i) => s + (i.cant * i.precio), 0))}
+              </h4>
+            </div>
+          </div>
         </div>
         {editing && <button onClick={() => setEditCache({...editCache, items: [...editCache.items, { id: Utils.generateId(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 1 }]})} className="mt-4 px-4 py-2 border-2 border-dashed border-emerald-200 text-emerald-500 font-black rounded-xl text-[10px] uppercase">+ Agregar Producto Extra</button>}
       </div>
