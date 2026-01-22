@@ -114,6 +114,27 @@ const ScrollToTop = ({ trigger }) => {
   return null;
 };
 
+// --- COMPONENTE DE ANIMACIÓN DE ENTRADA ---
+const SplashScreen = () => (
+  <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white animate-in fade-in duration-500">
+    <div className="relative flex flex-col items-center">
+      <div className="w-36 h-36 mb-6 animate-bounce-slow">
+        <img 
+          src={logoAlekey} 
+          alt="Alekey Logo" 
+          className="w-full h-full object-contain rounded-full shadow-2xl border-4 border-[#8ED4BE]/20"
+        />
+      </div>
+      <h1 className="text-4xl font-black italic uppercase tracking-tighter text-slate-800 animate-pulse-gentle">
+        Alekey<span className="text-[#8ED4BE]">.</span>
+      </h1>
+      <div className="mt-8 w-48 h-1.5 bg-slate-50 rounded-full overflow-hidden">
+        <div className="h-full bg-[#8ED4BE] animate-progress-load rounded-full"></div>
+      </div>
+    </div>
+  </div>
+);
+
 const StatCard = ({ icon, label, val, borderColor, isClient }) => (
   <div className={`bg-white p-8 rounded-[3rem] shadow-xl border-b-10 ${borderColor} transition-transform hover:scale-[1.02]`}>
     <div className="mb-4 opacity-40">{icon}</div>
@@ -209,7 +230,7 @@ const Estadisticas = ({ ventas }) => {
       <button onClick={() => setView('general')} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all"><Plus className="rotate-45" size={20}/> Volver Atrás</button>
       <div className="bg-white p-10 rounded-[3.5rem] shadow-2xl">
         <h2 className="text-3xl font-black italic uppercase mb-10">Todos los Temas</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{stats.allTemas.map(([tema, cant], i) => (<div key={i} className="flex items-center justify-between p-5 bg-slate-50 rounded-3xl"><span className="font-black italic text-slate-200 text-2xl"># {i+1}</span><span className="font-bold uppercase text-[10px] text-slate-600">{tema}</span><span className="font-black text-slate-800 text-xs">{cant} pzs</span></div>))}</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{stats.allTemas.map(([tema, cant], i) => (<div key={i} className="flex items-center justify-between p-5 bg-slate-50 rounded-3xl"><span className="font-black italic text-slate-200 text-2xl"># {i+1}</span><span className="font-bold uppercase text-[10px] text-slate-600 tracking-wider font-black">{tema}</span><span className="font-black text-slate-800 text-xs">{cant} pzs</span></div>))}</div>
       </div>
     </div>
   );
@@ -228,8 +249,8 @@ const Estadisticas = ({ ventas }) => {
         </div>
         <div className="space-y-4">
           {stats.listaFlujo.map((c, i) => (
-            <div key={i} className="flex items-center justify-between p-6 bg-slate-50 rounded-[2.5rem] border-l-8 border-[#8ED4BE]">
-              <div className="max-w-[60%]"><h4 className="font-black italic uppercase text-slate-800 text-sm sm:text-base truncate">{c.nombre}</h4><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{c.tel} • {c.fecha}</p></div>
+            <div key={i} className="flex items-center justify-between p-6 bg-slate-50 rounded-4xl border-l-8 border-[#8ED4BE]">
+              <div className="max-w-[60%]"><h4 className="font-black italic uppercase text-slate-800 text-sm sm:text-base truncate font-black">{c.nombre}</h4><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest font-black">{c.tel} • {c.fecha}</p></div>
               <span className="font-black text-lg sm:text-xl text-[#8ED4BE]">{Utils.currency(c.total)}</span>
             </div>
           ))}
@@ -247,16 +268,16 @@ const Estadisticas = ({ ventas }) => {
         <div className="space-y-10">{stats.allCategorias.map(([cat, data], i) => (<div key={i} className="bg-slate-50 rounded-[3rem] p-6 lg:p-8 border-l-15 border-[#F79598]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 border-b border-slate-200 pb-4 gap-2">
             <div className="flex items-center gap-4">
-              <span className="font-black italic text-4xl lg:text-5xl text-slate-200"># {i+1}</span>
-              <span className="font-black uppercase text-base lg:text-2xl text-slate-700 tracking-tighter leading-tight">{cat}</span>
+              <span className="font-black italic text-4xl lg:text-5xl text-slate-200 font-black"># {i+1}</span>
+              <span className="font-black uppercase text-base lg:text-2xl text-slate-700 tracking-tighter leading-tight font-black">{cat}</span>
             </div>
-            <span className="font-black text-lg lg:text-3xl text-slate-800">{data.total} <span className="text-[10px] lg:text-sm opacity-30 italic">pzs</span></span>
+            <span className="font-black text-lg lg:text-3xl text-slate-800 font-black">{data.total} <span className="text-[10px] lg:text-sm opacity-30 italic">pzs</span></span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {Object.entries(data.temas).sort((a,b)=>b[1]-a[1]).map(([tema, c]) => (
               <div key={tema} className="flex flex-col justify-center bg-white/60 p-4 rounded-2xl border border-white min-h-15">
-                <span className="font-bold uppercase text-[8px] lg:text-[9px] text-slate-500 tracking-wider font-medium leading-tight mb-1 truncate">{tema}</span>
-                <span className="font-black text-[10px] lg:text-[11px] text-[#F79598]">{c} pzs</span>
+                <span className="font-bold uppercase text-[8px] lg:text-[9px] text-slate-500 font-black tracking-wider leading-tight mb-1 truncate">{tema}</span>
+                <span className="font-black text-[10px] lg:text-[11px] text-[#F79598] font-black">{c} pzs</span>
               </div>
             ))}
           </div>
@@ -268,7 +289,7 @@ const Estadisticas = ({ ventas }) => {
   return (
     <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in fade-in duration-500 text-slate-800">
       <ScrollToTop />
-      <header className="mb-10 text-center lg:text-left"><h2 className="text-4xl font-black italic uppercase tracking-tighter">Métricas Alekey<span className="text-[#8ED4BE]">.</span></h2></header>
+      <header className="mb-10 text-center lg:text-left"><h2 className="text-4xl font-black italic uppercase tracking-tighter font-black">Métricas Alekey<span className="text-[#8ED4BE]">.</span></h2></header>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         <StatCard icon={<TrendingUp size={24} className="text-[#8ED4BE]"/>} label="Ingresos" val={Utils.currency(stats.totalDinero)} borderColor="border-[#8ED4BE]"/>
         <StatCard icon={<AlertCircle size={24} className="text-[#F79598]"/>} label="Pendientes" val={stats.totalPendientes} borderColor="border-[#F79598]"/>
@@ -276,10 +297,10 @@ const Estadisticas = ({ ventas }) => {
         <StatCard icon={<User size={24} className="text-slate-800"/>} label="Top Cliente" val={stats.listaFlujo.sort((a,b)=>b.total-a.total)[0]?.nombre || 'N/A'} borderColor="border-slate-800" isClient/>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50"><div className="flex justify-between items-center mb-8"><h4 className="font-black italic uppercase text-xs flex items-center gap-2 text-slate-400"><Trophy size={16} className="text-[#C0C976]"/> Ranking de Temas</h4><button onClick={() => setView('temas')} className="bg-slate-50 px-3 py-1.5 rounded-full font-black text-[9px] uppercase text-slate-400 hover:bg-[#C0C976] hover:text-white transition-all shadow-sm">Ver más</button></div><div className="space-y-4">{stats.topTemas.map(([tema, cant], i) => (<div key={i} className="flex items-center justify-between group"><div className="flex items-center gap-4"><span className="font-black italic text-slate-200 text-2xl group-hover:text-[#C0C976] transition-colors"># {i+1}</span><span className="font-bold uppercase text-[10px] text-slate-600 tracking-wider">{tema}</span></div><span className="font-black text-slate-800 text-xs">{cant} pzs</span></div>))}</div></div>
+        <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50"><div className="flex justify-between items-center mb-8"><h4 className="font-black italic uppercase text-xs flex items-center gap-2 text-slate-400 font-black"><Trophy size={16} className="text-[#C0C976]"/> Ranking de Temas</h4><button onClick={() => setView('temas')} className="bg-slate-50 px-3 py-1.5 rounded-full font-black text-[9px] uppercase text-slate-400 hover:bg-[#C0C976] hover:text-white transition-all shadow-sm">Ver más</button></div><div className="space-y-4">{stats.topTemas.map(([tema, cant], i) => (<div key={i} className="flex items-center justify-between group"><div className="flex items-center gap-4"><span className="font-black italic text-slate-200 text-2xl group-hover:text-[#C0C976] transition-colors font-black"># {i+1}</span><span className="font-bold uppercase text-[10px] text-slate-600 tracking-wider font-black">{tema}</span></div><span className="font-black text-slate-800 text-xs font-black">{cant} pzs</span></div>))}</div></div>
         <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 text-center">
             <div className="flex justify-between items-center mb-8">
-                <h4 className="font-black italic uppercase text-xs text-slate-400">Flujo de Dinero (Últimas 10)</h4>
+                <h4 className="font-black italic uppercase text-xs text-slate-400 font-black">Flujo de Dinero (Últimas 10)</h4>
                 <button onClick={() => setView('flujo')} className="bg-slate-50 px-3 py-1.5 rounded-full font-black text-[9px] uppercase text-slate-400 hover:bg-[#8ED4BE] hover:text-white transition-all shadow-sm">Ver</button>
             </div>
             <div className="h-64" style={{ minHeight: '250px' }}>
@@ -293,7 +314,7 @@ const Estadisticas = ({ ventas }) => {
                 </ResponsiveContainer>
             </div>
         </div>
-        <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 text-center lg:text-left"><div className="flex justify-between items-center mb-8"><h4 className="font-black italic uppercase text-xs flex items-center gap-2 text-slate-400"><Star size={16} className="text-[#F79598]"/> Ranking de Categorías</h4><button onClick={() => setView('categorias')} className="bg-slate-50 px-3 py-1.5 rounded-full font-black text-[9px] uppercase text-slate-400 hover:bg-[#F79598] hover:text-white transition-all shadow-sm">Ver más</button></div><div className="space-y-4">{stats.topCategorias.map(([cat, data], i) => (<div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl group hover:bg-white hover:shadow-md transition-all"><div className="flex items-center gap-3"><span className="font-black italic text-slate-300 transition-colors group-hover:text-[#F79598]"># {i+1}</span><span className="font-bold uppercase text-[10px] text-slate-700">{cat}</span></div><span className="font-black bg-[#F79598]/10 text-[#F79598] px-3 py-1 rounded-full text-[10px]">{data.total} pzs</span></div>))}</div></div>
+        <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 text-center lg:text-left"><div className="flex justify-between items-center mb-8"><h4 className="font-black italic uppercase text-xs flex items-center gap-2 text-slate-400 font-black"><Star size={16} className="text-[#F79598]"/> Ranking de Categorías</h4><button onClick={() => setView('categorias')} className="bg-slate-50 px-3 py-1.5 rounded-full font-black text-[9px] uppercase text-slate-400 hover:bg-[#F79598] hover:text-white transition-all shadow-sm">Ver más</button></div><div className="space-y-4">{stats.topCategorias.map(([cat, data], i) => (<div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl group hover:bg-white hover:shadow-md transition-all font-black"><div className="flex items-center gap-3"><span className="font-black italic text-slate-300 transition-colors group-hover:text-[#F79598]"># {i+1}</span><span className="font-bold uppercase text-[10px] text-slate-700">{cat}</span></div><span className="font-black bg-[#F79598]/10 text-[#F79598] px-3 py-1 rounded-full text-[10px]">{data.total} pzs</span></div>))}</div></div>
       </div>
     </div>
   );
@@ -412,7 +433,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
     const tienePendientes = (data.items || []).some(i => i.pendiente > 0);
     const editValido = Utils.validateName(data.nombre || "") && (data.telefono || "").replace(/\D/g, '').length === 8 && (data.items || []).length > 0;
     return (
-      <div key={v.id} className={`bg-white rounded-4xl shadow-xl border-l-12 flex flex-col overflow-hidden ${tienePendientes ? 'border-red-400' : 'border-[#8ED4BE]'}`}>
+      <div key={v.id} className="bg-white rounded-4xl shadow-xl border-l-12 flex flex-col overflow-hidden transition-colors duration-300 font-black" style={{ borderLeftColor: tienePendientes ? '#F79598' : '#8ED4BE' }}>
         <div className="p-6 lg:p-8 border-b border-slate-50 bg-white z-10">
           <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
             <div className="flex-1 w-full text-slate-800">
@@ -432,8 +453,8 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
               ) : (
                 <div>
                   <h3 className="text-xl lg:text-2xl font-black italic">{data.nombre}</h3>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                    <span className="bg-slate-100 px-2 py-0.5 rounded-md mr-2 text-slate-500">#{data.id}</span>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-black">
+                    <span className="bg-slate-100 px-2 py-0.5 rounded-md mr-2 text-slate-500 font-black">#{data.id}</span>
                     {data.fecha} • {data.telefono} • {data.direccion}
                   </p>
                 </div>
@@ -453,10 +474,10 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
             </div>
           </div>
         </div>
-        <div className="overflow-x-auto max-h-75 overflow-y-auto bg-slate-50/40 p-4 scrollbar-thin">
+        <div className="overflow-x-auto max-h-75 overflow-y-auto bg-slate-50/40 p-4 scrollbar-thin font-black">
           <table className="w-full min-w-150">
-            <thead className="text-[10px] font-black text-slate-300 uppercase">
-              <tr><th className="text-left pb-2">Cant.</th><th className="text-left pb-2">Descripción</th><th className="text-center pb-2">Pend.</th><th className="text-right pb-2">Subtotal</th>{editing && <th className="w-10"></th>}</tr>
+            <thead className="text-[10px] font-black text-slate-300 uppercase font-black">
+              <tr><th className="text-left pb-2 font-black">Cant.</th><th className="text-left pb-2 font-black">Descripción</th><th className="text-center pb-2 font-black">Pend.</th><th className="text-right pb-2 font-black">Subtotal</th>{editing && <th className="w-10"></th>}</tr>
             </thead>
             <tbody>
               {(data.items || []).map(item => (
@@ -465,37 +486,37 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
                     {editing ? (
                       <QuantityControls value={item.cant} onChange={(val) => handleEditItem(item.id, 'cant', val)} min={1} max={99} />
                     ) : (
-                      <span className="font-black text-slate-600">{item.cant}</span>
+                      <span className="font-black text-slate-600 font-black">{item.cant}</span>
                     )}
                   </td>
-                  <td className="py-3 text-[11px] font-black uppercase text-slate-700">
+                  <td className="py-3 text-[11px] font-black uppercase text-slate-700 font-black">
                     {editing ? (
-                      <div className="flex flex-col gap-1">
-                        <input list="productos-list" className="border rounded p-1 w-full" value={item.cat} onChange={e => handleEditItem(item.id, 'cat', e.target.value)} />
+                      <div className="flex flex-col gap-1 font-black">
+                        <input list="productos-list" className="border rounded p-1 w-full font-black" value={item.cat} onChange={e => handleEditItem(item.id, 'cat', e.target.value)} />
                         {item.cat === "OTROS..." && (
-                          <input type="number" placeholder="Precio manual" className="border rounded p-1 w-full text-purple-600 font-bold" value={item.precio} onChange={e => handleEditItem(item.id, 'precio', parseFloat(e.target.value) || 0)} />
+                          <input type="number" placeholder="Precio manual" className="border rounded p-1 w-full text-purple-600 font-bold font-black" value={item.precio} onChange={e => handleEditItem(item.id, 'precio', parseFloat(e.target.value) || 0)} />
                         )}
-                        <input list="temas-list" className="border rounded p-1 w-full" value={item.tema} onChange={e => handleEditItem(item.id, 'tema', e.target.value)} />
+                        <input list="temas-list" className="border rounded p-1 w-full font-black" value={item.tema} onChange={e => handleEditItem(item.id, 'tema', e.target.value)} />
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2">
-                        <span className={`px-2 py-0.5 rounded-full text-[8px] ${Utils.getThemeColorClass(item.cat)}`}>{item.cat}</span>
+                      <div className="flex items-center gap-2 font-black">
+                        <span className={`px-2 py-0.5 rounded-full text-[8px] font-black ${Utils.getThemeColorClass(item.cat)}`}>{item.cat}</span>
                         {item.tema}
                       </div>
                     )}
                   </td>
-                  <td className="py-3">
+                  <td className="py-3 font-black">
                     {editing ? (
                       <QuantityControls value={item.pendiente} onChange={(val) => handleEditItem(item.id, 'pendiente', val)} min={0} max={item.cant} colorClass="bg-red-50" textClass="text-red-500" />
                     ) : (
-                      <div className="flex justify-center">
+                      <div className="flex justify-center font-black">
                         <span className={`px-4 py-1.5 rounded-xl font-black text-[10px] ${item.pendiente > 0 ? 'bg-red-50 text-red-400' : 'bg-emerald-50 text-emerald-500'}`}>
                           {item.pendiente > 0 ? `${item.pendiente} PEND` : 'OK'}
                         </span>
                       </div>
                     )}
                   </td>
-                  <td className="py-3 text-right font-black text-slate-400 text-xs">{Utils.currency(item.cant * item.precio)}</td>
+                  <td className="py-3 text-right font-black text-slate-400 text-xs font-black">{Utils.currency(item.cant * item.precio)}</td>
                   {editing && (
                     <td className="py-3 text-center">
                       <button onClick={() => borrarLineaEnEdicion(item.id)} className="text-red-300 hover:text-red-500 transition-colors"><Trash2 size={16}/></button>
@@ -506,19 +527,18 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
             </tbody>
           </table>
           {editing && (
-            <button onClick={agregarLineaEnEdicion} className="mt-4 w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-black uppercase text-[10px] hover:bg-slate-100 transition-all flex items-center justify-center gap-2">
+            <button onClick={agregarLineaEnEdicion} className="mt-4 w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-black uppercase text-[10px] hover:bg-slate-100 transition-all flex items-center justify-center gap-2 font-black">
               <Plus size={14}/> Agregar Línea
             </button>
           )}
         </div>
-        <div className="p-6 bg-slate-900 flex justify-between items-center"><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Total Final</span><span className="text-xl font-black italic text-[#8ED4BE]">{Utils.currency(data.total)}</span></div>
+        <div className="p-6 bg-slate-900 flex justify-between items-center font-black"><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic font-black">Total Final</span><span className="text-xl font-black italic text-[#8ED4BE] font-black">{Utils.currency(data.total)}</span></div>
       </div>
     );
   };
 
   if (folderView) {
     const pedidos = ventas.filter(v => folderView.ids_ventas.includes(v.id));
-    // Filtro dinámico interno para la carpeta
     const filtradosFolder = pedidos.filter(v => 
         (v.nombre || "").toLowerCase().includes(filtroFolder.toLowerCase()) || 
         (v.id || "").toString().includes(filtroFolder) ||
@@ -526,63 +546,62 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
     );
 
     return (
-      <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in slide-in-from-bottom duration-300">
+      <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in slide-in-from-bottom duration-300 font-black">
         <ScrollToTop trigger={folderView} />
-        <button onClick={() => setFolderView(null)} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all"><ArrowLeft size={20}/> Volver a Centros</button>
+        <button onClick={() => setFolderView(null)} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all font-black"><ArrowLeft size={20}/> Volver a Centros</button>
         
-        <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-4xl shadow-lg border border-slate-50">
+        <div className="mb-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-4xl shadow-lg border border-slate-50 font-black">
           <div className="flex flex-col">
-            <h2 className="text-2xl lg:text-3xl font-black italic uppercase text-slate-800 tracking-tighter">{folderView.nombre} <span className="text-[#8ED4BE]">({pedidos.length})</span></h2>
-            <div className="mt-4 relative w-full sm:w-64">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16}/>
-                <input type="text" placeholder="Buscar en centro..." className="w-full pl-10 pr-4 py-2 bg-slate-50 rounded-xl text-xs font-bold outline-none border border-transparent focus:border-[#8ED4BE]" value={filtroFolder} onChange={(e) => setFiltroFolder(e.target.value)} />
+            <h2 className="text-2xl lg:text-3xl font-black italic uppercase text-slate-800 tracking-tighter font-black">{folderView.nombre} <span className="text-[#8ED4BE] font-black">({pedidos.length})</span></h2>
+            <div className="mt-4 relative w-full sm:w-64 font-black">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 font-black" size={16}/>
+                <input type="text" placeholder="Buscar en centro..." className="w-full pl-10 pr-4 py-2 bg-slate-50 rounded-xl text-xs font-black outline-none border border-transparent focus:border-[#8ED4BE]" value={filtroFolder} onChange={(e) => setFiltroFolder(e.target.value)} />
             </div>
           </div>
-          <div className="flex flex-col items-end">
-            <span className="text-[10px] font-black text-slate-400 uppercase">Total Acumulado</span>
-            <span className="text-2xl font-black italic text-[#8ED4BE]">{Utils.currency(pedidos.reduce((s,v)=>s+v.total, 0))}</span>
+          <div className="flex flex-col items-end font-black">
+            <span className="text-[10px] font-black text-slate-400 uppercase font-black">Total Acumulado</span>
+            <span className="text-2xl font-black italic text-[#8ED4BE] font-black">{Utils.currency(pedidos.reduce((s,v)=>s+v.total, 0))}</span>
           </div>
         </div>
-        
-        <div className="grid grid-cols-1 gap-8">{filtradosFolder.length ? filtradosFolder.map(v => renderVentaCard(v, true)) : <div className="p-20 text-center border-4 border-dashed rounded-[3rem] opacity-20 font-black italic text-2xl uppercase">Sin coincidencias</div>}</div>
+        <div className="grid grid-cols-1 gap-8 font-black">{filtradosFolder.length ? filtradosFolder.map(v => renderVentaCard(v, true)) : <div className="p-20 text-center border-4 border-dashed rounded-[3rem] opacity-20 font-black italic text-2xl uppercase">Sin coincidencias</div>}</div>
       </div>
     );
   }
 
   if (mode === 'carpetas') return (
-    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in fade-in duration-500">
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in fade-in duration-500 font-black">
       <ScrollToTop trigger={mode} />
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-12">
-        <div className="text-center sm:text-left"><h2 className="text-4xl font-black italic uppercase tracking-tighter text-slate-800">Centros Educativos<span className="text-[#8ED4BE]">.</span></h2><p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Organiza tus pedidos por instituciones</p></div>
-        <div className="flex gap-3">
-          <button onClick={() => setMode('normal')} className="px-6 py-4 bg-white shadow-lg rounded-2xl font-black uppercase text-xs text-slate-400 hover:text-slate-800 transition-all">Historial</button>
-          <button onClick={crearCarpeta} className="px-6 py-4 bg-[#8ED4BE] text-slate-800 shadow-lg rounded-2xl font-black uppercase text-xs flex items-center gap-2 hover:scale-105 transition-all"><FolderPlus size={18}/> Nuevo Centro</button>
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-12 font-black">
+        <div className="text-center sm:text-left"><h2 className="text-4xl font-black italic uppercase tracking-tighter text-slate-800 font-black">Centros Educativos<span className="text-[#8ED4BE] font-black">.</span></h2><p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1 font-black">Organiza tus pedidos por instituciones</p></div>
+        <div className="flex gap-3 font-black">
+          <button onClick={() => setMode('normal')} className="px-6 py-4 bg-white shadow-lg rounded-2xl font-black uppercase text-xs text-slate-400 hover:text-slate-800 transition-all font-black">Historial</button>
+          <button onClick={crearCarpeta} className="px-6 py-4 bg-[#8ED4BE] text-slate-800 shadow-lg rounded-2xl font-black uppercase text-xs flex items-center gap-2 hover:scale-105 transition-all font-black"><FolderPlus size={18}/> Nuevo Centro</button>
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 font-black">
         {carpetas.map(c => {
           const pedidosEnCarpeta = ventas.filter(v => c.ids_ventas.includes(v.id));
           const totalCarpeta = pedidosEnCarpeta.reduce((s, v) => s + (v.total || 0), 0);
           return (
-            <div key={c.id} onClick={() => setFolderView(c)} className="group bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 cursor-pointer hover:shadow-2xl transition-all relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all bg-white/60 lg:bg-transparent rounded-bl-3xl z-10">
-                <button onClick={(e) => moverCarpeta(c.id, 'izq', e)} className="p-2 bg-slate-100 rounded-lg hover:bg-slate-200"><ChevronUp className="-rotate-90" size={14}/></button>
-                <button onClick={(e) => moverCarpeta(c.id, 'der', e)} className="p-2 bg-slate-100 rounded-lg hover:bg-slate-200"><ChevronDown className="-rotate-90" size={14}/></button>
-                <button onClick={(e) => editarNombreCarpeta(c.id, c.nombre, e)} className="p-2 bg-blue-50 text-blue-400 rounded-lg hover:bg-blue-400 hover:text-white"><Edit2 size={14}/></button>
-                <button onClick={(e) => eliminarCarpeta(c.id, c.nombre, e)} className="p-2 bg-red-50 text-red-300 rounded-lg hover:bg-red-400 hover:text-white"><Trash2 size={14}/></button>
+            <div key={c.id} onClick={() => setFolderView(c)} className="group bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 cursor-pointer hover:shadow-2xl transition-all relative overflow-hidden font-black">
+              <div className="absolute top-0 right-0 p-4 flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all bg-white/60 lg:bg-transparent rounded-bl-3xl z-10 font-black">
+                <button onClick={(e) => moverCarpeta(c.id, 'izq', e)} className="p-2 bg-slate-100 rounded-lg hover:bg-slate-200"><ChevronUp className="-rotate-90 font-black" size={14}/></button>
+                <button onClick={(e) => moverCarpeta(c.id, 'der', e)} className="p-2 bg-slate-100 rounded-lg hover:bg-slate-200"><ChevronDown className="-rotate-90 font-black" size={14}/></button>
+                <button onClick={(e) => editarNombreCarpeta(c.id, c.nombre, e)} className="p-2 bg-blue-50 text-blue-400 rounded-lg hover:bg-blue-400 hover:text-white font-black"><Edit2 size={14}/></button>
+                <button onClick={(e) => eliminarCarpeta(c.id, c.nombre, e)} className="p-2 bg-red-50 text-red-300 rounded-lg hover:bg-red-400 hover:text-white font-black"><Trash2 size={14}/></button>
               </div>
-              <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-[#8ED4BE] transition-colors"><Folder size={32} className="text-slate-200 group-hover:text-white"/></div>
-              <h4 className="font-black italic uppercase text-lg text-slate-800 leading-tight mb-2">{c.nombre}</h4>
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${c.ids_ventas?.length > 0 ? 'bg-[#8ED4BE]/10 text-[#8ED4BE]' : 'bg-slate-50 text-slate-300'}`}>
+              <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-[#8ED4BE] transition-colors font-black"><Folder size={32} className="text-slate-200 group-hover:text-white font-black"/></div>
+              <h4 className="font-black italic uppercase text-lg text-slate-800 leading-tight mb-2 font-black">{c.nombre}</h4>
+              <div className="flex flex-col gap-2 font-black">
+                <div className="flex items-center gap-2 font-black">
+                  <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase font-black ${c.ids_ventas?.length > 0 ? 'bg-[#8ED4BE]/10 text-[#8ED4BE]' : 'bg-slate-50 text-slate-300'}`}>
                     {c.ids_ventas?.length || 0} PEDIDOS
                   </span>
-                  <span className="text-[10px] font-bold text-slate-300 uppercase italic">Orden: #{c.orden}</span>
+                  <span className="text-[10px] font-bold text-slate-300 uppercase italic font-black">Orden: #{c.orden}</span>
                 </div>
-                <div className="mt-1">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total en Centro</p>
-                  <p className="font-black text-[#8ED4BE] italic">{Utils.currency(totalCarpeta)}</p>
+                <div className="mt-1 font-black">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest font-black">Total en Centro</p>
+                  <p className="font-black text-[#8ED4BE] italic font-black">{Utils.currency(totalCarpeta)}</p>
                 </div>
               </div>
             </div>
@@ -599,20 +618,20 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
   );
 
   return (
-    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in fade-in duration-500">
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in fade-in duration-500 font-black">
       <ScrollToTop trigger={mode} />
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-12">
-        <div className="text-center sm:text-left"><h2 className="text-4xl font-black italic uppercase tracking-tighter text-slate-800">Historial de Ventas<span className="text-[#F79598]">.</span></h2><p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Control total de pedidos y entregas</p></div>
-        <div className="flex gap-3">
-          <button onClick={() => setMode('carpetas')} className="px-6 py-4 bg-white shadow-lg rounded-2xl font-black uppercase text-xs text-slate-400 hover:text-slate-800 transition-all flex items-center gap-2"><Folder size={18}/> Ver Centros</button>
-          <Link to="/cotizar" className="px-6 py-4 bg-[#F79598] text-white shadow-lg rounded-2xl font-black uppercase text-xs flex items-center gap-2 hover:scale-105 transition-all shadow-[#F79598]/20"><Plus size={18}/> Nueva Venta</Link>
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-12 font-black">
+        <div className="text-center sm:text-left"><h2 className="text-4xl font-black italic uppercase tracking-tighter text-slate-800 font-black">Historial de Ventas<span className="text-[#F79598] font-black">.</span></h2><p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1 font-black">Control total de pedidos y entregas</p></div>
+        <div className="flex gap-3 font-black">
+          <button onClick={() => setMode('carpetas')} className="px-6 py-4 bg-white shadow-lg rounded-2xl font-black uppercase text-xs text-slate-400 hover:text-slate-800 transition-all flex items-center gap-2 font-black"><Folder size={18}/> Ver Centros</button>
+          <Link to="/cotizar" className="px-6 py-4 bg-[#F79598] text-white shadow-lg rounded-2xl font-black uppercase text-xs flex items-center gap-2 hover:scale-105 transition-all shadow-[#F79598]/20 font-black"><Plus size={18}/> Nueva Venta</Link>
         </div>
       </div>
-      <div className="mb-10 relative">
-        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={20}/>
-        <input type="text" placeholder="Buscar por nombre, orden o teléfono..." className="w-full pl-14 pr-8 py-5 bg-white rounded-4xl shadow-xl outline-none font-bold text-slate-600 focus:ring-4 ring-[#F79598]/10 transition-all" value={filtro} onChange={(e) => setFiltro(e.target.value)} />
+      <div className="mb-10 relative font-black">
+        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 font-black" size={20}/>
+        <input type="text" placeholder="Buscar por nombre, orden o teléfono..." className="w-full pl-14 pr-8 py-5 bg-white rounded-4xl shadow-xl outline-none font-bold text-slate-600 focus:ring-4 ring-[#F79598]/10 transition-all font-black" value={filtro} onChange={(e) => setFiltro(e.target.value)} />
       </div>
-      <div className="grid grid-cols-1 gap-8">{filtradas.map(v => renderVentaCard(v))}</div>
+      <div className="grid grid-cols-1 gap-8 font-black">{filtradas.map(v => renderVentaCard(v))}</div>
     </div>
   );
 };
@@ -666,52 +685,52 @@ const FormularioCotizacion = ({ alGuardar }) => {
   };
 
   return (
-    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in slide-in-from-bottom duration-500">
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in slide-in-from-bottom duration-500 font-black">
       <ScrollToTop />
-      <div className="bg-white rounded-[4rem] shadow-2xl overflow-hidden border border-slate-50">
-        <div className="p-8 lg:p-12 bg-slate-900 text-white flex flex-col lg:flex-row justify-between items-center gap-6">
-          <div className="text-center lg:text-left"><h2 className="text-4xl font-black italic uppercase tracking-tighter">Nueva Cotización<span className="text-[#8ED4BE]">.</span></h2><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2">Completa los datos para generar el pedido</p></div>
-          <div className="flex items-center gap-4 bg-white/5 p-4 rounded-4xl border border-white/10"><div className="text-right"><p className="text-[9px] font-black uppercase text-slate-400">Total Estimado</p><p className="text-3xl font-black italic text-[#8ED4BE]">{Utils.currency(total)}</p></div><div className="w-12 h-12 bg-[#8ED4BE] rounded-2xl flex items-center justify-center text-slate-900 shadow-lg shadow-[#8ED4BE]/20"><Package size={24}/></div></div>
+      <div className="bg-white rounded-[4rem] shadow-2xl overflow-hidden border border-slate-50 font-black">
+        <div className="p-8 lg:p-12 bg-slate-900 text-white flex flex-col lg:flex-row justify-between items-center gap-6 font-black">
+          <div className="text-center lg:text-left font-black"><h2 className="text-4xl font-black italic uppercase tracking-tighter font-black">Nueva Cotización<span className="text-[#8ED4BE] font-black">.</span></h2><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-2 font-black">Completa los datos para generar el pedido</p></div>
+          <div className="flex items-center gap-4 bg-white/5 p-4 rounded-4xl border border-white/10 font-black"><div className="text-right font-black"><p className="text-[9px] font-black uppercase text-slate-400 font-black">Total Estimado</p><p className="text-3xl font-black italic text-[#8ED4BE] font-black">{Utils.currency(total)}</p></div><div className="w-12 h-12 bg-[#8ED4BE] rounded-2xl flex items-center justify-center text-slate-900 shadow-lg shadow-[#8ED4BE]/20 font-black"><Package size={24}/></div></div>
         </div>
-        <div className="p-8 lg:p-12 space-y-10">
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2"><User size={14}/> Nombre Completo</label><input type="text" className={`w-full p-6 bg-slate-50 rounded-4xl font-bold text-slate-700 outline-none border-2 transition-all ${nombre && !Utils.validateName(nombre) ? 'border-red-100 bg-red-50/30' : 'border-transparent focus:border-[#8ED4BE]'}`} placeholder="Buscando cliente..." value={nombre} onChange={e => setNombre(Utils.capitalize(e.target.value))} /></div>
-            <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2"><Clock size={14}/> Teléfono (8 dígitos)</label><input type="text" className="w-full p-6 bg-slate-50 rounded-4xl font-bold text-slate-700 outline-none border-2 border-transparent focus:border-[#8ED4BE] transition-all" placeholder="0000-0000" value={tel} onChange={e => setTel(Utils.formatPhone(e.target.value))} /></div>
+        <div className="p-8 lg:p-12 space-y-10 font-black">
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-8 font-black">
+            <div className="space-y-2 font-black"><label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2 font-black"><User size={14}/> Nombre Completo</label><input type="text" className={`w-full p-6 bg-slate-50 rounded-4xl font-black text-slate-700 outline-none border-2 transition-all font-black ${nombre && !Utils.validateName(nombre) ? 'border-red-100 bg-red-50/30 font-black' : 'border-transparent focus:border-[#8ED4BE] font-black'}`} placeholder="Buscando cliente..." value={nombre} onChange={e => setNombre(Utils.capitalize(e.target.value))} /></div>
+            <div className="space-y-2 font-black"><label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2 font-black"><Clock size={14}/> Teléfono (8 dígitos)</label><input type="text" className="w-full p-6 bg-slate-50 rounded-4xl font-black text-slate-700 outline-none border-2 border-transparent focus:border-[#8ED4BE] transition-all font-black" placeholder="0000-0000" value={tel} onChange={e => setTel(Utils.formatPhone(e.target.value))} /></div>
           </section>
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
-            <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-400 ml-4">Provincia</label><select className="w-full p-5 bg-white rounded-2xl font-black uppercase text-xs outline-none shadow-sm" value={provincia} onChange={e => {setProvincia(e.target.value); setDireccion("");}}><option value="" disabled>Seleccione...</option>{Object.keys(UBICACIONES_CR).map(p => <option key={p} value={p}>{p}</option>)}</select></div>
-            <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-400 ml-4">Ubicación Específica</label><select className="w-full p-5 bg-white rounded-2xl font-black uppercase text-xs outline-none shadow-sm" value={direccion} onChange={e => setDireccion(e.target.value)}><option value="" disabled>Seleccione...</option>{provincia && UBICACIONES_CR[provincia].map(loc => <option key={loc} value={loc}>{loc}</option>)}</select></div>
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 font-black">
+            <div className="space-y-2 font-black"><label className="text-[10px] font-black uppercase text-slate-400 ml-4 font-black">Provincia</label><select className="w-full p-5 bg-white rounded-2xl font-black uppercase text-xs outline-none shadow-sm font-black" value={provincia} onChange={e => {setProvincia(e.target.value); setDireccion("");}}><option value="" disabled>Seleccione...</option>{Object.keys(UBICACIONES_CR).map(p => <option key={p} value={p} className="font-black">{p}</option>)}</select></div>
+            <div className="space-y-2 font-black"><label className="text-[10px] font-black uppercase text-slate-400 ml-4 font-black">Ubicación Específica</label><select className="w-full p-5 bg-white rounded-2xl font-black uppercase text-xs outline-none shadow-sm font-black" value={direccion} onChange={e => setDireccion(e.target.value)}><option value="" disabled className="font-black">Seleccione...</option>{provincia && UBICACIONES_CR[provincia].map(loc => <option key={loc} value={loc} className="font-black">{loc}</option>)}</select></div>
           </section>
-          <section className="space-y-6">
-            <div className="flex justify-between items-center px-4"><h4 className="font-black italic uppercase text-slate-800 flex items-center gap-2 text-sm"><ShoppingBag size={18} className="text-[#8ED4BE]"/> Desglose de Productos</h4><button onClick={agregarLinea} className="p-3 bg-slate-900 text-white rounded-xl hover:scale-110 transition-all shadow-xl shadow-slate-900/20"><Plus size={20}/></button></div>
-            <div className="space-y-4">
+          <section className="space-y-6 font-black">
+            <div className="flex justify-between items-center px-4 font-black"><h4 className="font-black italic uppercase text-slate-800 flex items-center gap-2 text-sm font-black"><ShoppingBag size={18} className="text-[#8ED4BE] font-black"/> Desglose de Productos</h4><button onClick={agregarLinea} className="p-3 bg-slate-900 text-white rounded-xl hover:scale-110 transition-all shadow-xl shadow-slate-900/20 font-black"><Plus size={20}/></button></div>
+            <div className="space-y-4 font-black">
               {items.map((item, idx) => (
-                <div key={item.id} className="group flex flex-col items-stretch lg:flex-row lg:items-center gap-6 p-6 bg-white border-2 border-slate-100 rounded-[2.5rem] hover:border-[#8ED4BE] transition-all relative">
-                  <span className="font-black italic text-slate-200 text-2xl lg:text-3xl w-10 text-center lg:text-left">#{idx+1}</span>
-                  <div className="flex-1 w-full grid grid-cols-1 gap-4">
-                    <input list="productos-list" className={`w-full p-4 bg-slate-50 rounded-4xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE] ${item.cat === "OTROS..." ? 'text-purple-600' : ''}`} placeholder="Buscar categoría..." value={item.cat} onChange={e => updItem(item.id, 'cat', e.target.value)} />
+                <div key={item.id} className="group flex flex-col items-stretch lg:flex-row lg:items-center gap-6 p-6 bg-white border-2 border-slate-100 rounded-[2.5rem] hover:border-[#8ED4BE] transition-all relative font-black">
+                  <span className="font-black italic text-slate-200 text-2xl lg:text-3xl w-10 text-center lg:text-left font-black">#{idx+1}</span>
+                  <div className="flex-1 w-full grid grid-cols-1 gap-4 font-black">
+                    <input list="productos-list" className={`w-full p-4 bg-slate-50 rounded-4xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE] font-black ${item.cat === "OTROS..." ? 'text-purple-600' : ''}`} placeholder="Buscar categoría..." value={item.cat} onChange={e => updItem(item.id, 'cat', e.target.value)} />
                     {item.cat === "OTROS..." && (
-                      <input type="number" placeholder="Precio manual" className="w-full p-4 bg-purple-50 rounded-4xl font-black text-purple-600 text-[10px] outline-none border-2 border-purple-100 focus:border-purple-300" value={item.precio || ""} onChange={e => updItem(item.id, 'precio', parseFloat(e.target.value) || 0)} />
+                      <input type="number" placeholder="Precio manual" className="w-full p-4 bg-purple-50 rounded-4xl font-black text-purple-600 text-[10px] outline-none border-2 border-purple-100 focus:border-purple-300 font-black" value={item.precio || ""} onChange={e => updItem(item.id, 'precio', parseFloat(e.target.value) || 0)} />
                     )}
-                    <input list="temas-list" className="w-full p-4 bg-slate-50 rounded-4xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE]" placeholder="Buscar tema..." value={item.tema} onChange={e => updItem(item.id, 'tema', e.target.value)} />
+                    <input list="temas-list" className="w-full p-4 bg-slate-50 rounded-4xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE] font-black" placeholder="Buscar tema..." value={item.tema} onChange={e => updItem(item.id, 'tema', e.target.value)} />
                   </div>
                   
-                  <div className="grid grid-cols-3 items-center gap-2 sm:gap-6 pt-4 lg:pt-0 border-t lg:border-t-0">
-                    <div className="flex flex-col items-center flex-1 min-w-17.5">
-                       <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase mb-2">Cant.</span>
+                  <div className="grid grid-cols-3 items-center gap-2 sm:gap-6 pt-4 lg:pt-0 border-t lg:border-t-0 font-black">
+                    <div className="flex flex-col items-center flex-1 min-w-17.5 font-black">
+                       <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase mb-2 font-black">Cant.</span>
                        <QuantityControls value={item.cant} onChange={v => updItem(item.id, 'cant', v)} min={1} max={99} />
                     </div>
-                    <div className="flex flex-col items-center flex-1 min-w-17.5">
-                       <span className="text-[9px] font-black text-slate-400 uppercase mb-2">Pend.</span>
+                    <div className="flex flex-col items-center flex-1 min-w-17.5 font-black">
+                       <span className="text-[9px] font-black text-slate-400 uppercase mb-2 font-black">Pend.</span>
                        <QuantityControls value={item.pendiente} onChange={v => updItem(item.id, 'pendiente', v)} min={0} max={item.cant} colorClass="bg-red-50" textClass="text-red-500" />
                     </div>
-                    <div className="flex flex-col items-end flex-1 min-w-22.5 pr-2">
-                       <p className="text-[8px] sm:text-[9px] font-black text-slate-300 uppercase">Subtotal</p>
-                       <p className="font-black italic text-slate-800 text-sm sm:text-lg whitespace-nowrap">{Utils.currency(item.cant * item.precio)}</p>
+                    <div className="flex flex-col items-end flex-1 min-w-22.5 pr-2 font-black">
+                       <p className="text-[8px] sm:text-[9px] font-black text-slate-300 uppercase font-black">Subtotal</p>
+                       <p className="font-black italic text-slate-800 text-sm sm:text-lg whitespace-nowrap font-black">{Utils.currency(item.cant * item.precio)}</p>
                     </div>
                     {items.length > 1 && (
-                      <div className="absolute top-4 right-4 lg:static">
-                        <button onClick={() => borrarLinea(item.id)} className="p-2 bg-red-50 text-red-400 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 size={16}/></button>
+                      <div className="absolute top-4 right-4 lg:static font-black">
+                        <button onClick={() => borrarLinea(item.id)} className="p-2 bg-red-50 text-red-400 rounded-xl hover:bg-red-500 hover:text-white transition-all font-black"><Trash2 size={16}/></button>
                       </div>
                     )}
                   </div>
@@ -719,7 +738,7 @@ const FormularioCotizacion = ({ alGuardar }) => {
               ))}
             </div>
           </section>
-          <button disabled={!esValido} onClick={guardar} className={`w-full p-8 rounded-4xl font-black italic uppercase text-xl shadow-2xl transition-all flex items-center justify-center gap-4 ${esValido ? 'bg-slate-900 text-[#8ED4BE] hover:scale-[1.02] shadow-slate-200' : 'bg-slate-100 text-slate-300 cursor-not-allowed'}`}><Check size={32}/> {esValido ? 'Confirmar y Guardar Pedido' : 'Complete los datos'}</button>
+          <button disabled={!esValido} onClick={guardar} className={`w-full p-8 rounded-4xl font-black italic uppercase text-xl shadow-2xl transition-all flex items-center justify-center gap-4 font-black ${esValido ? 'bg-slate-900 text-[#8ED4BE] hover:scale-[1.02] shadow-slate-200 font-black' : 'bg-slate-100 text-slate-300 cursor-not-allowed font-black'}`}><Check size={32}/> {esValido ? 'Confirmar y Guardar Pedido' : 'Complete los datos'}</button>
         </div>
       </div>
     </div>
@@ -738,31 +757,31 @@ const DashboardHome = ({ historial }) => {
     return { pend, total, count: (historial || []).length };
   }, [historial]);
   return (
-    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in fade-in duration-700">
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in fade-in duration-700 font-black">
       <ScrollToTop />
-      <header className="mb-12 flex flex-col lg:flex-row justify-between items-center gap-8 bg-white p-10 rounded-[4rem] shadow-xl border border-slate-50">
-        <div className="flex items-center gap-8 flex-col sm:flex-row text-center sm:text-left">
-          <div className="w-24 h-24 bg-slate-900 rounded-[2.5rem] flex items-center justify-center shadow-2xl rotate-3 transition-transform hover:rotate-0"><img src={logoAlekey} alt="Logo" className="w-16 h-16 object-contain rounded-xl" /></div>
-          <div><h1 className="text-4xl lg:text-5xl font-black italic uppercase tracking-tighter text-slate-800">Hola, Alekey<span className="text-[#8ED4BE]">.</span></h1><p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Gestión Administrativa {new Date().getFullYear()}</p></div>
+      <header className="mb-12 flex flex-col lg:flex-row justify-between items-center gap-8 bg-white p-10 rounded-[4rem] shadow-xl border border-slate-50 font-black">
+        <div className="flex items-center gap-8 flex-col sm:flex-row text-center sm:text-left font-black">
+          <div className="w-24 h-24 bg-slate-900 rounded-[2.5rem] flex items-center justify-center shadow-2xl rotate-3 transition-transform hover:rotate-0 font-black"><img src={logoAlekey} alt="Logo" className="w-16 h-16 object-contain rounded-xl font-black" /></div>
+          <div className="font-black"><h1 className="text-4xl lg:text-5xl font-black italic uppercase tracking-tighter text-slate-800 font-black">Hola, Alekey<span className="text-[#8ED4BE] font-black">.</span></h1><p className="text-sm font-black text-slate-400 uppercase tracking-widest mt-1 font-black">Gestión Administrativa {new Date().getFullYear()}</p></div>
         </div>
-        <div className="flex gap-4">
-          <div className="bg-slate-50 p-6 rounded-4xl text-center border-b-4 border-[#8ED4BE]"><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Hoy es</p><p className="font-black italic text-slate-800">{new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}</p></div>
+        <div className="flex gap-4 font-black">
+          <div className="bg-slate-50 p-6 rounded-4xl text-center border-b-4 border-[#8ED4BE] font-black"><p className="text-[9px] font-black uppercase text-slate-400 mb-1 font-black">Hoy es</p><p className="font-black italic text-slate-800 font-black">{new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}</p></div>
         </div>
       </header>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-        <StatCard icon={<TrendingUp size={28} className="text-[#8ED4BE]"/>} label="Ventas Totales" val={Utils.currency(summary.total)} borderColor="border-[#8ED4BE]"/>
-        <StatCard icon={<AlertCircle size={28} className="text-[#F79598]"/>} label="Piezas Pendientes" val={summary.pend} borderColor="border-[#F79598]"/>
-        <StatCard icon={<ShoppingBag size={28} className="text-[#C0C976]"/>} label="Pedidos Realizados" val={summary.count} borderColor="border-[#C0C976]"/>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 font-black">
+        <StatCard icon={<TrendingUp size={28} className="text-[#8ED4BE] font-black"/>} label="Ventas Totales" val={Utils.currency(summary.total)} borderColor="border-[#8ED4BE]"/>
+        <StatCard icon={<AlertCircle size={28} className="text-[#F79598] font-black"/>} label="Piezas Pendientes" val={summary.pend} borderColor="border-[#F79598]"/>
+        <StatCard icon={<ShoppingBag size={28} className="text-[#C0C976] font-black"/>} label="Pedidos Realizados" val={summary.count} borderColor="border-[#C0C976]"/>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <button onClick={() => navigate('/cotizar')} className="group p-10 bg-slate-900 rounded-[4rem] text-white flex items-center justify-between hover:scale-[1.02] transition-all shadow-2xl shadow-slate-400 relative overflow-hidden">
-          <div className="z-10 text-left"><h4 className="text-3xl font-black italic uppercase mb-2">Nueva Venta</h4><p className="text-slate-500 font-bold uppercase text-xs tracking-widest">Crear cotización y factura</p></div>
-          <div className="w-20 h-20 bg-[#8ED4BE] rounded-[2rem] flex items-center justify-center text-slate-900 shadow-xl group-hover:rotate-12 transition-transform"><Plus size={40}/></div>
-          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white/5 rounded-full blur-3xl"></div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 font-black">
+        <button onClick={() => navigate('/cotizar')} className="group p-10 bg-slate-900 rounded-[4rem] text-white flex items-center justify-between hover:scale-[1.02] transition-all shadow-2xl shadow-slate-400 relative overflow-hidden font-black">
+          <div className="z-10 text-left font-black"><h4 className="text-3xl font-black italic uppercase mb-2 font-black">Nueva Venta</h4><p className="text-slate-500 font-black uppercase text-xs tracking-widest font-black">Crear cotización y factura</p></div>
+          <div className="w-20 h-20 bg-[#8ED4BE] rounded-[2rem] flex items-center justify-center text-slate-900 shadow-xl group-hover:rotate-12 transition-transform font-black"><Plus size={40}/></div>
+          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white/5 rounded-full blur-3xl font-black"></div>
         </button>
-        <button onClick={() => navigate('/ventas')} className="group p-10 bg-white rounded-[4rem] text-slate-800 flex items-center justify-between hover:scale-[1.02] transition-all shadow-2xl border border-slate-50 relative overflow-hidden">
-          <div className="z-10 text-left"><h4 className="text-3xl font-black italic uppercase mb-2">Historial</h4><p className="text-slate-400 font-bold uppercase text-xs tracking-widest">Ver reportes y estados</p></div>
-          <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center text-slate-400 group-hover:bg-slate-900 group-hover:text-white transition-all"><Search size={40}/></div>
+        <button onClick={() => navigate('/ventas')} className="group p-10 bg-white rounded-[4rem] text-slate-800 flex items-center justify-between hover:scale-[1.02] transition-all shadow-2xl border border-slate-50 relative overflow-hidden font-black">
+          <div className="z-10 text-left font-black"><h4 className="text-3xl font-black italic uppercase mb-2 font-black">Historial</h4><p className="text-slate-400 font-black uppercase text-xs tracking-widest font-black">Ver reportes y estados</p></div>
+          <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center text-slate-400 group-hover:bg-slate-900 group-hover:text-white transition-all font-black"><Search size={40}/></div>
         </button>
       </div>
     </div>
@@ -775,7 +794,19 @@ const DashboardHome = ({ historial }) => {
 
 export default function App() {
   const [ventas, setVentas] = useState([]);
-  useEffect(() => { fetchVentas(); }, []);
+  const [showSplash, setShowSplash] = useState(false);
+
+  useEffect(() => {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+                         || window.navigator.standalone 
+                         || document.referrer.includes('android-app://');
+
+    if (isStandalone) {
+      setShowSplash(true);
+      setTimeout(() => setShowSplash(false), 2500);
+    }
+    fetchVentas(); 
+  }, []);
 
   async function fetchVentas() {
     const { data } = await supabase.from('ventas').select('*').order('created_at', { ascending: false });
@@ -787,7 +818,7 @@ export default function App() {
     if (error) return Swal.fire('Error', error.message, 'error');
     if (data && data.length > 0) setVentas([data[0], ...ventas]);
     else await fetchVentas();
-    Swal.fire({ title: '¡Pedido Guardado!', icon: 'success', confirmButtonColor: '#8ED4BE', customClass: { popup: 'rounded-[3rem] font-black italic' } });
+    Swal.fire({ title: '¡Pedido Guardado!', icon: 'success', confirmButtonColor: '#8ED4BE', customClass: { popup: 'rounded-[3rem] font-black italic font-black' } });
   };
 
   const alEliminar = async (id) => {
@@ -805,24 +836,26 @@ export default function App() {
     Swal.fire({ title: '¡Actualizado!', icon: 'success', timer: 1500, showConfirmButton: false });
   };
 
+  if (showSplash) return <SplashScreen />;
+
   return (
     <Router>
-      <div className="flex flex-col lg:flex-row h-screen bg-slate-50 font-sans overflow-hidden">
+      <div className="flex flex-col lg:flex-row h-screen bg-slate-50 font-sans overflow-hidden font-black">
         
-        <aside className="hidden lg:flex w-32 bg-white border-r border-slate-100 flex-col items-center py-10 gap-8 z-50">
-          <div className="w-16 h-16 bg-[#8ED4BE] rounded-[1.8rem] items-center justify-center shadow-lg shadow-[#8ED4BE]/30 mb-6 flex"><Package className="text-slate-800" size={28}/></div>
-          <nav className="flex flex-col gap-8 justify-center w-full">
+        <aside className="hidden lg:flex w-32 bg-white border-r border-slate-100 flex-col items-center py-10 gap-8 z-50 font-black">
+          <div className="w-16 h-16 bg-[#8ED4BE] rounded-[1.8rem] items-center justify-center shadow-lg shadow-[#8ED4BE]/30 mb-6 flex font-black"><Package className="text-slate-800 font-black" size={28}/></div>
+          <nav className="flex flex-col gap-8 justify-center w-full font-black">
             <NavLink to="/" icon={<Home size={24}/>} label="Home" isMobile={false} />
             <NavLink to="/cotizar" icon={<Plus size={24}/>} label="Nueva" isMobile={false} />
             <NavLink to="/ventas" icon={<Clock size={24}/>} label="Ventas" isMobile={false} />
             <NavLink to="/stats" icon={<BarChart3 size={24}/>} label="Stats" isMobile={false} />
           </nav>
-          <div className="mt-auto p-4 flex flex-col items-center gap-2">
-            <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center font-bold text-[#8ED4BE] text-xs">IV</div>
+          <div className="mt-auto p-4 flex flex-col items-center gap-2 font-black">
+            <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center font-bold text-[#8ED4BE] text-xs font-black">IV</div>
           </div>
         </aside>
 
-        <main className="flex-1 overflow-y-auto bg-slate-50/30">
+        <main className="flex-1 overflow-y-auto bg-slate-50/30 font-black">
           <Routes>
             <Route path="/" element={<DashboardHome historial={ventas} />} />
             <Route path="/cotizar" element={<FormularioCotizacion alGuardar={alGuardarEnNube} />} />
@@ -831,8 +864,8 @@ export default function App() {
           </Routes>
         </main>
 
-        <footer className="lg:hidden w-full bg-white border-t border-slate-100 flex items-center justify-around py-4 px-2 z-50">
-          <nav className="flex w-full justify-around items-center">
+        <footer className="lg:hidden w-full bg-white border-t border-slate-100 flex items-center justify-around py-4 px-2 z-50 font-black">
+          <nav className="flex w-full justify-around items-center font-black">
             <NavLink to="/" icon={<Home size={22}/>} label="Home" isMobile={true} />
             <NavLink to="/cotizar" icon={<Plus size={22}/>} label="Nueva" isMobile={true} />
             <NavLink to="/ventas" icon={<Clock size={22}/>} label="Ventas" isMobile={true} />
@@ -841,8 +874,8 @@ export default function App() {
         </footer>
       </div>
 
-      <datalist id="productos-list">{Object.keys(PRODUCTOS_PRECIOS).map(p => <option key={p} value={p} />)}</datalist>
-      <datalist id="temas-list">{TEMAS_PREDEFINIDOS.map(t => <option key={t} value={t} />)}</datalist>
+      <datalist id="productos-list">{Object.keys(PRODUCTOS_PRECIOS).map(p => <option key={p} value={p} className="font-black" />)}</datalist>
+      <datalist id="temas-list">{TEMAS_PREDEFINIDOS.map(t => <option key={t} value={t} className="font-black" />)}</datalist>
     </Router>
   );
 }
@@ -850,11 +883,11 @@ export default function App() {
 const NavLink = ({ to, icon, label, isMobile }) => {
   const active = useLocation().pathname === to;
   return (
-    <Link to={to} className={`flex flex-col items-center gap-1 group relative transition-all ${active ? 'text-[#8ED4BE]' : 'text-slate-300 hover:text-slate-500'}`}>
-      <div className={`p-3 rounded-2xl transition-all ${active ? 'bg-[#8ED4BE]/10 shadow-inner' : 'group-hover:bg-slate-50'}`}>{icon}</div>
-      <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest">{label}</span>
-      {active && !isMobile && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#8ED4BE] rounded-full hidden lg:block"></div>}
-      {active && isMobile && <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-1 bg-[#8ED4BE] rounded-full"></div>}
+    <Link to={to} className={`flex flex-col items-center gap-1 group relative transition-all font-black ${active ? 'text-[#8ED4BE] font-black' : 'text-slate-300 hover:text-slate-500 font-black'}`}>
+      <div className={`p-3 rounded-2xl transition-all font-black ${active ? 'bg-[#8ED4BE]/10 shadow-inner font-black' : 'group-hover:bg-slate-50 font-black'}`}>{icon}</div>
+      <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest font-black">{label}</span>
+      {active && !isMobile && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#8ED4BE] rounded-full hidden lg:block font-black"></div>}
+      {active && isMobile && <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-1 bg-[#8ED4BE] rounded-full font-black"></div>}
     </Link>
   );
 };
