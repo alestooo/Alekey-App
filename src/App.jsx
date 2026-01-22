@@ -115,7 +115,7 @@ const ScrollToTop = ({ trigger }) => {
 };
 
 const StatCard = ({ icon, label, val, borderColor, isClient }) => (
-  <div className={`bg-white p-8 rounded-[3rem] shadow-xl border-b-[10px] ${borderColor} transition-transform hover:scale-[1.02]`}>
+  <div className={`bg-white p-8 rounded-[3rem] shadow-xl border-b-10 ${borderColor} transition-transform hover:scale-[1.02]`}>
     <div className="mb-4 opacity-40">{icon}</div>
     <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">{label}</p>
     <h4 className={`font-black italic uppercase leading-tight ${isClient ? 'text-sm lg:text-md text-slate-800' : 'text-2xl text-slate-900'}`}>
@@ -244,7 +244,7 @@ const Estadisticas = ({ ventas }) => {
       <button onClick={() => setView('general')} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all"><Plus className="rotate-45" size={20}/> Volver Atrás</button>
       <div className="bg-white p-6 lg:p-10 rounded-[3.5rem] shadow-2xl">
         <h2 className="text-3xl font-black italic uppercase mb-10 tracking-tighter">Ranking Categorías Detallado</h2>
-        <div className="space-y-10">{stats.allCategorias.map(([cat, data], i) => (<div key={i} className="bg-slate-50 rounded-[3rem] p-6 lg:p-8 border-l-[15px] border-[#F79598]">
+        <div className="space-y-10">{stats.allCategorias.map(([cat, data], i) => (<div key={i} className="bg-slate-50 rounded-[3rem] p-6 lg:p-8 border-l-15 border-[#F79598]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 border-b border-slate-200 pb-4 gap-2">
             <div className="flex items-center gap-4">
               <span className="font-black italic text-4xl lg:text-5xl text-slate-200"># {i+1}</span>
@@ -254,7 +254,7 @@ const Estadisticas = ({ ventas }) => {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {Object.entries(data.temas).sort((a,b)=>b[1]-a[1]).map(([tema, c]) => (
-              <div key={tema} className="flex flex-col justify-center bg-white/60 p-4 rounded-2xl border border-white min-h-[60px]">
+              <div key={tema} className="flex flex-col justify-center bg-white/60 p-4 rounded-2xl border border-white min-h-15">
                 <span className="font-bold uppercase text-[8px] lg:text-[9px] text-slate-500 tracking-wider leading-tight mb-1 truncate">{tema}</span>
                 <span className="font-black text-[10px] lg:text-[11px] text-[#F79598]">{c} pzs</span>
               </div>
@@ -277,7 +277,22 @@ const Estadisticas = ({ ventas }) => {
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50"><div className="flex justify-between items-center mb-8"><h4 className="font-black italic uppercase text-xs flex items-center gap-2 text-slate-400"><Trophy size={16} className="text-[#C0C976]"/> Ranking de Temas</h4><button onClick={() => setView('temas')} className="bg-slate-50 px-3 py-1.5 rounded-full font-black text-[9px] uppercase text-slate-400 hover:bg-[#C0C976] hover:text-white transition-all shadow-sm">Ver más</button></div><div className="space-y-4">{stats.topTemas.map(([tema, cant], i) => (<div key={i} className="flex items-center justify-between group"><div className="flex items-center gap-4"><span className="font-black italic text-slate-200 text-2xl group-hover:text-[#C0C976] transition-colors"># {i+1}</span><span className="font-bold uppercase text-[10px] text-slate-600 tracking-wider">{tema}</span></div><span className="font-black text-slate-800 text-xs">{cant} pzs</span></div>))}</div></div>
-        <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 text-center"><div className="flex justify-between items-center mb-8"><h4 className="font-black italic uppercase text-xs text-slate-400">Flujo de Dinero (Últimas 10)</h4><button onClick={() => setView('flujo')} className="bg-slate-50 px-3 py-1.5 rounded-full font-black text-[9px] uppercase text-slate-400 hover:bg-[#8ED4BE] hover:text-white transition-all shadow-sm">Ver</button></div><div className="h-64"><ResponsiveContainer width="100%" height="100%"><BarChart data={stats.dataBarras}><CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" /><XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 'black', fill: '#cbd5e1'}} /><Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '20px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}} formatter={(v) => Utils.currency(v)} /><Bar dataKey="monto" fill="#8ED4BE" radius={[8, 8, 0, 0]} /></BarChart></ResponsiveContainer></div></div>
+        <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 text-center">
+            <div className="flex justify-between items-center mb-8">
+                <h4 className="font-black italic uppercase text-xs text-slate-400">Flujo de Dinero (Últimas 10)</h4>
+                <button onClick={() => setView('flujo')} className="bg-slate-50 px-3 py-1.5 rounded-full font-black text-[9px] uppercase text-slate-400 hover:bg-[#8ED4BE] hover:text-white transition-all shadow-sm">Ver</button>
+            </div>
+            <div className="h-64" style={{ minHeight: '250px' }}>
+                <ResponsiveContainer width="99%" height="100%">
+                    <BarChart data={stats.dataBarras}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 'black', fill: '#cbd5e1'}} />
+                        <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '20px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}} formatter={(v) => Utils.currency(v)} />
+                        <Bar dataKey="monto" fill="#8ED4BE" radius={[8, 8, 0, 0]} />
+                    </BarChart>
+                </ResponsiveContainer>
+            </div>
+        </div>
         <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 text-center lg:text-left"><div className="flex justify-between items-center mb-8"><h4 className="font-black italic uppercase text-xs flex items-center gap-2 text-slate-400"><Star size={16} className="text-[#F79598]"/> Ranking de Categorías</h4><button onClick={() => setView('categorias')} className="bg-slate-50 px-3 py-1.5 rounded-full font-black text-[9px] uppercase text-slate-400 hover:bg-[#F79598] hover:text-white transition-all shadow-sm">Ver más</button></div><div className="space-y-4">{stats.topCategorias.map(([cat, data], i) => (<div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl group hover:bg-white hover:shadow-md transition-all"><div className="flex items-center gap-3"><span className="font-black italic text-slate-300 transition-colors group-hover:text-[#F79598]"># {i+1}</span><span className="font-bold uppercase text-[10px] text-slate-700">{cat}</span></div><span className="font-black bg-[#F79598]/10 text-[#F79598] px-3 py-1 rounded-full text-[10px]">{data.total} pzs</span></div>))}</div></div>
       </div>
     </div>
@@ -396,7 +411,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
     const tienePendientes = (data.items || []).some(i => i.pendiente > 0);
     const editValido = Utils.validateName(data.nombre || "") && (data.telefono || "").replace(/\D/g, '').length === 8 && (data.items || []).length > 0;
     return (
-      <div key={v.id} className={`bg-white rounded-[2.5rem] shadow-xl border-l-[12px] flex flex-col overflow-hidden ${tienePendientes ? 'border-red-400' : 'border-[#8ED4BE]'}`}>
+      <div key={v.id} className="bg-white rounded-4xl shadow-xl border-l-12 flex flex-col overflow-hidden transition-colors duration-300" style={{ borderLeftColor: tienePendientes ? '#F79598' : '#8ED4BE' }}>
         <div className="p-6 lg:p-8 border-b border-slate-50 bg-white z-10">
           <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
             <div className="flex-1 w-full text-slate-800">
@@ -437,8 +452,8 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
             </div>
           </div>
         </div>
-        <div className="overflow-x-auto max-h-[300px] overflow-y-auto bg-slate-50/40 p-4 scrollbar-thin">
-          <table className="w-full min-w-[600px]">
+        <div className="overflow-x-auto max-h-75 overflow-y-auto bg-slate-50/40 p-4 scrollbar-thin">
+          <table className="w-full min-w-150">
             <thead className="text-[10px] font-black text-slate-300 uppercase">
               <tr><th className="text-left pb-2">Cant.</th><th className="text-left pb-2">Descripción</th><th className="text-center pb-2">Pend.</th><th className="text-right pb-2">Subtotal</th>{editing && <th className="w-10"></th>}</tr>
             </thead>
@@ -505,8 +520,8 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
     return (
       <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in slide-in-from-bottom duration-300">
         <ScrollToTop trigger={folderView} />
-        <button onClick={() => setFolderView(null)} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all"><ArrowLeft size={20}/> Volver a Centros</button>
-        <div className="mb-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-[2.5rem] shadow-lg">
+        <button onClick={() => setFolderView(null)} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all"><Plus className="rotate-45" size={20}/> Volver a Centros</button>
+        <div className="mb-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-4xl shadow-lg">
           <h2 className="text-2xl lg:text-3xl font-black italic uppercase text-slate-800 tracking-tighter">{folderView.nombre} <span className="text-[#8ED4BE]">({pedidos.length})</span></h2>
           <div className="flex flex-col items-end">
             <span className="text-[10px] font-black text-slate-400 uppercase">Total Acumulado</span>
@@ -540,7 +555,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
                 <button onClick={(e) => editarNombreCarpeta(c.id, c.nombre, e)} className="p-2 bg-blue-50 text-blue-400 rounded-lg hover:bg-blue-400 hover:text-white"><Edit2 size={14}/></button>
                 <button onClick={(e) => eliminarCarpeta(c.id, c.nombre, e)} className="p-2 bg-red-50 text-red-300 rounded-lg hover:bg-red-400 hover:text-white"><Trash2 size={14}/></button>
               </div>
-              <div className="w-16 h-16 bg-slate-50 rounded-[1.5rem] flex items-center justify-center mb-6 group-hover:bg-[#8ED4BE] transition-colors"><Folder size={32} className="text-slate-200 group-hover:text-white"/></div>
+              <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-[#8ED4BE] transition-colors"><Folder size={32} className="text-slate-200 group-hover:text-white"/></div>
               <h4 className="font-black italic uppercase text-lg text-slate-800 leading-tight mb-2">{c.nombre}</h4>
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
@@ -573,7 +588,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
           <Link to="/cotizar" className="px-6 py-4 bg-[#F79598] text-white shadow-lg rounded-2xl font-black uppercase text-xs flex items-center gap-2 hover:scale-105 transition-all shadow-[#F79598]/20"><Plus size={18}/> Nueva Venta</Link>
         </div>
       </div>
-      <div className="mb-10 relative"><Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={20}/><input type="text" placeholder="Buscar por nombre o número de orden..." className="w-full pl-14 pr-8 py-5 bg-white rounded-[2rem] shadow-xl outline-none font-bold text-slate-600 focus:ring-4 ring-[#F79598]/10 transition-all" value={filtro} onChange={(e) => setFiltro(e.target.value)} /></div>
+      <div className="mb-10 relative"><Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={20}/><input type="text" placeholder="Buscar por nombre o número de orden..." className="w-full pl-14 pr-8 py-5 bg-white rounded-4xl shadow-xl outline-none font-bold text-slate-600 focus:ring-4 ring-[#F79598]/10 transition-all" value={filtro} onChange={(e) => setFiltro(e.target.value)} /></div>
       <div className="grid grid-cols-1 gap-8">{filtradas.map(v => renderVentaCard(v))}</div>
     </div>
   );
@@ -633,12 +648,12 @@ const FormularioCotizacion = ({ alGuardar }) => {
       <div className="bg-white rounded-[4rem] shadow-2xl overflow-hidden border border-slate-50">
         <div className="p-8 lg:p-12 bg-slate-900 text-white flex flex-col lg:flex-row justify-between items-center gap-6">
           <div className="text-center lg:text-left"><h2 className="text-4xl font-black italic uppercase tracking-tighter">Nueva Cotización<span className="text-[#8ED4BE]">.</span></h2><p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2">Completa los datos para generar el pedido</p></div>
-          <div className="flex items-center gap-4 bg-white/5 p-4 rounded-[2rem] border border-white/10"><div className="text-right"><p className="text-[9px] font-black uppercase text-slate-400">Total Estimado</p><p className="text-3xl font-black italic text-[#8ED4BE]">{Utils.currency(total)}</p></div><div className="w-12 h-12 bg-[#8ED4BE] rounded-2xl flex items-center justify-center text-slate-900 shadow-lg shadow-[#8ED4BE]/20"><Package size={24}/></div></div>
+          <div className="flex items-center gap-4 bg-white/5 p-4 rounded-4xl border border-white/10"><div className="text-right"><p className="text-[9px] font-black uppercase text-slate-400">Total Estimado</p><p className="text-3xl font-black italic text-[#8ED4BE]">{Utils.currency(total)}</p></div><div className="w-12 h-12 bg-[#8ED4BE] rounded-2xl flex items-center justify-center text-slate-900 shadow-lg shadow-[#8ED4BE]/20"><Package size={24}/></div></div>
         </div>
         <div className="p-8 lg:p-12 space-y-10">
           <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2"><User size={14}/> Nombre Completo</label><input type="text" className={`w-full p-6 bg-slate-50 rounded-[2rem] font-bold text-slate-700 outline-none border-2 transition-all ${nombre && !Utils.validateName(nombre) ? 'border-red-100 bg-red-50/30' : 'border-transparent focus:border-[#8ED4BE]'}`} placeholder="Buscando cliente..." value={nombre} onChange={e => setNombre(Utils.capitalize(e.target.value))} /></div>
-            <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2"><Clock size={14}/> Teléfono (8 dígitos)</label><input type="text" className="w-full p-6 bg-slate-50 rounded-[2rem] font-bold text-slate-700 outline-none border-2 border-transparent focus:border-[#8ED4BE] transition-all" placeholder="0000-0000" value={tel} onChange={e => setTel(Utils.formatPhone(e.target.value))} /></div>
+            <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2"><User size={14}/> Nombre Completo</label><input type="text" className={`w-full p-6 bg-slate-50 rounded-4xl font-bold text-slate-700 outline-none border-2 transition-all ${nombre && !Utils.validateName(nombre) ? 'border-red-100 bg-red-50/30' : 'border-transparent focus:border-[#8ED4BE]'}`} placeholder="Buscando cliente..." value={nombre} onChange={e => setNombre(Utils.capitalize(e.target.value))} /></div>
+            <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2"><Clock size={14}/> Teléfono (8 dígitos)</label><input type="text" className="w-full p-6 bg-slate-50 rounded-4xl font-bold text-slate-700 outline-none border-2 border-transparent focus:border-[#8ED4BE] transition-all" placeholder="0000-0000" value={tel} onChange={e => setTel(Utils.formatPhone(e.target.value))} /></div>
           </section>
           <section className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
             <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-400 ml-4">Provincia</label><select className="w-full p-5 bg-white rounded-2xl font-black uppercase text-xs outline-none shadow-sm" value={provincia} onChange={e => {setProvincia(e.target.value); setDireccion("");}}><option value="" disabled>Seleccione...</option>{Object.keys(UBICACIONES_CR).map(p => <option key={p} value={p}>{p}</option>)}</select></div>
@@ -651,24 +666,24 @@ const FormularioCotizacion = ({ alGuardar }) => {
                 <div key={item.id} className="group flex flex-col items-stretch lg:flex-row lg:items-center gap-6 p-6 bg-white border-2 border-slate-100 rounded-[2.5rem] hover:border-[#8ED4BE] transition-all relative">
                   <span className="font-black italic text-slate-200 text-2xl lg:text-3xl w-10 text-center lg:text-left">#{idx+1}</span>
                   <div className="flex-1 w-full grid grid-cols-1 gap-4">
-                    <input list="productos-list" className={`w-full p-4 bg-slate-50 rounded-2xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE] ${item.cat === "OTROS..." ? 'text-purple-600' : ''}`} placeholder="Buscar categoría..." value={item.cat} onChange={e => updItem(item.id, 'cat', e.target.value)} />
+                    <input list="productos-list" className={`w-full p-4 bg-slate-50 rounded-4xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE] ${item.cat === "OTROS..." ? 'text-purple-600' : ''}`} placeholder="Buscar categoría..." value={item.cat} onChange={e => updItem(item.id, 'cat', e.target.value)} />
                     {item.cat === "OTROS..." && (
-                      <input type="number" placeholder="Precio manual" className="w-full p-4 bg-purple-50 rounded-2xl font-black text-purple-600 text-[10px] outline-none border-2 border-purple-100 focus:border-purple-300" value={item.precio || ""} onChange={e => updItem(item.id, 'precio', parseFloat(e.target.value) || 0)} />
+                      <input type="number" placeholder="Precio manual" className="w-full p-4 bg-purple-50 rounded-4xl font-black text-purple-600 text-[10px] outline-none border-2 border-purple-100 focus:border-purple-300" value={item.precio || ""} onChange={e => updItem(item.id, 'precio', parseFloat(e.target.value) || 0)} />
                     )}
-                    <input list="temas-list" className="w-full p-4 bg-slate-50 rounded-2xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE]" placeholder="Buscar tema..." value={item.tema} onChange={e => updItem(item.id, 'tema', e.target.value)} />
+                    <input list="temas-list" className="w-full p-4 bg-slate-50 rounded-4xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE]" placeholder="Buscar tema..." value={item.tema} onChange={e => updItem(item.id, 'tema', e.target.value)} />
                   </div>
                   
-                  <div className="flex flex-row flex-wrap justify-between items-center gap-4 pt-4 lg:pt-0 border-t lg:border-t-0">
-                    <div className="flex flex-col items-center flex-1 min-w-[70px]">
-                       <span className="text-[9px] font-black text-slate-400 uppercase mb-2">Cant.</span>
+                  <div className="grid grid-cols-3 items-center gap-2 sm:gap-6 pt-4 lg:pt-0 border-t lg:border-t-0">
+                    <div className="flex flex-col items-center flex-1 min-w-17.5">
+                       <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase mb-2">Cant.</span>
                        <QuantityControls value={item.cant} onChange={v => updItem(item.id, 'cant', v)} min={1} max={99} />
                     </div>
-                    <div className="flex flex-col items-center flex-1 min-w-[70px]">
-                       <span className="text-[9px] font-black text-slate-400 uppercase mb-2">Pend.</span>
+                    <div className="flex flex-col items-center flex-1 min-w-17.5">
+                       <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase mb-2">Pend.</span>
                        <QuantityControls value={item.pendiente} onChange={v => updItem(item.id, 'pendiente', v)} min={0} max={item.cant} colorClass="bg-red-50" textClass="text-red-500" />
                     </div>
-                    <div className="flex flex-col items-end flex-1 min-w-[90px]">
-                       <p className="text-[9px] font-black text-slate-300 uppercase">Subtotal</p>
+                    <div className="flex flex-col items-end flex-1 min-w-22.5 pr-2">
+                       <p className="text-[8px] sm:text-[9px] font-black text-slate-300 uppercase">Subtotal</p>
                        <p className="font-black italic text-slate-800 text-sm sm:text-lg whitespace-nowrap">{Utils.currency(item.cant * item.precio)}</p>
                     </div>
                     {items.length > 1 && (
@@ -681,7 +696,7 @@ const FormularioCotizacion = ({ alGuardar }) => {
               ))}
             </div>
           </section>
-          <button disabled={!esValido} onClick={guardar} className={`w-full p-8 rounded-[2.5rem] font-black italic uppercase text-xl shadow-2xl transition-all flex items-center justify-center gap-4 ${esValido ? 'bg-slate-900 text-[#8ED4BE] hover:scale-[1.02] shadow-slate-200' : 'bg-slate-100 text-slate-300 cursor-not-allowed'}`}><Check size={32}/> {esValido ? 'Confirmar y Guardar Pedido' : 'Complete los datos'}</button>
+          <button disabled={!esValido} onClick={guardar} className={`w-full p-8 rounded-4xl font-black italic uppercase text-xl shadow-2xl transition-all flex items-center justify-center gap-4 ${esValido ? 'bg-slate-900 text-[#8ED4BE] hover:scale-[1.02] shadow-slate-200' : 'bg-slate-100 text-slate-300 cursor-not-allowed'}`}><Check size={32}/> {esValido ? 'Confirmar y Guardar Pedido' : 'Complete los datos'}</button>
         </div>
       </div>
     </div>
@@ -708,7 +723,7 @@ const DashboardHome = ({ historial }) => {
           <div><h1 className="text-4xl lg:text-5xl font-black italic uppercase tracking-tighter text-slate-800">Hola, Alekey<span className="text-[#8ED4BE]">.</span></h1><p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Gestión Administrativa {new Date().getFullYear()}</p></div>
         </div>
         <div className="flex gap-4">
-          <div className="bg-slate-50 p-6 rounded-[2.5rem] text-center border-b-4 border-[#8ED4BE]"><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Hoy es</p><p className="font-black italic text-slate-800">{new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}</p></div>
+          <div className="bg-slate-50 p-6 rounded-4xl text-center border-b-4 border-[#8ED4BE]"><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Hoy es</p><p className="font-black italic text-slate-800">{new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}</p></div>
         </div>
       </header>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
@@ -815,7 +830,7 @@ const NavLink = ({ to, icon, label, isMobile }) => {
     <Link to={to} className={`flex flex-col items-center gap-1 group relative transition-all ${active ? 'text-[#8ED4BE]' : 'text-slate-300 hover:text-slate-500'}`}>
       <div className={`p-3 rounded-2xl transition-all ${active ? 'bg-[#8ED4BE]/10 shadow-inner' : 'group-hover:bg-slate-50'}`}>{icon}</div>
       <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest">{label}</span>
-      {active && !isMobile && <div className="absolute -left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#8ED4BE] rounded-full hidden lg:block"></div>}
+      {active && !isMobile && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#8ED4BE] rounded-full hidden lg:block"></div>}
       {active && isMobile && <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-1 bg-[#8ED4BE] rounded-full"></div>}
     </Link>
   );
