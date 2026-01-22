@@ -506,7 +506,13 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
       <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in slide-in-from-bottom duration-300">
         <ScrollToTop trigger={folderView} />
         <button onClick={() => setFolderView(null)} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all"><ArrowLeft size={20}/> Volver a Centros</button>
-        <div className="mb-10 flex justify-between items-center"><h2 className="text-3xl font-black italic uppercase text-slate-800 tracking-tighter">{folderView.nombre} <span className="text-[#8ED4BE]">({pedidos.length})</span></h2></div>
+        <div className="mb-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-[2.5rem] shadow-lg">
+          <h2 className="text-2xl lg:text-3xl font-black italic uppercase text-slate-800 tracking-tighter">{folderView.nombre} <span className="text-[#8ED4BE]">({pedidos.length})</span></h2>
+          <div className="flex flex-col items-end">
+            <span className="text-[10px] font-black text-slate-400 uppercase">Total Acumulado</span>
+            <span className="text-2xl font-black italic text-[#8ED4BE]">{Utils.currency(pedidos.reduce((s,v)=>s+v.total, 0))}</span>
+          </div>
+        </div>
         <div className="grid grid-cols-1 gap-8">{pedidos.length ? pedidos.map(v => renderVentaCard(v, true)) : <div className="p-20 text-center border-4 border-dashed rounded-[3rem] opacity-20 font-black italic text-2xl uppercase">Carpeta Vacía</div>}</div>
       </div>
     );
@@ -523,24 +529,34 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {carpetas.map(c => (
-          <div key={c.id} onClick={() => setFolderView(c)} className="group bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 cursor-pointer hover:shadow-2xl transition-all relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all bg-white/60 lg:bg-transparent rounded-bl-3xl z-10">
-              <button onClick={(e) => moverCarpeta(c.id, 'izq', e)} className="p-2 bg-slate-100 rounded-lg hover:bg-slate-200"><ChevronUp className="-rotate-90" size={14}/></button>
-              <button onClick={(e) => moverCarpeta(c.id, 'der', e)} className="p-2 bg-slate-100 rounded-lg hover:bg-slate-200"><ChevronDown className="-rotate-90" size={14}/></button>
-              <button onClick={(e) => editarNombreCarpeta(c.id, c.nombre, e)} className="p-2 bg-blue-50 text-blue-400 rounded-lg hover:bg-blue-400 hover:text-white"><Edit2 size={14}/></button>
-              <button onClick={(e) => eliminarCarpeta(c.id, c.nombre, e)} className="p-2 bg-red-50 text-red-300 rounded-lg hover:bg-red-400 hover:text-white"><Trash2 size={14}/></button>
+        {carpetas.map(c => {
+          const pedidosEnCarpeta = ventas.filter(v => c.ids_ventas.includes(v.id));
+          const totalCarpeta = pedidosEnCarpeta.reduce((s, v) => s + (v.total || 0), 0);
+          return (
+            <div key={c.id} onClick={() => setFolderView(c)} className="group bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 cursor-pointer hover:shadow-2xl transition-all relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all bg-white/60 lg:bg-transparent rounded-bl-3xl z-10">
+                <button onClick={(e) => moverCarpeta(c.id, 'izq', e)} className="p-2 bg-slate-100 rounded-lg hover:bg-slate-200"><ChevronUp className="-rotate-90" size={14}/></button>
+                <button onClick={(e) => moverCarpeta(c.id, 'der', e)} className="p-2 bg-slate-100 rounded-lg hover:bg-slate-200"><ChevronDown className="-rotate-90" size={14}/></button>
+                <button onClick={(e) => editarNombreCarpeta(c.id, c.nombre, e)} className="p-2 bg-blue-50 text-blue-400 rounded-lg hover:bg-blue-400 hover:text-white"><Edit2 size={14}/></button>
+                <button onClick={(e) => eliminarCarpeta(c.id, c.nombre, e)} className="p-2 bg-red-50 text-red-300 rounded-lg hover:bg-red-400 hover:text-white"><Trash2 size={14}/></button>
+              </div>
+              <div className="w-16 h-16 bg-slate-50 rounded-[1.5rem] flex items-center justify-center mb-6 group-hover:bg-[#8ED4BE] transition-colors"><Folder size={32} className="text-slate-200 group-hover:text-white"/></div>
+              <h4 className="font-black italic uppercase text-lg text-slate-800 leading-tight mb-2">{c.nombre}</h4>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${c.ids_ventas?.length > 0 ? 'bg-[#8ED4BE]/10 text-[#8ED4BE]' : 'bg-slate-50 text-slate-300'}`}>
+                    {c.ids_ventas?.length || 0} PEDIDOS
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-300 uppercase italic">Orden: #{c.orden}</span>
+                </div>
+                <div className="mt-1">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total en Centro</p>
+                  <p className="font-black text-[#8ED4BE] italic">{Utils.currency(totalCarpeta)}</p>
+                </div>
+              </div>
             </div>
-            <div className="w-16 h-16 bg-slate-50 rounded-[1.5rem] flex items-center justify-center mb-6 group-hover:bg-[#8ED4BE] transition-colors"><Folder size={32} className="text-slate-200 group-hover:text-white"/></div>
-            <h4 className="font-black italic uppercase text-lg text-slate-800 leading-tight mb-2">{c.nombre}</h4>
-            <div className="flex items-center gap-2">
-              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${c.ids_ventas?.length > 0 ? 'bg-[#8ED4BE]/10 text-[#8ED4BE]' : 'bg-slate-50 text-slate-300'}`}>
-                {c.ids_ventas?.length || 0} PEDIDOS
-              </span>
-              <span className="text-[10px] font-bold text-slate-300 uppercase italic">Orden: #{c.orden}</span>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -641,6 +657,7 @@ const FormularioCotizacion = ({ alGuardar }) => {
                     )}
                     <input list="temas-list" className="w-full p-4 bg-slate-50 rounded-2xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE]" placeholder="Buscar tema..." value={item.tema} onChange={e => updItem(item.id, 'tema', e.target.value)} />
                   </div>
+                  
                   <div className="flex flex-row flex-wrap justify-between items-center gap-4 pt-4 lg:pt-0 border-t lg:border-t-0">
                     <div className="flex flex-col items-center flex-1 min-w-[70px]">
                        <span className="text-[9px] font-black text-slate-400 uppercase mb-2">Cant.</span>
