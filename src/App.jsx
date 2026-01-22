@@ -365,6 +365,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
             return { ...item, cant: v, pendiente: Math.min(item.pendiente, v) }; 
           }
           if (field === 'pendiente') return { ...item, pendiente: Math.max(0, Math.min(item.cant, value)) };
+          if (field === 'precio' && item.cat === "OTROS...") return { ...item, precio: Math.max(0, value) };
           if (field === 'cat') return { ...item, cat: value, precio: PRODUCTOS_PRECIOS[value] || 0 };
           return { ...item, [field]: value };
         }
@@ -455,11 +456,14 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
                     {editing ? (
                       <div className="flex flex-col gap-1">
                         <input list="productos-list" className="border rounded p-1 w-full" value={item.cat} onChange={e => handleEditItem(item.id, 'cat', e.target.value)} />
+                        {item.cat === "OTROS..." && (
+                          <input type="number" placeholder="Precio manual" className="border rounded p-1 w-full text-purple-600 font-bold" value={item.precio} onChange={e => handleEditItem(item.id, 'precio', parseFloat(e.target.value) || 0)} />
+                        )}
                         <input list="temas-list" className="border rounded p-1 w-full" value={item.tema} onChange={e => handleEditItem(item.id, 'tema', e.target.value)} />
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
-                        <span className={`px-2 py-0.5 rounded-full text-[8px] ${Utils.getThemeColorClass(item.tema)}`}>{item.cat}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[8px] ${Utils.getThemeColorClass(item.cat)}`}>{item.cat}</span>
                         {item.tema}
                       </div>
                     )}
@@ -584,6 +588,7 @@ const FormularioCotizacion = ({ alGuardar }) => {
           return { ...i, cant: newCant, pendiente: Math.min(i.pendiente, newCant) };
         }
         if (field === 'pendiente') return { ...i, pendiente: Math.max(0, Math.min(i.cant, val)) };
+        if (field === 'precio' && i.cat === "OTROS...") return { ...i, precio: Math.max(0, val) };
         return { ...i, [field]: val };
       }
       return i;
@@ -630,11 +635,12 @@ const FormularioCotizacion = ({ alGuardar }) => {
                 <div key={item.id} className="group flex flex-col items-stretch lg:flex-row lg:items-center gap-6 p-6 bg-white border-2 border-slate-100 rounded-[2.5rem] hover:border-[#8ED4BE] transition-all relative">
                   <span className="font-black italic text-slate-200 text-2xl lg:text-3xl w-10 text-center lg:text-left">#{idx+1}</span>
                   <div className="flex-1 w-full grid grid-cols-1 gap-4">
-                    <input list="productos-list" className="w-full p-4 bg-slate-50 rounded-2xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE]" placeholder="Buscar categoría..." value={item.cat} onChange={e => updItem(item.id, 'cat', e.target.value)} />
+                    <input list="productos-list" className={`w-full p-4 bg-slate-50 rounded-2xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE] ${item.cat === "OTROS..." ? 'text-purple-600' : ''}`} placeholder="Buscar categoría..." value={item.cat} onChange={e => updItem(item.id, 'cat', e.target.value)} />
+                    {item.cat === "OTROS..." && (
+                      <input type="number" placeholder="Precio manual" className="w-full p-4 bg-purple-50 rounded-2xl font-black text-purple-600 text-[10px] outline-none border-2 border-purple-100 focus:border-purple-300" value={item.precio || ""} onChange={e => updItem(item.id, 'precio', parseFloat(e.target.value) || 0)} />
+                    )}
                     <input list="temas-list" className="w-full p-4 bg-slate-50 rounded-2xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE]" placeholder="Buscar tema..." value={item.tema} onChange={e => updItem(item.id, 'tema', e.target.value)} />
                   </div>
-                  
-                  {/* DISEÑO RESPONSIVE CORREGIDO PARA SUBTOTAL */}
                   <div className="flex flex-row flex-wrap justify-between items-center gap-4 pt-4 lg:pt-0 border-t lg:border-t-0">
                     <div className="flex flex-col items-center flex-1 min-w-[70px]">
                        <span className="text-[9px] font-black text-slate-400 uppercase mb-2">Cant.</span>
