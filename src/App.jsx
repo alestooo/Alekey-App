@@ -255,7 +255,7 @@ const Estadisticas = ({ ventas }) => {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {Object.entries(data.temas).sort((a,b)=>b[1]-a[1]).map(([tema, c]) => (
               <div key={tema} className="flex flex-col justify-center bg-white/60 p-4 rounded-2xl border border-white min-h-15">
-                <span className="font-bold uppercase text-[8px] lg:text-[9px] text-slate-500 tracking-wider leading-tight mb-1 truncate">{tema}</span>
+                <span className="font-bold uppercase text-[8px] lg:text-[9px] text-slate-500 tracking-wider font-medium leading-tight mb-1 truncate">{tema}</span>
                 <span className="font-black text-[10px] lg:text-[11px] text-[#F79598]">{c} pzs</span>
               </div>
             ))}
@@ -306,6 +306,7 @@ const Estadisticas = ({ ventas }) => {
 const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
   const [mode, setMode] = useState('normal');
   const [filtro, setFiltro] = useState('');
+  const [filtroFolder, setFiltroFolder] = useState('');
   const [editId, setEditId] = useState(null);
   const [editCache, setEditCache] = useState(null);
   const [carpetas, setCarpetas] = useState([]);
@@ -411,7 +412,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
     const tienePendientes = (data.items || []).some(i => i.pendiente > 0);
     const editValido = Utils.validateName(data.nombre || "") && (data.telefono || "").replace(/\D/g, '').length === 8 && (data.items || []).length > 0;
     return (
-      <div key={v.id} className="bg-white rounded-4xl shadow-xl border-l-12 flex flex-col overflow-hidden transition-colors duration-300" style={{ borderLeftColor: tienePendientes ? '#F79598' : '#8ED4BE' }}>
+      <div key={v.id} className={`bg-white rounded-4xl shadow-xl border-l-12 flex flex-col overflow-hidden ${tienePendientes ? 'border-red-400' : 'border-[#8ED4BE]'}`}>
         <div className="p-6 lg:p-8 border-b border-slate-50 bg-white z-10">
           <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
             <div className="flex-1 w-full text-slate-800">
@@ -517,18 +518,33 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
 
   if (folderView) {
     const pedidos = ventas.filter(v => folderView.ids_ventas.includes(v.id));
+    // Filtro dinámico interno para la carpeta
+    const filtradosFolder = pedidos.filter(v => 
+        (v.nombre || "").toLowerCase().includes(filtroFolder.toLowerCase()) || 
+        (v.id || "").toString().includes(filtroFolder) ||
+        (v.telefono || "").toString().includes(filtroFolder)
+    );
+
     return (
       <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in slide-in-from-bottom duration-300">
         <ScrollToTop trigger={folderView} />
-        <button onClick={() => setFolderView(null)} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all"><Plus className="rotate-45" size={20}/> Volver a Centros</button>
-        <div className="mb-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-4xl shadow-lg">
-          <h2 className="text-2xl lg:text-3xl font-black italic uppercase text-slate-800 tracking-tighter">{folderView.nombre} <span className="text-[#8ED4BE]">({pedidos.length})</span></h2>
+        <button onClick={() => setFolderView(null)} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all"><ArrowLeft size={20}/> Volver a Centros</button>
+        
+        <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-4xl shadow-lg border border-slate-50">
+          <div className="flex flex-col">
+            <h2 className="text-2xl lg:text-3xl font-black italic uppercase text-slate-800 tracking-tighter">{folderView.nombre} <span className="text-[#8ED4BE]">({pedidos.length})</span></h2>
+            <div className="mt-4 relative w-full sm:w-64">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16}/>
+                <input type="text" placeholder="Buscar en centro..." className="w-full pl-10 pr-4 py-2 bg-slate-50 rounded-xl text-xs font-bold outline-none border border-transparent focus:border-[#8ED4BE]" value={filtroFolder} onChange={(e) => setFiltroFolder(e.target.value)} />
+            </div>
+          </div>
           <div className="flex flex-col items-end">
             <span className="text-[10px] font-black text-slate-400 uppercase">Total Acumulado</span>
             <span className="text-2xl font-black italic text-[#8ED4BE]">{Utils.currency(pedidos.reduce((s,v)=>s+v.total, 0))}</span>
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-8">{pedidos.length ? pedidos.map(v => renderVentaCard(v, true)) : <div className="p-20 text-center border-4 border-dashed rounded-[3rem] opacity-20 font-black italic text-2xl uppercase">Carpeta Vacía</div>}</div>
+        
+        <div className="grid grid-cols-1 gap-8">{filtradosFolder.length ? filtradosFolder.map(v => renderVentaCard(v, true)) : <div className="p-20 text-center border-4 border-dashed rounded-[3rem] opacity-20 font-black italic text-2xl uppercase">Sin coincidencias</div>}</div>
       </div>
     );
   }
@@ -576,7 +592,11 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
     </div>
   );
 
-  const filtradas = ventas.filter(v => (v.nombre || "").toLowerCase().includes(filtro.toLowerCase()) || (v.id || "").toString().includes(filtro));
+  const filtradas = ventas.filter(v => 
+    (v.nombre || "").toLowerCase().includes(filtro.toLowerCase()) || 
+    (v.id || "").toString().includes(filtro) ||
+    (v.telefono || "").toString().includes(filtro)
+  );
 
   return (
     <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in fade-in duration-500">
@@ -588,7 +608,10 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
           <Link to="/cotizar" className="px-6 py-4 bg-[#F79598] text-white shadow-lg rounded-2xl font-black uppercase text-xs flex items-center gap-2 hover:scale-105 transition-all shadow-[#F79598]/20"><Plus size={18}/> Nueva Venta</Link>
         </div>
       </div>
-      <div className="mb-10 relative"><Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={20}/><input type="text" placeholder="Buscar por nombre o número de orden..." className="w-full pl-14 pr-8 py-5 bg-white rounded-4xl shadow-xl outline-none font-bold text-slate-600 focus:ring-4 ring-[#F79598]/10 transition-all" value={filtro} onChange={(e) => setFiltro(e.target.value)} /></div>
+      <div className="mb-10 relative">
+        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={20}/>
+        <input type="text" placeholder="Buscar por nombre, orden o teléfono..." className="w-full pl-14 pr-8 py-5 bg-white rounded-4xl shadow-xl outline-none font-bold text-slate-600 focus:ring-4 ring-[#F79598]/10 transition-all" value={filtro} onChange={(e) => setFiltro(e.target.value)} />
+      </div>
       <div className="grid grid-cols-1 gap-8">{filtradas.map(v => renderVentaCard(v))}</div>
     </div>
   );
@@ -679,7 +702,7 @@ const FormularioCotizacion = ({ alGuardar }) => {
                        <QuantityControls value={item.cant} onChange={v => updItem(item.id, 'cant', v)} min={1} max={99} />
                     </div>
                     <div className="flex flex-col items-center flex-1 min-w-17.5">
-                       <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase mb-2">Pend.</span>
+                       <span className="text-[9px] font-black text-slate-400 uppercase mb-2">Pend.</span>
                        <QuantityControls value={item.pendiente} onChange={v => updItem(item.id, 'pendiente', v)} min={0} max={item.cant} colorClass="bg-red-50" textClass="text-red-500" />
                     </div>
                     <div className="flex flex-col items-end flex-1 min-w-22.5 pr-2">
