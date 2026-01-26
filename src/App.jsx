@@ -13,7 +13,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
 
-import logoAlekey from './assets/alekey-logo.jpeg';
+import logoAlekey from './assets/alekey-logo.jpeg'; 
 
 // ==========================================
 // 1. CONFIGURACIÓN Y CONSTANTES
@@ -223,7 +223,6 @@ const Estadisticas = ({ ventas }) => {
   }, [ventas, sortFlujo]);
 
   if (!stats) return <div className="p-20 text-center font-black italic opacity-20 text-4xl uppercase text-slate-800">Cargando Datos...</div>;
-
   if (view === 'temas') return (
     <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in slide-in-from-left duration-300 text-slate-800">
       <ScrollToTop trigger={view} />
@@ -234,7 +233,6 @@ const Estadisticas = ({ ventas }) => {
       </div>
     </div>
   );
-
   if (view === 'flujo') return (
     <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in slide-in-from-left duration-300 text-slate-800">
       <ScrollToTop trigger={view} />
@@ -285,15 +283,14 @@ const Estadisticas = ({ ventas }) => {
       </div>
     </div>
   );
-
   return (
     <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in fade-in duration-500 text-slate-800">
       <ScrollToTop />
-      <header className="mb-10 text-center lg:text-left"><h2 className="text-4xl font-black italic uppercase tracking-tighter font-black">Métricas Alekey<span className="text-[#8ED4BE]">.</span></h2></header>
+      <header className="mb-10 text-center lg:text-left"><h2 className="text-4xl font-black italic uppercase tracking-tighter font-black">Métricas Alekey<span className="text-[#8ED4BE] font-black">.</span></h2></header>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        <StatCard icon={<TrendingUp size={24} className="text-[#8ED4BE]"/>} label="Ingresos" val={Utils.currency(stats.totalDinero)} borderColor="border-[#8ED4BE]"/>
-        <StatCard icon={<AlertCircle size={24} className="text-[#F79598]"/>} label="Pendientes" val={stats.totalPendientes} borderColor="border-[#F79598]"/>
-        <StatCard icon={<Package size={24} className="text-[#C0C976]"/>} label="Piezas" val={stats.piezasTotales} borderColor="border-[#C0C976]"/>
+        <StatCard icon={<TrendingUp size={24} className="text-[#8ED4BE] font-black"/>} label="Ingresos" val={Utils.currency(stats.totalDinero)} borderColor="border-[#8ED4BE]"/>
+        <StatCard icon={<AlertCircle size={24} className="text-[#F79598] font-black"/>} label="Pendientes" val={stats.totalPendientes} borderColor="border-[#F79598]"/>
+        <StatCard icon={<Package size={24} className="text-[#C0C976] font-black"/>} label="Piezas" val={stats.piezasTotales} borderColor="border-[#C0C976]"/>
         <StatCard icon={<User size={24} className="text-slate-800"/>} label="Top Cliente" val={stats.listaFlujo.sort((a,b)=>b.total-a.total)[0]?.nombre || 'N/A'} borderColor="border-slate-800" isClient/>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -314,7 +311,7 @@ const Estadisticas = ({ ventas }) => {
                 </ResponsiveContainer>
             </div>
         </div>
-        <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 text-center lg:text-left"><div className="flex justify-between items-center mb-8"><h4 className="font-black italic uppercase text-xs flex items-center gap-2 text-slate-400 font-black"><Star size={16} className="text-[#F79598]"/> Ranking de Categorías</h4><button onClick={() => setView('categorias')} className="bg-slate-50 px-3 py-1.5 rounded-full font-black text-[9px] uppercase text-slate-400 hover:bg-[#F79598] hover:text-white transition-all shadow-sm">Ver más</button></div><div className="space-y-4">{stats.topCategorias.map(([cat, data], i) => (<div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl group hover:bg-white hover:shadow-md transition-all font-black"><div className="flex items-center gap-3"><span className="font-black italic text-slate-300 transition-colors group-hover:text-[#F79598]"># {i+1}</span><span className="font-bold uppercase text-[10px] text-slate-700">{cat}</span></div><span className="font-black bg-[#F79598]/10 text-[#F79598] px-3 py-1 rounded-full text-[10px]">{data.total} pzs</span></div>))}</div></div>
+        <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 text-center lg:text-left"><div className="flex justify-between items-center mb-8"><h4 className="font-black italic uppercase text-xs flex items-center gap-2 text-slate-400 font-black"><Star size={16} className="text-[#F79598]"/> Ranking de Categorías</h4><button onClick={() => setView('categorias')} className="bg-slate-50 px-3 py-1.5 rounded-full font-black text-[9px] uppercase text-slate-400 hover:bg-[#F79598] hover:white transition-all shadow-sm">Ver más</button></div><div className="space-y-4">{stats.topCategorias.map(([cat, data], i) => (<div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl group hover:bg-white hover:shadow-md transition-all font-black"><div className="flex items-center gap-3"><span className="font-black italic text-slate-300 transition-colors group-hover:text-[#F79598]"># {i+1}</span><span className="font-bold uppercase text-[10px] text-slate-700">{cat}</span></div><span className="font-black bg-[#F79598]/10 text-[#F79598] px-3 py-1 rounded-full text-[10px]">{data.total} pzs</span></div>))}</div></div>
       </div>
     </div>
   );
@@ -333,7 +330,6 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
   const [carpetas, setCarpetas] = useState([]);
   const [folderView, setFolderView] = useState(null);
   const [provinciaEdit, setProvinciaEdit] = useState("San José");
-
   useEffect(() => { obtenerCarpetas(); }, []);
   const obtenerCarpetas = async () => { 
     const { data } = await supabase.from('carpetas_centros').select('*').order('orden', { ascending: true });
@@ -354,13 +350,11 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
     const result = await Swal.fire({ title: `¿Eliminar centro?`, text: `Se borrará "${nombre}". Los pedidos NO se borran del historial general.`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#F79598' });
     if (result.isConfirmed) { await supabase.from('carpetas_centros').delete().eq('id', id); obtenerCarpetas(); setFolderView(null); }
   };
-
   const editarNombreCarpeta = async (id, actual, e) => {
     if (e) e.stopPropagation();
     const { value: nombre } = await Swal.fire({ title: 'Editar Nombre', input: 'text', inputValue: actual, showCancelButton: true });
     if (nombre) { await supabase.from('carpetas_centros').update({ nombre }).eq('id', id); obtenerCarpetas(); }
   };
-
   const moverCarpeta = async (id, direccion, e) => {
     if (e) e.stopPropagation();
     const index = carpetas.findIndex(c => c.id === id);
@@ -373,7 +367,6 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
     const updates = nuevas.map((c, i) => supabase.from('carpetas_centros').update({ orden: i }).eq('id', c.id));
     await Promise.all(updates);
   };
-
   const agregarACarpeta = async (ventaId) => {
     if (!carpetas.length) return Swal.fire('Error', 'Primero crea un centro', 'error');
     const { value: folderId } = await Swal.fire({ title: 'Seleccionar Centro', input: 'select', inputOptions: Object.fromEntries(carpetas.map(c => [c.id, c.nombre])), showCancelButton: true });
@@ -386,13 +379,11 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
       }
     }
   };
-
   const deseleccionarDeCarpeta = async (ventaId, folder) => {
     const nuevosIds = folder.ids_ventas.filter(id => id !== ventaId);
     await supabase.from('carpetas_centros').update({ ids_ventas: nuevosIds }).eq('id', folder.id);
     setFolderView({ ...folder, ids_ventas: nuevosIds }); obtenerCarpetas();
   };
-
   const handleEditItem = (itemId, field, value) => {
     setEditCache(prev => {
       const updatedItems = prev.items.map(item => {
@@ -413,7 +404,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
   };
 
   const agregarLineaEnEdicion = () => {
-    const nuevo = { id: Date.now(), cant: 1, cat: 'Abecedarios', tema: 'Abeja Acuarela', precio: 5000, pendiente: 0 };
+    const nuevo = { id: Date.now(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 0 };
     setEditCache(prev => {
       const updatedItems = [...prev.items, nuevo];
       return { ...prev, items: updatedItems, total: updatedItems.reduce((s, i) => s + (i.cant * i.precio), 0) };
@@ -544,12 +535,10 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
         (v.id || "").toString().includes(filtroFolder) ||
         (v.telefono || "").toString().includes(filtroFolder)
     );
-
     return (
       <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in slide-in-from-bottom duration-300 font-black">
         <ScrollToTop trigger={folderView} />
         <button onClick={() => setFolderView(null)} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all font-black"><ArrowLeft size={20}/> Volver a Centros</button>
-        
         <div className="mb-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-4xl shadow-lg border border-slate-50 font-black">
           <div className="flex flex-col">
             <h2 className="text-2xl lg:text-3xl font-black italic uppercase text-slate-800 tracking-tighter font-black">{folderView.nombre} <span className="text-[#8ED4BE] font-black">({pedidos.length})</span></h2>
@@ -611,12 +600,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
     </div>
   );
 
-  const filtradas = ventas.filter(v => 
-    (v.nombre || "").toLowerCase().includes(filtro.toLowerCase()) || 
-    (v.id || "").toString().includes(filtro) ||
-    (v.telefono || "").toString().includes(filtro)
-  );
-
+  const filtradas = ventas.filter(v => (v.nombre || "").toLowerCase().includes(filtro.toLowerCase()) || (v.id || "").toString().includes(filtro) || (v.telefono || "").toString().includes(filtro));
   return (
     <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in fade-in duration-500 font-black">
       <ScrollToTop trigger={mode} />
@@ -649,7 +633,6 @@ const FormularioCotizacion = ({ alGuardar }) => {
   const [items, setItems] = useState([{ id: Date.now(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 0 }]);
   const total = items.reduce((acc, i) => acc + (i.cant * i.precio), 0);
   const esValido = Utils.validateName(nombre) && tel.replace(/\D/g, '').length === 8 && items.length > 0 && items.every(i => i.cat && i.tema);
-
   const agregarLinea = () => setItems([...items, { id: Date.now(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 0 }]);
   const borrarLinea = (id) => setItems(items.filter(i => i.id !== id));
   const updItem = (id, field, val) => {
@@ -670,16 +653,7 @@ const FormularioCotizacion = ({ alGuardar }) => {
 
   const guardar = async () => {
     if (!esValido) return;
-    const nueva = { 
-      id: Utils.generateId(),
-      nombre, 
-      telefono: tel, 
-      direccion: (provincia ? provincia + ", " : "") + direccion, 
-      items, 
-      total, 
-      fecha: new Date().toLocaleDateString(), 
-      created_at: new Date().toISOString() 
-    };
+    const nueva = { id: Utils.generateId(), nombre, telefono: tel, direccion: (provincia ? provincia + ", " : "") + direccion, items, total, fecha: new Date().toLocaleDateString(), created_at: new Date().toISOString() };
     await alGuardar(nueva);
     navigate('/ventas');
   };
@@ -692,7 +666,7 @@ const FormularioCotizacion = ({ alGuardar }) => {
           <div className="text-center lg:text-left font-black"><h2 className="text-4xl font-black italic uppercase tracking-tighter font-black">Nueva Cotización<span className="text-[#8ED4BE] font-black">.</span></h2><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-2 font-black">Completa los datos para generar el pedido</p></div>
           <div className="flex items-center gap-4 bg-white/5 p-4 rounded-4xl border border-white/10 font-black"><div className="text-right font-black"><p className="text-[9px] font-black uppercase text-slate-400 font-black">Total Estimado</p><p className="text-3xl font-black italic text-[#8ED4BE] font-black">{Utils.currency(total)}</p></div><div className="w-12 h-12 bg-[#8ED4BE] rounded-2xl flex items-center justify-center text-slate-900 shadow-lg shadow-[#8ED4BE]/20 font-black"><Package size={24}/></div></div>
         </div>
-        <div className="p-8 lg:p-12 space-y-10 font-black">
+        <div className="p-8 lg:p-12 space-y-10 font-black text-slate-800">
           <section className="grid grid-cols-1 md:grid-cols-2 gap-8 font-black">
             <div className="space-y-2 font-black"><label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2 font-black"><User size={14}/> Nombre Completo</label><input type="text" className={`w-full p-6 bg-slate-50 rounded-4xl font-black text-slate-700 outline-none border-2 transition-all font-black ${nombre && !Utils.validateName(nombre) ? 'border-red-100 bg-red-50/30 font-black' : 'border-transparent focus:border-[#8ED4BE] font-black'}`} placeholder="Buscando cliente..." value={nombre} onChange={e => setNombre(Utils.capitalize(e.target.value))} /></div>
             <div className="space-y-2 font-black"><label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2 font-black"><Clock size={14}/> Teléfono (8 dígitos)</label><input type="text" className="w-full p-6 bg-slate-50 rounded-4xl font-black text-slate-700 outline-none border-2 border-transparent focus:border-[#8ED4BE] transition-all font-black" placeholder="0000-0000" value={tel} onChange={e => setTel(Utils.formatPhone(e.target.value))} /></div>
@@ -702,7 +676,7 @@ const FormularioCotizacion = ({ alGuardar }) => {
             <div className="space-y-2 font-black"><label className="text-[10px] font-black uppercase text-slate-400 ml-4 font-black">Ubicación Específica</label><select className="w-full p-5 bg-white rounded-2xl font-black uppercase text-xs outline-none shadow-sm font-black" value={direccion} onChange={e => setDireccion(e.target.value)}><option value="" disabled className="font-black">Seleccione...</option>{provincia && UBICACIONES_CR[provincia].map(loc => <option key={loc} value={loc} className="font-black">{loc}</option>)}</select></div>
           </section>
           <section className="space-y-6 font-black">
-            <div className="flex justify-between items-center px-4 font-black"><h4 className="font-black italic uppercase text-slate-800 flex items-center gap-2 text-sm font-black"><ShoppingBag size={18} className="text-[#8ED4BE] font-black"/> Desglose de Productos</h4><button onClick={agregarLinea} className="p-3 bg-slate-900 text-white rounded-xl hover:scale-110 transition-all shadow-xl shadow-slate-900/20 font-black"><Plus size={20}/></button></div>
+            <div className="flex justify-between items-center px-4 font-black"><h4 className="font-black italic uppercase text-slate-800 flex items-center gap-2 text-sm font-black"><ShoppingBag size={18} className="text-[#8ED4BE] font-black"/> Desglose de Productos</h4></div>
             <div className="space-y-4 font-black">
               {items.map((item, idx) => (
                 <div key={item.id} className="group flex flex-col items-stretch lg:flex-row lg:items-center gap-6 p-6 bg-white border-2 border-slate-100 rounded-[2.5rem] hover:border-[#8ED4BE] transition-all relative font-black">
@@ -714,7 +688,6 @@ const FormularioCotizacion = ({ alGuardar }) => {
                     )}
                     <input list="temas-list" className="w-full p-4 bg-slate-50 rounded-4xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE] font-black" placeholder="Buscar tema..." value={item.tema} onChange={e => updItem(item.id, 'tema', e.target.value)} />
                   </div>
-                  
                   <div className="grid grid-cols-3 items-center gap-2 sm:gap-6 pt-4 lg:pt-0 border-t lg:border-t-0 font-black">
                     <div className="flex flex-col items-center flex-1 min-w-17.5 font-black">
                        <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase mb-2 font-black">Cant.</span>
@@ -737,6 +710,9 @@ const FormularioCotizacion = ({ alGuardar }) => {
                 </div>
               ))}
             </div>
+            <button onClick={agregarLinea} className="w-full py-4 border-2 border-dashed border-slate-200 rounded-3xl text-slate-400 font-black uppercase text-xs hover:bg-slate-50 transition-all flex items-center justify-center gap-2 font-black">
+              <Plus size={18}/> Agregar Línea
+            </button>
           </section>
           <button disabled={!esValido} onClick={guardar} className={`w-full p-8 rounded-4xl font-black italic uppercase text-xl shadow-2xl transition-all flex items-center justify-center gap-4 font-black ${esValido ? 'bg-slate-900 text-[#8ED4BE] hover:scale-[1.02] shadow-slate-200 font-black' : 'bg-slate-100 text-slate-300 cursor-not-allowed font-black'}`}><Check size={32}/> {esValido ? 'Confirmar y Guardar Pedido' : 'Complete los datos'}</button>
         </div>
@@ -800,7 +776,6 @@ export default function App() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
                          || window.navigator.standalone 
                          || document.referrer.includes('android-app://');
-
     if (isStandalone) {
       setShowSplash(true);
       setTimeout(() => setShowSplash(false), 2500);
@@ -820,7 +795,6 @@ export default function App() {
     else await fetchVentas();
     Swal.fire({ title: '¡Pedido Guardado!', icon: 'success', confirmButtonColor: '#8ED4BE', customClass: { popup: 'rounded-[3rem] font-black italic font-black' } });
   };
-
   const alEliminar = async (id) => {
     const res = await Swal.fire({ title: '¿Eliminar Venta?', text: "Esta acción no se puede revertir", icon: 'warning', showCancelButton: true, confirmButtonColor: '#F79598', cancelButtonColor: '#cbd5e1' });
     if (res.isConfirmed) {
@@ -828,7 +802,6 @@ export default function App() {
       setVentas(ventas.filter(v => v.id !== id));
     }
   };
-
   const alActualizar = async (id, dataEditada) => {
     const { error } = await supabase.from('ventas').update(dataEditada).eq('id', id);
     if (error) return Swal.fire('Error', error.message, 'error');
@@ -837,11 +810,9 @@ export default function App() {
   };
 
   if (showSplash) return <SplashScreen />;
-
   return (
     <Router>
       <div className="flex flex-col lg:flex-row h-screen bg-slate-50 font-sans overflow-hidden font-black">
-        
         <aside className="hidden lg:flex w-32 bg-white border-r border-slate-100 flex-col items-center py-10 gap-8 z-50 font-black">
           <div className="w-16 h-16 bg-[#8ED4BE] rounded-[1.8rem] items-center justify-center shadow-lg shadow-[#8ED4BE]/30 mb-6 flex font-black"><Package className="text-slate-800 font-black" size={28}/></div>
           <nav className="flex flex-col gap-8 justify-center w-full font-black">
@@ -854,7 +825,6 @@ export default function App() {
             <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center font-bold text-[#8ED4BE] text-xs font-black">IV</div>
           </div>
         </aside>
-
         <main className="flex-1 overflow-y-auto bg-slate-50/30 font-black">
           <Routes>
             <Route path="/" element={<DashboardHome historial={ventas} />} />
@@ -863,7 +833,6 @@ export default function App() {
             <Route path="/stats" element={<Estadisticas ventas={ventas} />} />
           </Routes>
         </main>
-
         <footer className="lg:hidden w-full bg-white border-t border-slate-100 flex items-center justify-around py-4 px-2 z-50 font-black">
           <nav className="flex w-full justify-around items-center font-black">
             <NavLink to="/" icon={<Home size={22}/>} label="Home" isMobile={true} />
@@ -873,7 +842,6 @@ export default function App() {
           </nav>
         </footer>
       </div>
-
       <datalist id="productos-list">{Object.keys(PRODUCTOS_PRECIOS).map(p => <option key={p} value={p} className="font-black" />)}</datalist>
       <datalist id="temas-list">{TEMAS_PREDEFINIDOS.map(t => <option key={t} value={t} className="font-black" />)}</datalist>
     </Router>
