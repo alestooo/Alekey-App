@@ -35,7 +35,7 @@ const PRODUCTOS_PRECIOS = {
   "Calendario 3": 3750, "Cumpleaños": 1500, "Cumpleaños MR-2": 2500, "DG - amarilla": 1350,
   "DCC": 3750, "Distintivo": 1350, "Distintivo foto": 1350, "DM - celeste": 700,
   "DP - rosado": 500, "Fechero": 4750, "Fechero completo": 8500, "Laminario 5": 2250,
-  "Laminario 6": 2750, "Laminario 7": 3150, "Laminario 8": 3500, "Mural-1":1500, "MR-2": 2500,
+  "Laminario 6": 2750, "Laminario 7": 3150, "Laminario 8": 3500, "Mural-1":1500, "Mural Laminado 1":2500, "MR-2": 2500,
   "MR-6": 6500, "MR-8": 8000, "Nombres": 1500, "Pasafecha": 12500, "Pasalista": 5500, "Puerta": 1500, "Puerta grande": 2500,
   "Rótulo 60 cm": 2750, "Tablas": 2000, "Velcro": 1250, "OTROS...": 0
 };
