@@ -37,7 +37,7 @@ const PRODUCTOS_PRECIOS = {
   "DP - rosado": 500, "Fechero": 4750, "Fechero completo": 8500, "Laminario 5": 2250,
   "Laminario 6": 2750, "Laminario 7": 3150, "Laminario 8": 3500, "Mural-1":1500, "Mural Laminado 1":2500, "MR-2": 2500,
   "MR-6": 6500, "MR-8": 8000, "Nombres": 1500, "Pasafecha": 12500, "Pasalista": 5500, "Puerta": 1500, "Puerta grande": 2500,
-  "Rótulo 60 cm": 2750, "Tablas": 2000, "Velcro": 1250, "OTROS...": 0
+  "Rótulo 60 cm": 2750, "Tablas": 2000, "Velcro": 1250, "Welcome": 4750, "OTROS...": 0
 };
 
 const TEMAS_PREDEFINIDOS = [
