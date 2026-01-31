@@ -1,19 +1,20 @@
 import { supabase } from './supabaseClient';
 import Swal from 'sweetalert2';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react'; 
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable"; 
 import { 
   Plus, Trash2, Home, ShoppingBag, Printer, Edit2, Check, Search,
   ChevronUp, ChevronDown, BarChart3, User, Package, Clock, TrendingUp,
-  AlertCircle, MapPin, Star, Trophy, FolderPlus, Folder, Calendar, ArrowLeft, FolderMinus
+  AlertCircle, MapPin, Star, Trophy, FolderPlus, Folder, Calendar, ArrowLeft, FolderMinus,
+  Box, Save
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
 
-import logoAlekey from './assets/alekey-logo.jpeg'; 
+import logoAlekey from './assets/alekey-logo.jpeg';
 
 // ==========================================
 // 1. CONFIGURACIÓN Y CONSTANTES
@@ -74,8 +75,10 @@ const Utils = {
     const hasNumbers = /\d/.test(str);
     return words.length >= 3 && !hasNumbers;
   },
-  generateId: () => `ALK-${Math.random().toString(36).substr(2, 5).toUpperCase()}`,
-  getThemeColorClass: (tema) => {
+generateId: () => {
+    const random = Math.random().toString(36).substring(2, 7).toUpperCase();
+    return `ALK-${Date.now().toString().slice(-5)}-${random}`;
+  },  getThemeColorClass: (tema) => {
     if (tema === "LAMINADO...") return "bg-blue-50 border-blue-200 text-blue-600";
     if (tema === "ENVIO...") return "bg-green-50 border-green-200 text-green-600";
     if (tema === "FALTA...") return "bg-red-50 border-red-200 text-red-600";
@@ -329,11 +332,24 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
   const [editCache, setEditCache] = useState(null);
   const [carpetas, setCarpetas] = useState([]);
   const [folderView, setFolderView] = useState(null);
-  const [provinciaEdit, setProvinciaEdit] = useState("San José");
+  const [provinciaEdit, setProvinciaEdit] = useState("Heredia");
+
+  /* ================= PAGINACIÓN ================= */
+  const ITEMS_POR_PAGINA = 20;
+  const [pagina, setPagina] = useState(1);
+
   useEffect(() => { obtenerCarpetas(); }, []);
-  const obtenerCarpetas = async () => { 
-    const { data } = await supabase.from('carpetas_centros').select('*').order('orden', { ascending: true });
-    if (data) setCarpetas(data); 
+  useEffect(() => {
+    const mainContent = document.querySelector('main');
+    if (mainContent) mainContent.scrollTo(0, 0);
+  }, [folderView, pagina, mode]);
+
+  const obtenerCarpetas = async () => {
+    const { data } = await supabase
+      .from('carpetas_centros')
+      .select('*')
+      .order('orden', { ascending: true });
+    if (data) setCarpetas(data);
   };
   
   const crearCarpeta = async () => {
@@ -430,13 +446,13 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
             <div className="flex-1 w-full text-slate-800">
               {editing ? (
                 <div className="space-y-4">
-                  <input className={`text-xl font-black border-b-2 outline-none w-full bg-slate-50 p-2 ${!Utils.validateName(data.nombre) ? 'border-red-300' : 'border-[#8ED4BE]'}`} value={data.nombre} onChange={e => setEditCache({...editCache, nombre: Utils.capitalize(e.target.value)})} />
-                  <div className="flex flex-wrap gap-2">
+                  <input className={`text-xl lg:text-2xl font-black italic border-b-2 outline-none w-full bg-slate-50 p-2 ${!Utils.validateName(data.nombre) ? 'border-red-300' : 'border-[#8ED4BE]'}`} value={data.nombre} onChange={e => setEditCache({...editCache, nombre: Utils.capitalize(e.target.value)})} />
+                  <div className="flex flex-wrap gap-3">
                     <input className="text-sm font-bold border-b outline-none w-32 bg-transparent" value={data.telefono} onChange={e => setEditCache({...editCache, telefono: Utils.formatPhone(e.target.value)})} />
-                    <select className="text-xs font-bold border-b bg-slate-50 p-1" value={provinciaEdit} onChange={e => setProvinciaEdit(e.target.value)}>
+                    <select className="text-sm font-bold border-b outline-none bg-transparent" value={provinciaEdit} onChange={e => setProvinciaEdit(e.target.value)}>
                       {Object.keys(UBICACIONES_CR).map(p => <option key={p} value={p}>{p}</option>)}
                     </select>
-                    <select className="text-xs font-bold border-b bg-slate-50 p-1" value={data.direccion} onChange={e => setEditCache({...editCache, direccion: e.target.value})}>
+                    <select className="text-sm font-bold border-b outline-none bg-transparent" value={data.direccion} onChange={e => setEditCache({...editCache, direccion: e.target.value})}>
                       {UBICACIONES_CR[provinciaEdit].map(loc => <option key={loc} value={loc}>{loc}</option>)}
                     </select>
                   </div>
@@ -451,15 +467,15 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
                 </div>
               )}
             </div>
-            <div className="flex gap-2 w-full lg:w-auto">
+            <div className="grid grid-cols-2 gap-2 w-full lg:flex lg:w-auto lg:gap-2">
               {editing ? (
-                <button disabled={!editValido} onClick={() => {onUpdate(v.id, editCache); setEditId(null);}} className="flex-1 p-4 bg-emerald-500 text-white rounded-2xl flex justify-center"><Check size={24}/></button>
+                <button disabled={!editValido} onClick={() => {onUpdate(v.id, editCache); setEditId(null);}} className="col-span-2 p-4 bg-emerald-500 text-white rounded-2xl shadow-lg active:scale-95 flex justify-center"><Check size={24}/></button>
               ) : (
                 <>
-                  <button onClick={() => {setEditId(v.id); setEditCache(JSON.parse(JSON.stringify(v)));}} className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:bg-slate-900 hover:text-white transition-all"><Edit2 size={18}/></button>
-                  {inFolder ? <button onClick={() => deseleccionarDeCarpeta(v.id, folderView)} className="p-3 bg-orange-50 text-orange-500 rounded-xl hover:bg-orange-500 hover:text-white transition-all"><FolderMinus size={18}/></button> : <button onClick={() => agregarACarpeta(v.id)} className="p-3 bg-purple-50 text-purple-500 rounded-xl hover:bg-purple-500 hover:text-white transition-all"><FolderPlus size={18}/></button>}
-                  <button onClick={() => exportToPDF(v)} className="p-3 bg-blue-50 text-blue-500 rounded-xl hover:bg-blue-600 hover:text-white transition-all"><Printer size={18}/></button>
-                  <button onClick={() => onDelete(v.id)} className="p-3 bg-red-50 text-red-300 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 size={18}/></button>
+                  <button onClick={() => {setEditId(v.id); setEditCache(JSON.parse(JSON.stringify(v)));}} className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:bg-slate-900 hover:text-white transition-all flex justify-center items-center"><Edit2 size={18}/></button>
+                  {inFolder ? <button onClick={() => deseleccionarDeCarpeta(v.id, folderView)} className="p-3 bg-orange-50 text-orange-500 rounded-xl hover:bg-orange-500 hover:text-white transition-all flex justify-center items-center"><FolderMinus size={18}/></button> : <button onClick={() => agregarACarpeta(v.id)} className="p-3 bg-purple-50 text-purple-500 rounded-xl hover:bg-purple-500 hover:text-white transition-all flex justify-center items-center"><FolderPlus size={18}/></button>}
+                  <button onClick={() => exportToPDF(v)} className="p-3 bg-blue-50 text-blue-500 rounded-xl hover:bg-blue-600 hover:text-white transition-all flex justify-center items-center"><Printer size={18}/></button>
+                  <button onClick={() => onDelete(v.id)} className="p-3 bg-red-50 text-red-300 rounded-xl hover:bg-red-500 hover:text-white transition-all flex justify-center items-center"><Trash2 size={18}/></button>
                 </>
               )}
             </div>
@@ -528,94 +544,250 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
     );
   };
 
-  if (folderView) {
-    const pedidos = ventas.filter(v => folderView.ids_ventas.includes(v.id));
-    const filtradosFolder = pedidos.filter(v => 
-        (v.nombre || "").toLowerCase().includes(filtroFolder.toLowerCase()) || 
-        (v.id || "").toString().includes(filtroFolder) ||
-        (v.telefono || "").toString().includes(filtroFolder)
+   if (folderView) {
+    const pedidos = ventas.filter(v =>
+      (folderView.ids_ventas || []).includes(v.id)
     );
+
+    const filtradosFolder = pedidos.filter(v =>
+      (v.nombre || "").toLowerCase().includes(filtroFolder.toLowerCase()) ||
+      (v.id || "").toString().includes(filtroFolder) ||
+      (v.telefono || "").toString().includes(filtroFolder)
+    );
+
     return (
       <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in slide-in-from-bottom duration-300 font-black">
         <ScrollToTop trigger={folderView} />
-        <button onClick={() => setFolderView(null)} className="mb-8 flex items-center gap-2 font-black uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all font-black"><ArrowLeft size={20}/> Volver a Centros</button>
-        <div className="mb-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-4xl shadow-lg border border-slate-50 font-black">
-          <div className="flex flex-col">
-            <h2 className="text-2xl lg:text-3xl font-black italic uppercase text-slate-800 tracking-tighter font-black">{folderView.nombre} <span className="text-[#8ED4BE] font-black">({pedidos.length})</span></h2>
-            <div className="mt-4 relative w-full sm:w-64 font-black">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 font-black" size={16}/>
-                <input type="text" placeholder="Buscar en centro..." className="w-full pl-10 pr-4 py-2 bg-slate-50 rounded-xl text-xs font-black outline-none border border-transparent focus:border-[#8ED4BE]" value={filtroFolder} onChange={(e) => setFiltroFolder(e.target.value)} />
+
+        <button
+          onClick={() => setFolderView(null)}
+          className="mb-8 flex items-center gap-2 uppercase text-xs text-[#8ED4BE] hover:scale-105 transition-all"
+        >
+          <ArrowLeft size={20}/> Volver a Centros
+        </button>
+
+        <div className="mb-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-4xl shadow-lg border border-slate-50">
+          <div>
+            <h2 className="text-2xl lg:text-3xl font-black italic uppercase tracking-tighter">
+              {folderView.nombre}
+              <span className="text-[#8ED4BE]"> ({pedidos.length})</span>
+            </h2>
+
+            <div className="mt-4 relative w-full sm:w-64">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16}/>
+              <input
+                type="text"
+                placeholder="Buscar en centro..."
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 rounded-xl text-xs outline-none border focus:border-[#8ED4BE]"
+                value={filtroFolder}
+                onChange={(e) => setFiltroFolder(e.target.value)}
+              />
             </div>
           </div>
-          <div className="flex flex-col items-end font-black">
-            <span className="text-[10px] font-black text-slate-400 uppercase font-black">Total Acumulado</span>
-            <span className="text-2xl font-black italic text-[#8ED4BE] font-black">{Utils.currency(pedidos.reduce((s,v)=>s+v.total, 0))}</span>
+
+          <div className="text-right">
+            <span className="text-[10px] text-slate-400 uppercase">
+              Total Acumulado
+            </span>
+            <div className="text-2xl font-black italic text-[#8ED4BE]">
+              {Utils.currency(pedidos.reduce((s, v) => s + v.total, 0))}
+            </div>
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-8 font-black">{filtradosFolder.length ? filtradosFolder.map(v => renderVentaCard(v, true)) : <div className="p-20 text-center border-4 border-dashed rounded-[3rem] opacity-20 font-black italic text-2xl uppercase">Sin coincidencias</div>}</div>
+
+        <div className="grid grid-cols-1 gap-8">
+          {filtradosFolder.length
+            ? filtradosFolder.map(v => renderVentaCard(v, true))
+            : (
+              <div className="p-20 text-center border-4 border-dashed rounded-[3rem] opacity-20 italic text-2xl uppercase">
+                Sin coincidencias
+              </div>
+            )
+          }
+        </div>
       </div>
     );
   }
 
-  if (mode === 'carpetas') return (
-    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in fade-in duration-500 font-black">
-      <ScrollToTop trigger={mode} />
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-12 font-black">
-        <div className="text-center sm:text-left"><h2 className="text-4xl font-black italic uppercase tracking-tighter text-slate-800 font-black">Centros Educativos<span className="text-[#8ED4BE] font-black">.</span></h2><p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1 font-black">Organiza tus pedidos por instituciones</p></div>
-        <div className="flex gap-3 font-black">
-          <button onClick={() => setMode('normal')} className="px-6 py-4 bg-white shadow-lg rounded-2xl font-black uppercase text-xs text-slate-400 hover:text-slate-800 transition-all font-black">Historial</button>
-          <button onClick={crearCarpeta} className="px-6 py-4 bg-[#8ED4BE] text-slate-800 shadow-lg rounded-2xl font-black uppercase text-xs flex items-center gap-2 hover:scale-105 transition-all font-black"><FolderPlus size={18}/> Nuevo Centro</button>
+  /* ======================= VISTA CARPETAS ======================= */
+  if (mode === 'carpetas') {
+    return (
+      <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in fade-in duration-500 font-black">
+        <ScrollToTop trigger={mode} />
+
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-12">
+          <div>
+            <h2 className="text-4xl font-black italic uppercase tracking-tighter">
+              Centros Educativos<span className="text-[#8ED4BE]">.</span>
+            </h2>
+            <p className="text-[10px] text-slate-400 uppercase tracking-[0.2em] mt-1">
+              Organiza tus pedidos por instituciones
+            </p>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => setMode('normal')}
+              className="px-6 py-4 bg-white shadow-lg rounded-2xl uppercase text-xs text-slate-400 hover:text-slate-800"
+            >
+              Historial
+            </button>
+
+            <button
+              onClick={crearCarpeta}
+              className="px-6 py-4 bg-[#8ED4BE] text-slate-800 shadow-lg rounded-2xl uppercase text-xs flex items-center gap-2 hover:scale-105"
+            >
+              <FolderPlus size={18}/> Nuevo Centro
+            </button>
+          </div>
+        </div>
+
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  {carpetas.map(c => {
+    const pedidosEnCarpeta = ventas.filter(v =>
+      (c.ids_ventas || []).includes(v.id)
+    );
+
+    const totalCarpeta = pedidosEnCarpeta.reduce(
+      (s, v) => s + (v.total || 0), 0
+    );
+
+    return (
+      <div
+        key={c.id}
+        onClick={() => setFolderView(c)}
+        className="group bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 cursor-pointer hover:shadow-2xl transition-all relative"
+      >
+        <div className="absolute top-0 right-0 p-4 flex gap-1 bg-white/60 rounded-bl-3xl z-10">
+          <button onClick={(e) => moverCarpeta(c.id, 'izq', e)} className="p-2 bg-slate-100 rounded-lg">
+            <ChevronUp className="-rotate-90" size={14}/>
+          </button>
+          <button onClick={(e) => moverCarpeta(c.id, 'der', e)} className="p-2 bg-slate-100 rounded-lg">
+            <ChevronDown className="-rotate-90" size={14}/>
+          </button>
+          <button onClick={(e) => editarNombreCarpeta(c.id, c.nombre, e)} className="p-2 bg-blue-50 text-blue-400 rounded-lg">
+            <Edit2 size={14}/>
+          </button>
+          <button onClick={(e) => eliminarCarpeta(c.id, c.nombre, e)} className="p-2 bg-red-50 text-red-300 rounded-lg">
+            <Trash2 size={14}/>
+          </button>
+        </div>
+
+        <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center mb-6">
+          <Folder size={32} className="text-slate-300"/>
+        </div>
+
+        <h4 className="font-black italic uppercase text-lg mb-2">
+          {c.nombre}
+        </h4>
+
+        {/* ✅ CONTADOR REAL */}
+        <span className="text-[10px] uppercase text-slate-400">
+          {pedidosEnCarpeta.length} pedidos
+        </span>
+
+        <div className="mt-3 text-[#8ED4BE] font-black italic">
+          {Utils.currency(totalCarpeta)}
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 font-black">
-        {carpetas.map(c => {
-          const pedidosEnCarpeta = ventas.filter(v => c.ids_ventas.includes(v.id));
-          const totalCarpeta = pedidosEnCarpeta.reduce((s, v) => s + (v.total || 0), 0);
-          return (
-            <div key={c.id} onClick={() => setFolderView(c)} className="group bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 cursor-pointer hover:shadow-2xl transition-all relative overflow-hidden font-black">
-              <div className="absolute top-0 right-0 p-4 flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all bg-white/60 lg:bg-transparent rounded-bl-3xl z-10 font-black">
-                <button onClick={(e) => moverCarpeta(c.id, 'izq', e)} className="p-2 bg-slate-100 rounded-lg hover:bg-slate-200"><ChevronUp className="-rotate-90 font-black" size={14}/></button>
-                <button onClick={(e) => moverCarpeta(c.id, 'der', e)} className="p-2 bg-slate-100 rounded-lg hover:bg-slate-200"><ChevronDown className="-rotate-90 font-black" size={14}/></button>
-                <button onClick={(e) => editarNombreCarpeta(c.id, c.nombre, e)} className="p-2 bg-blue-50 text-blue-400 rounded-lg hover:bg-blue-400 hover:text-white font-black"><Edit2 size={14}/></button>
-                <button onClick={(e) => eliminarCarpeta(c.id, c.nombre, e)} className="p-2 bg-red-50 text-red-300 rounded-lg hover:bg-red-400 hover:text-white font-black"><Trash2 size={14}/></button>
-              </div>
-              <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-[#8ED4BE] transition-colors font-black"><Folder size={32} className="text-slate-200 group-hover:text-white font-black"/></div>
-              <h4 className="font-black italic uppercase text-lg text-slate-800 leading-tight mb-2 font-black">{c.nombre}</h4>
-              <div className="flex flex-col gap-2 font-black">
-                <div className="flex items-center gap-2 font-black">
-                  <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase font-black ${c.ids_ventas?.length > 0 ? 'bg-[#8ED4BE]/10 text-[#8ED4BE]' : 'bg-slate-50 text-slate-300'}`}>
-                    {c.ids_ventas?.length || 0} PEDIDOS
-                  </span>
-                  <span className="text-[10px] font-bold text-slate-300 uppercase italic font-black">Orden: #{c.orden}</span>
-                </div>
-                <div className="mt-1 font-black">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest font-black">Total en Centro</p>
-                  <p className="font-black text-[#8ED4BE] italic font-black">{Utils.currency(totalCarpeta)}</p>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+    );
+  })}
+</div>
       </div>
-    </div>
+    );
+  }
+
+  /* ======================= HISTORIAL NORMAL PAGINADO ======================= */
+
+  const filtradas = ventas.filter(v =>
+    (v.nombre || "").toLowerCase().includes(filtro.toLowerCase()) ||
+    (v.id || "").toString().includes(filtro) ||
+    (v.telefono || "").toString().includes(filtro)
   );
 
-  const filtradas = ventas.filter(v => (v.nombre || "").toLowerCase().includes(filtro.toLowerCase()) || (v.id || "").toString().includes(filtro) || (v.telefono || "").toString().includes(filtro));
+  const totalPaginas = Math.ceil(filtradas.length / ITEMS_POR_PAGINA);
+  const inicio = (pagina - 1) * ITEMS_POR_PAGINA;
+  const ventasPagina = filtradas.slice(inicio, inicio + ITEMS_POR_PAGINA);
+
+  const paginasVisibles = () => {
+    if (pagina === 1) return [1, 2, 3].filter(p => p <= totalPaginas);
+    if (pagina === 2) return [1, 2, 3, 4].filter(p => p <= totalPaginas);
+    if (pagina === totalPaginas)
+      return [totalPaginas - 2, totalPaginas - 1, totalPaginas].filter(p => p > 0);
+    return [pagina - 1, pagina, pagina + 1];
+  };
+
   return (
     <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in fade-in duration-500 font-black">
-      <ScrollToTop trigger={mode} />
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-12 font-black">
-        <div className="text-center sm:text-left"><h2 className="text-4xl font-black italic uppercase tracking-tighter text-slate-800 font-black">Historial de Ventas<span className="text-[#F79598] font-black">.</span></h2><p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1 font-black">Control total de pedidos y entregas</p></div>
-        <div className="flex gap-3 font-black">
-          <button onClick={() => setMode('carpetas')} className="px-6 py-4 bg-white shadow-lg rounded-2xl font-black uppercase text-xs text-slate-400 hover:text-slate-800 transition-all flex items-center gap-2 font-black"><Folder size={18}/> Ver Centros</button>
-          <Link to="/cotizar" className="px-6 py-4 bg-[#F79598] text-white shadow-lg rounded-2xl font-black uppercase text-xs flex items-center gap-2 hover:scale-105 transition-all shadow-[#F79598]/20 font-black"><Plus size={18}/> Nueva Venta</Link>
+      <ScrollToTop trigger={pagina} />
+
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-12">
+        <div>
+          <h2 className="text-4xl font-black italic uppercase tracking-tighter">
+            Historial de Ventas<span className="text-[#F79598]">.</span>
+          </h2>
+          <p className="text-[10px] text-slate-400 uppercase tracking-[0.2em] mt-1">
+            Control total de pedidos y entregas
+          </p>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={() => setMode('carpetas')}
+            className="px-6 py-4 bg-white shadow-lg rounded-2xl uppercase text-xs text-slate-400 hover:text-slate-800 flex items-center gap-2"
+          >
+            <Folder size={18}/> Ver Centros
+          </button>
+
+          <Link
+            to="/cotizar"
+            className="px-6 py-4 bg-[#F79598] text-white shadow-lg rounded-2xl uppercase text-xs flex items-center gap-2 hover:scale-105"
+          >
+            <Plus size={18}/> Nueva Venta
+          </Link>
         </div>
       </div>
-      <div className="mb-10 relative font-black">
-        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 font-black" size={20}/>
-        <input type="text" placeholder="Buscar por nombre, orden o teléfono..." className="w-full pl-14 pr-8 py-5 bg-white rounded-4xl shadow-xl outline-none font-bold text-slate-600 focus:ring-4 ring-[#F79598]/10 transition-all font-black" value={filtro} onChange={(e) => setFiltro(e.target.value)} />
+
+      {/* BUSCADOR */}
+      <div className="mb-10 relative">
+        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={20}/>
+        <input
+          type="text"
+          placeholder="Buscar por nombre, orden o teléfono..."
+          className="w-full pl-14 pr-8 py-5 bg-white rounded-4xl shadow-xl outline-none font-bold text-slate-600 focus:ring-4 ring-[#F79598]/10"
+          value={filtro}
+          onChange={(e) => { setFiltro(e.target.value); setPagina(1); }}
+        />
       </div>
-      <div className="grid grid-cols-1 gap-8 font-black">{filtradas.map(v => renderVentaCard(v))}</div>
+
+      {/* LISTADO */}
+      <div className="grid grid-cols-1 gap-8">
+        {ventasPagina.map(v => renderVentaCard(v))}
+      </div>
+
+      {/* PAGINADOR */}
+      {totalPaginas > 1 && (
+        <div className="mt-14 flex justify-center gap-2">
+          <button onClick={() => setPagina(1)} className="px-4 py-2 rounded-xl bg-slate-100">&laquo;</button>
+          <button onClick={() => setPagina(p => Math.max(1, p - 1))} className="px-4 py-2 rounded-xl bg-slate-100">&lsaquo;</button>
+
+          {paginasVisibles().map(p => (
+            <button
+              key={p}
+              onClick={() => setPagina(p)}
+              className={`px-4 py-2 rounded-xl ${
+                p === pagina ? 'bg-[#F79598] text-white' : 'bg-slate-100'
+              }`}
+            >
+              {p}
+            </button>
+          ))}
+
+          <button onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))} className="px-4 py-2 rounded-xl bg-slate-100">&rsaquo;</button>
+          <button onClick={() => setPagina(totalPaginas)} className="px-4 py-2 rounded-xl bg-slate-100">&raquo;</button>
+        </div>
+      )}
     </div>
   );
 };
@@ -722,7 +894,193 @@ const FormularioCotizacion = ({ alGuardar }) => {
 };
 
 // ==========================================
-// 7. COMPONENTE DASHBOARD (HOME)
+// 7. COMPONENTE GESTIÓN INVENTARIO
+// ==========================================
+
+const GestionInventario = () => {
+  const [inventario, setInventario] = useState([]);
+  const [catFiltro, setCatFiltro] = useState('Todo');
+  const [orden, setOrden] = useState('alfabetico'); // NUEVO
+  const [busqueda, setBusqueda] = useState(''); // NUEVO
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => { fetchInv(); }, []);
+  const fetchInv = async () => {
+    setCargando(true);
+    const { data } = await supabase.from('inventario').select('*').order('tema', { ascending: true });
+    if (data) setInventario(data);
+    setCargando(false);
+  };
+
+  const actualizarStock = async (id, nuevoStock) => {
+    const { error } = await supabase.from('inventario').update({ stock_actual: nuevoStock }).eq('id', id);
+    if (!error) setInventario(inventario.map(i => i.id === id ? { ...i, stock_actual: nuevoStock } : i));
+  };
+
+  // NUEVO: editar stock manual
+  const editarStockManual = async (item) => {
+    const { value } = await Swal.fire({
+      title: 'Editar Stock Manual',
+      input: 'number',
+      inputValue: item.stock_actual,
+      inputAttributes: { min: 0 },
+      showCancelButton: true,
+      confirmButtonColor: '#C0C976'
+    });
+    if (value !== undefined) {
+      actualizarStock(item.id, Math.max(0, parseInt(value)));
+    }
+  };
+
+  const agregarNuevo = async () => {
+    const { value: formValues } = await Swal.fire({
+      title: 'Nuevo Item de Inventario',
+      html:
+        `<input id="swal-cat" list="productos-list" class="swal2-input" placeholder="Categoría (DCC, MR-6...)">` +
+        `<input id="swal-tema" list="temas-list" class="swal2-input" placeholder="Tema (Abeja, Bosque...)">` +
+        `<input id="swal-stock" type="number" class="swal2-input" placeholder="Cantidad Inicial">`,
+      focusConfirm: false,
+      preConfirm: () => ({
+        categoria: document.getElementById('swal-cat').value,
+        tema: document.getElementById('swal-tema').value,
+        stock_actual: parseInt(document.getElementById('swal-stock').value) || 0
+      })
+    });
+
+    if (formValues && formValues.categoria && formValues.tema) {
+      const { data, error } = await supabase.from('inventario').insert([formValues]).select();
+      if (!error && data) setInventario([...inventario, data[0]]);
+    }
+  };
+
+  const borrarItem = async (id) => {
+    const res = await Swal.fire({ title: '¿Borrar de inventario?', icon: 'warning', showCancelButton: true });
+    if (res.isConfirmed) {
+      await supabase.from('inventario').delete().eq('id', id);
+      setInventario(inventario.filter(i => i.id !== id));
+    }
+  };
+
+  // FILTRO + BUSQUEDA + ORDEN (AGREGADO, NO REEMPLAZA)
+  const filtrados = (
+    catFiltro === 'Todo'
+      ? inventario
+      : inventario.filter(i => i.categoria === catFiltro)
+  )
+    .filter(i =>
+      i.tema.toLowerCase().includes(busqueda.toLowerCase())
+    )
+    .slice()
+    .sort((a, b) => {
+      if (orden === 'cantidad') {
+        return (b.stock_actual || 0) - (a.stock_actual || 0);
+      }
+      return a.tema.localeCompare(b.tema, 'es', { sensitivity: 'base' });
+    });
+
+  return (
+    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 text-slate-800 font-black">
+      <ScrollToTop trigger={catFiltro} />
+
+      <header className="mb-10 flex flex-col sm:flex-row justify-between items-center gap-6">
+        <div>
+          <h2 className="text-4xl italic uppercase tracking-tighter">
+            Inventario Alekey<span className="text-[#C0C976]">.</span>
+          </h2>
+          <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">
+            Control de Stock en Tiempo Real
+          </p>
+        </div>
+        <button onClick={agregarNuevo} className="px-8 py-4 bg-[#C0C976] text-slate-800 rounded-2xl uppercase text-xs flex items-center gap-2 shadow-lg hover:scale-105 transition-all">
+          <Plus size={18}/> Agregar Item
+        </button>
+      </header>
+
+      {/* BUSCAR + ORDEN */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <input
+          type="text"
+          placeholder="Buscar diseño..."
+          value={busqueda}
+          onChange={e => setBusqueda(e.target.value)}
+          className="flex-1 px-4 py-3 rounded-xl bg-white shadow-sm text-xs uppercase tracking-widest outline-none"
+        />
+        <div className="flex gap-2">
+          <button onClick={() => setOrden('alfabetico')} className={`px-4 py-2 rounded-lg text-[9px] uppercase ${orden === 'alfabetico' ? 'bg-slate-900 text-white' : 'bg-white text-slate-400'}`}>
+            Alfabético
+          </button>
+          <button onClick={() => setOrden('cantidad')} className={`px-4 py-2 rounded-lg text-[9px] uppercase ${orden === 'cantidad' ? 'bg-slate-900 text-white' : 'bg-white text-slate-400'}`}>
+            Cantidad
+          </button>
+        </div>
+      </div>
+
+      {/* FILTROS DE CATEGORIA (IGUAL QUE TENIAS) */}
+      <div className="flex gap-2 overflow-x-auto pb-4 mb-8">
+        {['Todo', 'DCC', 'MR-6', 'Borde decorado', 'Distintivo', 'DG - amarilla'].map(cat => (
+          <button key={cat} onClick={() => setCatFiltro(cat)} className={`px-6 py-3 rounded-xl text-[10px] uppercase whitespace-nowrap transition-all ${catFiltro === cat ? 'bg-slate-900 text-white shadow-xl scale-105' : 'bg-white text-slate-400 shadow-sm'}`}>
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {cargando ? (
+        <div className="p-20 text-center italic opacity-20 text-2xl uppercase">Cargando Inventario...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filtrados.map(item => (
+            <div key={item.id} className="bg-white p-8 rounded-[3rem] shadow-xl border-l-10 border-[#C0C976] relative group">
+              <button onClick={() => borrarItem(item.id)} className="absolute top-6 right-6 text-red-100 group-hover:text-red-300 transition-colors">
+                <Trash2 size={16}/>
+              </button>
+
+              {catFiltro === 'Todo' && (
+                <p className="text-[8px] uppercase tracking-widest text-slate-400 mb-1">
+                  {item.categoria}
+                </p>
+              )}
+
+              <h4 className="italic uppercase text-lg text-slate-800 mb-4">
+                {item.tema}
+              </h4>
+
+              <div className="flex items-center justify-between bg-slate-50 p-4 rounded-2xl">
+                <div>
+                  <p className="text-[9px] text-slate-400 uppercase tracking-widest">
+                    Stock Actual
+                  </p>
+                  <p className={`text-2xl italic ${item.stock_actual < 5 ? 'text-red-400' : 'text-slate-800'}`}>
+                    {item.stock_actual} Pzs
+                  </p>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <button onClick={() => actualizarStock(item.id, item.stock_actual + 1)} className="p-2 bg-white rounded-lg shadow-sm text-[#C0C976] hover:bg-[#C0C976] hover:text-white transition-all">
+                    <ChevronUp size={16}/>
+                  </button>
+                  <button onClick={() => actualizarStock(item.id, Math.max(0, item.stock_actual - 1))} className="p-2 bg-white rounded-lg shadow-sm text-[#C0C976] hover:bg-[#C0C976] hover:text-white transition-all">
+                    <ChevronDown size={16}/>
+                  </button>
+                  <button onClick={() => editarStockManual(item)} className="text-[9px] uppercase text-slate-400 hover:text-slate-800 mt-1">
+                    Editar
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+          {!filtrados.length && (
+            <div className="col-span-full p-20 text-center border-4 border-dashed border-slate-100 rounded-[3rem] opacity-20 italic text-2xl uppercase">
+              Sin productos en esta categoría
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+
+// ==========================================
+// 8. COMPONENTE DASHBOARD (HOME)
 // ==========================================
 
 const DashboardHome = ({ historial }) => {
@@ -749,15 +1107,18 @@ const DashboardHome = ({ historial }) => {
         <StatCard icon={<AlertCircle size={28} className="text-[#F79598] font-black"/>} label="Piezas Pendientes" val={summary.pend} borderColor="border-[#F79598]"/>
         <StatCard icon={<ShoppingBag size={28} className="text-[#C0C976] font-black"/>} label="Pedidos Realizados" val={summary.count} borderColor="border-[#C0C976]"/>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 font-black">
-        <button onClick={() => navigate('/cotizar')} className="group p-10 bg-slate-900 rounded-[4rem] text-white flex items-center justify-between hover:scale-[1.02] transition-all shadow-2xl shadow-slate-400 relative overflow-hidden font-black">
-          <div className="z-10 text-left font-black"><h4 className="text-3xl font-black italic uppercase mb-2 font-black">Nueva Venta</h4><p className="text-slate-500 font-black uppercase text-xs tracking-widest font-black">Crear cotización y factura</p></div>
-          <div className="w-20 h-20 bg-[#8ED4BE] rounded-[2rem] flex items-center justify-center text-slate-900 shadow-xl group-hover:rotate-12 transition-transform font-black"><Plus size={40}/></div>
-          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white/5 rounded-full blur-3xl font-black"></div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 font-black">
+        <button onClick={() => navigate('/cotizar')} className="group p-8 bg-slate-900 rounded-[3.5rem] text-white flex flex-col justify-between hover:scale-[1.02] transition-all shadow-2xl relative overflow-hidden font-black min-h-48">
+          <div className="w-14 h-14 bg-[#8ED4BE] rounded-2xl flex items-center justify-center text-slate-900 shadow-xl group-hover:rotate-12 transition-transform font-black"><Plus size={32}/></div>
+          <div className="z-10 text-left font-black"><h4 className="text-2xl font-black italic uppercase mb-1 font-black">Nueva Venta</h4><p className="text-slate-500 font-black uppercase text-[10px] tracking-widest font-black">Crear cotización</p></div>
         </button>
-        <button onClick={() => navigate('/ventas')} className="group p-10 bg-white rounded-[4rem] text-slate-800 flex items-center justify-between hover:scale-[1.02] transition-all shadow-2xl border border-slate-50 relative overflow-hidden font-black">
-          <div className="z-10 text-left font-black"><h4 className="text-3xl font-black italic uppercase mb-2 font-black">Historial</h4><p className="text-slate-400 font-black uppercase text-xs tracking-widest font-black">Ver reportes y estados</p></div>
-          <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center text-slate-400 group-hover:bg-slate-900 group-hover:text-white transition-all font-black"><Search size={40}/></div>
+        <button onClick={() => navigate('/ventas')} className="group p-8 bg-white rounded-[3.5rem] text-slate-800 flex flex-col justify-between hover:scale-[1.02] transition-all shadow-xl border border-slate-50 relative overflow-hidden font-black min-h-48">
+          <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-slate-900 group-hover:text-white transition-all font-black"><Search size={32}/></div>
+          <div className="z-10 text-left font-black"><h4 className="text-2xl font-black italic uppercase mb-1 font-black">Historial</h4><p className="text-slate-400 font-black uppercase text-[10px] tracking-widest font-black">Ver pedidos</p></div>
+        </button>
+        <button onClick={() => navigate('/inventario')} className="group p-8 bg-white rounded-[3.5rem] text-slate-800 flex flex-col justify-between hover:scale-[1.02] transition-all shadow-xl border border-slate-50 relative overflow-hidden font-black min-h-48 border-b-10 border-[#C0C976]">
+          <div className="w-14 h-14 bg-[#C0C976]/10 rounded-2xl flex items-center justify-center text-[#C0C976] group-hover:bg-[#C0C976] group-hover:text-white transition-all font-black"><Box size={32}/></div>
+          <div className="z-10 text-left font-black"><h4 className="text-2xl font-black italic uppercase mb-1 font-black">Inventario</h4><p className="text-slate-400 font-black uppercase text-[10px] tracking-widest font-black">Gestionar Stock</p></div>
         </button>
       </div>
     </div>
@@ -765,7 +1126,7 @@ const DashboardHome = ({ historial }) => {
 };
 
 // ==========================================
-// 8. COMPONENTE PRINCIPAL (APP)
+// 9. APP PRINCIPAL
 // ==========================================
 
 export default function App() {
@@ -773,13 +1134,8 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(false);
 
   useEffect(() => {
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
-                         || window.navigator.standalone 
-                         || document.referrer.includes('android-app://');
-    if (isStandalone) {
-      setShowSplash(true);
-      setTimeout(() => setShowSplash(false), 2500);
-    }
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
+    if (isStandalone) { setShowSplash(true); setTimeout(() => setShowSplash(false), 2500); }
     fetchVentas(); 
   }, []);
 
@@ -797,10 +1153,7 @@ export default function App() {
   };
   const alEliminar = async (id) => {
     const res = await Swal.fire({ title: '¿Eliminar Venta?', text: "Esta acción no se puede revertir", icon: 'warning', showCancelButton: true, confirmButtonColor: '#F79598', cancelButtonColor: '#cbd5e1' });
-    if (res.isConfirmed) {
-      await supabase.from('ventas').delete().eq('id', id);
-      setVentas(ventas.filter(v => v.id !== id));
-    }
+    if (res.isConfirmed) { await supabase.from('ventas').delete().eq('id', id); setVentas(ventas.filter(v => v.id !== id)); }
   };
   const alActualizar = async (id, dataEditada) => {
     const { error } = await supabase.from('ventas').update(dataEditada).eq('id', id);
@@ -809,9 +1162,9 @@ export default function App() {
     Swal.fire({ title: '¡Actualizado!', icon: 'success', timer: 1500, showConfirmButton: false });
   };
 
-  if (showSplash) return <SplashScreen />;
   return (
     <Router>
+      <ScrollToTop />
       <div className="flex flex-col lg:flex-row h-screen bg-slate-50 font-sans overflow-hidden font-black">
         <aside className="hidden lg:flex w-32 bg-white border-r border-slate-100 flex-col items-center py-10 gap-8 z-50 font-black">
           <div className="w-16 h-16 bg-[#8ED4BE] rounded-[1.8rem] items-center justify-center shadow-lg shadow-[#8ED4BE]/30 mb-6 flex font-black"><Package className="text-slate-800 font-black" size={28}/></div>
@@ -820,6 +1173,7 @@ export default function App() {
             <NavLink to="/cotizar" icon={<Plus size={24}/>} label="Nueva" isMobile={false} />
             <NavLink to="/ventas" icon={<Clock size={24}/>} label="Ventas" isMobile={false} />
             <NavLink to="/stats" icon={<BarChart3 size={24}/>} label="Stats" isMobile={false} />
+            <NavLink to="/inventario" icon={<Box size={24}/>} label="Stock" isMobile={false} />
           </nav>
           <div className="mt-auto p-4 flex flex-col items-center gap-2 font-black">
             <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center font-bold text-[#8ED4BE] text-xs font-black">IV</div>
@@ -831,6 +1185,7 @@ export default function App() {
             <Route path="/cotizar" element={<FormularioCotizacion alGuardar={alGuardarEnNube} />} />
             <Route path="/ventas" element={<HistorialVentas ventas={ventas} onDelete={alEliminar} onUpdate={alActualizar} />} />
             <Route path="/stats" element={<Estadisticas ventas={ventas} />} />
+            <Route path="/inventario" element={<GestionInventario />} />
           </Routes>
         </main>
         <footer className="lg:hidden w-full bg-white border-t border-slate-100 flex items-center justify-around py-4 px-2 z-50 font-black">
@@ -839,6 +1194,7 @@ export default function App() {
             <NavLink to="/cotizar" icon={<Plus size={22}/>} label="Nueva" isMobile={true} />
             <NavLink to="/ventas" icon={<Clock size={22}/>} label="Ventas" isMobile={true} />
             <NavLink to="/stats" icon={<BarChart3 size={22}/>} label="Stats" isMobile={true} />
+            <NavLink to="/inventario" icon={<Box size={22}/>} label="Stock" isMobile={true} />
           </nav>
         </footer>
       </div>
