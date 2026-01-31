@@ -893,18 +893,19 @@ const FormularioCotizacion = ({ alGuardar }) => {
   );
 };
 
-// ==========================================
-// 7. COMPONENTE GESTIÓN INVENTARIO
-// ==========================================
-
 const GestionInventario = () => {
   const [inventario, setInventario] = useState([]);
   const [catFiltro, setCatFiltro] = useState('Todo');
-  const [orden, setOrden] = useState('alfabetico'); // NUEVO
-  const [busqueda, setBusqueda] = useState(''); // NUEVO
+  const [orden, setOrden] = useState('alfabetico');
+  const [busqueda, setBusqueda] = useState('');
   const [cargando, setCargando] = useState(true);
 
+  // --- NUEVO: ESTADO DE PAGINACIÓN ---
+  const [pagina, setPagina] = useState(1);
+  const itemsPorPagina = 21; // Lo que pediste
+
   useEffect(() => { fetchInv(); }, []);
+
   const fetchInv = async () => {
     setCargando(true);
     const { data } = await supabase.from('inventario').select('*').order('tema', { ascending: true });
@@ -917,7 +918,6 @@ const GestionInventario = () => {
     if (!error) setInventario(inventario.map(i => i.id === id ? { ...i, stock_actual: nuevoStock } : i));
   };
 
-  // NUEVO: editar stock manual
   const editarStockManual = async (item) => {
     const { value } = await Swal.fire({
       title: 'Editar Stock Manual',
@@ -961,15 +961,13 @@ const GestionInventario = () => {
     }
   };
 
-  // FILTRO + BUSQUEDA + ORDEN (AGREGADO, NO REEMPLAZA)
-  const filtrados = (
+  // LOGICA DE FILTRO Y ORDEN (Toda la tuya intacta)
+  const todosLosFiltrados = (
     catFiltro === 'Todo'
       ? inventario
       : inventario.filter(i => i.categoria === catFiltro)
   )
-    .filter(i =>
-      i.tema.toLowerCase().includes(busqueda.toLowerCase())
-    )
+    .filter(i => i.tema.toLowerCase().includes(busqueda.toLowerCase()))
     .slice()
     .sort((a, b) => {
       if (orden === 'cantidad') {
@@ -978,9 +976,16 @@ const GestionInventario = () => {
       return a.tema.localeCompare(b.tema, 'es', { sensitivity: 'base' });
     });
 
+  // --- NUEVO: CÁLCULO DE PAGINACIÓN ---
+  const totalPaginas = Math.ceil(todosLosFiltrados.length / itemsPorPagina);
+  const filtrados = todosLosFiltrados.slice(
+    (pagina - 1) * itemsPorPagina,
+    pagina * itemsPorPagina
+  );
+
   return (
     <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 text-slate-800 font-black">
-      <ScrollToTop trigger={catFiltro} />
+      <ScrollToTop trigger={catFiltro + pagina} />
 
       <header className="mb-10 flex flex-col sm:flex-row justify-between items-center gap-6">
         <div>
@@ -988,7 +993,7 @@ const GestionInventario = () => {
             Inventario Alekey<span className="text-[#C0C976]">.</span>
           </h2>
           <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">
-            Control de Stock en Tiempo Real
+            Control de Stock en Tiempo Real ({todosLosFiltrados.length} items)
           </p>
         </div>
         <button onClick={agregarNuevo} className="px-8 py-4 bg-[#C0C976] text-slate-800 rounded-2xl uppercase text-xs flex items-center gap-2 shadow-lg hover:scale-105 transition-all">
@@ -996,88 +1001,125 @@ const GestionInventario = () => {
         </button>
       </header>
 
-      {/* BUSCAR + ORDEN */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <input
           type="text"
           placeholder="Buscar diseño..."
           value={busqueda}
-          onChange={e => setBusqueda(e.target.value)}
-          className="flex-1 px-4 py-3 rounded-xl bg-white shadow-sm text-xs uppercase tracking-widest outline-none"
+          onChange={e => { setBusqueda(e.target.value); setPagina(1); }} // Reinicia pagina al buscar
+          className="flex-1 px-4 py-3 rounded-xl bg-white shadow-sm text-xs uppercase tracking-widest outline-none font-black"
         />
         <div className="flex gap-2">
-          <button onClick={() => setOrden('alfabetico')} className={`px-4 py-2 rounded-lg text-[9px] uppercase ${orden === 'alfabetico' ? 'bg-slate-900 text-white' : 'bg-white text-slate-400'}`}>
+          <button onClick={() => { setOrden('alfabetico'); setPagina(1); }} className={`px-4 py-2 rounded-lg text-[9px] uppercase font-black ${orden === 'alfabetico' ? 'bg-slate-900 text-white' : 'bg-white text-slate-400'}`}>
             Alfabético
           </button>
-          <button onClick={() => setOrden('cantidad')} className={`px-4 py-2 rounded-lg text-[9px] uppercase ${orden === 'cantidad' ? 'bg-slate-900 text-white' : 'bg-white text-slate-400'}`}>
+          <button onClick={() => { setOrden('cantidad'); setPagina(1); }} className={`px-4 py-2 rounded-lg text-[9px] uppercase font-black ${orden === 'cantidad' ? 'bg-slate-900 text-white' : 'bg-white text-slate-400'}`}>
             Cantidad
           </button>
         </div>
       </div>
 
-      {/* FILTROS DE CATEGORIA (IGUAL QUE TENIAS) */}
       <div className="flex gap-2 overflow-x-auto pb-4 mb-8">
         {['Todo', 'DCC', 'MR-6', 'Borde decorado', 'Distintivo', 'DG - amarilla'].map(cat => (
-          <button key={cat} onClick={() => setCatFiltro(cat)} className={`px-6 py-3 rounded-xl text-[10px] uppercase whitespace-nowrap transition-all ${catFiltro === cat ? 'bg-slate-900 text-white shadow-xl scale-105' : 'bg-white text-slate-400 shadow-sm'}`}>
+          <button key={cat} onClick={() => { setCatFiltro(cat); setPagina(1); }} className={`px-6 py-3 rounded-xl text-[10px] uppercase whitespace-nowrap transition-all font-black ${catFiltro === cat ? 'bg-slate-900 text-white shadow-xl scale-105' : 'bg-white text-slate-400 shadow-sm'}`}>
             {cat}
           </button>
         ))}
       </div>
 
       {cargando ? (
-        <div className="p-20 text-center italic opacity-20 text-2xl uppercase">Cargando Inventario...</div>
+        <div className="p-20 text-center italic opacity-20 text-2xl uppercase font-black">Cargando Inventario...</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtrados.map(item => (
-            <div key={item.id} className="bg-white p-8 rounded-[3rem] shadow-xl border-l-10 border-[#C0C976] relative group">
-              <button onClick={() => borrarItem(item.id)} className="absolute top-6 right-6 text-red-100 group-hover:text-red-300 transition-colors">
-                <Trash2 size={16}/>
-              </button>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filtrados.map(item => (
+              <div key={item.id} className="bg-white p-8 rounded-[3rem] shadow-xl border-l-10 border-[#C0C976] relative group font-black">
+                <button onClick={() => borrarItem(item.id)} className="absolute top-6 right-6 text-red-100 group-hover:text-red-300 transition-colors">
+                  <Trash2 size={16}/>
+                </button>
 
-              {catFiltro === 'Todo' && (
-                <p className="text-[8px] uppercase tracking-widest text-slate-400 mb-1">
-                  {item.categoria}
-                </p>
-              )}
-
-              <h4 className="italic uppercase text-lg text-slate-800 mb-4">
-                {item.tema}
-              </h4>
-
-              <div className="flex items-center justify-between bg-slate-50 p-4 rounded-2xl">
-                <div>
-                  <p className="text-[9px] text-slate-400 uppercase tracking-widest">
-                    Stock Actual
+                {catFiltro === 'Todo' && (
+                  <p className="text-[8px] uppercase tracking-widest text-slate-400 mb-1 font-black">
+                    {item.categoria}
                   </p>
-                  <p className={`text-2xl italic ${item.stock_actual < 5 ? 'text-red-400' : 'text-slate-800'}`}>
-                    {item.stock_actual} Pzs
-                  </p>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <button onClick={() => actualizarStock(item.id, item.stock_actual + 1)} className="p-2 bg-white rounded-lg shadow-sm text-[#C0C976] hover:bg-[#C0C976] hover:text-white transition-all">
-                    <ChevronUp size={16}/>
-                  </button>
-                  <button onClick={() => actualizarStock(item.id, Math.max(0, item.stock_actual - 1))} className="p-2 bg-white rounded-lg shadow-sm text-[#C0C976] hover:bg-[#C0C976] hover:text-white transition-all">
-                    <ChevronDown size={16}/>
-                  </button>
-                  <button onClick={() => editarStockManual(item)} className="text-[9px] uppercase text-slate-400 hover:text-slate-800 mt-1">
-                    Editar
-                  </button>
+                )}
+
+                <h4 className="italic uppercase text-lg text-slate-800 mb-4 font-black">
+                  {item.tema}
+                </h4>
+
+                <div className="flex items-center justify-between bg-slate-50 p-4 rounded-2xl">
+                  <div>
+                    <p className="text-[9px] text-slate-400 uppercase tracking-widest font-black">
+                      Stock Actual
+                    </p>
+                    <p className={`text-2xl italic font-black ${item.stock_actual < 5 ? 'text-red-400' : 'text-slate-800'}`}>
+                      {item.stock_actual} Pzs
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <button onClick={() => actualizarStock(item.id, item.stock_actual + 1)} className="p-2 bg-white rounded-lg shadow-sm text-[#C0C976] hover:bg-[#C0C976] hover:text-white transition-all">
+                      <ChevronUp size={16}/>
+                    </button>
+                    <button onClick={() => actualizarStock(item.id, Math.max(0, item.stock_actual - 1))} className="p-2 bg-white rounded-lg shadow-sm text-[#C0C976] hover:bg-[#C0C976] hover:text-white transition-all">
+                      <ChevronDown size={16}/>
+                    </button>
+                    <button onClick={() => editarStockManual(item)} className="text-[9px] uppercase text-slate-400 hover:text-slate-800 mt-1 font-black">
+                      Editar
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-          {!filtrados.length && (
-            <div className="col-span-full p-20 text-center border-4 border-dashed border-slate-100 rounded-[3rem] opacity-20 italic text-2xl uppercase">
-              Sin productos en esta categoría
+            ))}
+            
+            {!filtrados.length && (
+              <div className="col-span-full p-20 text-center border-4 border-dashed border-slate-100 rounded-[3rem] opacity-20 italic text-2xl uppercase font-black">
+                Sin productos
+              </div>
+            )}
+          </div>
+
+          {/* --- BOTONES DE PÁGINAS --- */}
+          {totalPaginas > 1 && (
+            <div className="flex justify-center items-center gap-3 mt-12 flex-wrap">
+              <button 
+                disabled={pagina === 1}
+                onClick={() => setPagina(p => p - 1)}
+                className="p-4 bg-white rounded-2xl shadow-sm disabled:opacity-20 text-slate-600 font-black"
+              >
+                <ArrowLeft size={18} />
+              </button>
+
+              <div className="flex gap-2">
+                {[...Array(totalPaginas)].map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setPagina(i + 1)}
+                    className={`w-12 h-12 rounded-2xl text-[10px] font-black transition-all ${
+                      pagina === i + 1 
+                      ? 'bg-slate-900 text-[#C0C976] shadow-xl scale-110' 
+                      : 'bg-white text-slate-400 hover:bg-slate-50'
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
+
+              <button 
+                disabled={pagina === totalPaginas}
+                onClick={() => setPagina(p => p + 1)}
+                className="p-4 bg-white rounded-2xl shadow-sm disabled:opacity-20 text-slate-600 font-black"
+              >
+                <div className="rotate-180"><ArrowLeft size={18} /></div>
+              </button>
             </div>
           )}
-        </div>
+        </>
       )}
     </div>
   );
 };
-
 
 // ==========================================
 // 8. COMPONENTE DASHBOARD (HOME)
