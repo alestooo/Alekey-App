@@ -439,6 +439,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
     const data = editing ? editCache : v;
     const tienePendientes = (data.items || []).some(i => i.pendiente > 0);
     const editValido = Utils.validateName(data.nombre || "") && (data.telefono || "").replace(/\D/g, '').length === 8 && (data.items || []).length > 0;
+    
     return (
       <div key={v.id} className="bg-white rounded-4xl shadow-xl border-l-12 flex flex-col overflow-hidden transition-colors duration-300 font-black" style={{ borderLeftColor: tienePendientes ? '#F79598' : '#8ED4BE' }}>
         <div className="p-6 lg:p-8 border-b border-slate-50 bg-white z-10">
@@ -455,15 +456,30 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
                     <select className="text-sm font-bold border-b outline-none bg-transparent" value={data.direccion} onChange={e => setEditCache({...editCache, direccion: e.target.value})}>
                       {UBICACIONES_CR[provinciaEdit].map(loc => <option key={loc} value={loc}>{loc}</option>)}
                     </select>
+                    {/* EDITAR ENCARGADO */}
+                    <select className="text-sm font-bold border-b outline-none bg-transparent text-[#8ED4BE]" value={data.encargado || "Encargado..."} onChange={e => setEditCache({...editCache, encargado: e.target.value})}>
+                        <option value="Encargado...">Encargado...</option>
+                        <option value="Alejandro">Alejandro</option>
+                        <option value="Isabel">Isabel</option>
+                        <option value="Jason">Jason</option>
+                    </select>
                   </div>
                 </div>
               ) : (
-                <div>
-                  <h3 className="text-xl lg:text-2xl font-black italic">{data.nombre}</h3>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-black">
-                    <span className="bg-slate-100 px-2 py-0.5 rounded-md mr-2 text-slate-500 font-black">#{data.id}</span>
-                    {data.fecha} • {data.telefono} • {data.direccion}
-                  </p>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="text-xl lg:text-2xl font-black italic">{data.nombre}</h3>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-black">
+                      <span className="bg-slate-100 px-2 py-0.5 rounded-md mr-2 text-slate-500 font-black">#{data.id}</span>
+                      {data.fecha} • {data.telefono} • {data.direccion}
+                    </p>
+                  </div>
+                  {/* ENCARGADO VISUAL */}
+                  {data.encargado && data.encargado !== 'Encargado...' && (
+                    <span className="text-[9px] font-black bg-[#8ED4BE]/10 text-[#8ED4BE] px-3 py-1 rounded-full uppercase tracking-tighter">
+                      💼 {data.encargado}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -481,6 +497,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
             </div>
           </div>
         </div>
+        
         <div className="overflow-x-auto max-h-75 overflow-y-auto bg-slate-50/40 p-4 scrollbar-thin font-black">
           <table className="w-full min-w-150">
             <thead className="text-[10px] font-black text-slate-300 uppercase font-black">
@@ -538,8 +555,29 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
               <Plus size={14}/> Agregar Línea
             </button>
           )}
+
+          {/* ÁREA DE COMENTARIOS */}
+          <div className="mt-4 p-4 bg-white/50 rounded-2xl border border-slate-100">
+            <p className="text-[9px] uppercase font-black text-slate-300 mb-2 tracking-widest">Notas / Comentarios</p>
+            {editing ? (
+              <textarea 
+                className="w-full p-3 bg-slate-50 rounded-xl text-[11px] font-black text-slate-700 outline-none border focus:border-[#8ED4BE] min-h-20"
+                value={data.comentario || ""}
+                onChange={e => setEditCache({...editCache, comentario: e.target.value})}
+                placeholder="Sin comentarios..."
+              />
+            ) : (
+              <p className="text-[11px] font-black text-slate-500 italic">
+                {data.comentario || "Sin notas adicionales."}
+              </p>
+            )}
+          </div>
         </div>
-        <div className="p-6 bg-slate-900 flex justify-between items-center font-black"><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic font-black">Total Final</span><span className="text-xl font-black italic text-[#8ED4BE] font-black">{Utils.currency(data.total)}</span></div>
+
+        <div className="p-6 bg-slate-900 flex justify-between items-center font-black">
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic font-black">Total Final</span>
+            <span className="text-xl font-black italic text-[#8ED4BE] font-black">{Utils.currency(data.total)}</span>
+        </div>
       </div>
     );
   };
@@ -642,57 +680,56 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
           </div>
         </div>
 
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-  {carpetas.map(c => {
-    const pedidosEnCarpeta = ventas.filter(v =>
-      (c.ids_ventas || []).includes(v.id)
-    );
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {carpetas.map(c => {
+            const pedidosEnCarpeta = ventas.filter(v =>
+              (c.ids_ventas || []).includes(v.id)
+            );
 
-    const totalCarpeta = pedidosEnCarpeta.reduce(
-      (s, v) => s + (v.total || 0), 0
-    );
+            const totalCarpeta = pedidosEnCarpeta.reduce(
+              (s, v) => s + (v.total || 0), 0
+            );
 
-    return (
-      <div
-        key={c.id}
-        onClick={() => setFolderView(c)}
-        className="group bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 cursor-pointer hover:shadow-2xl transition-all relative"
-      >
-        <div className="absolute top-0 right-0 p-4 flex gap-1 bg-white/60 rounded-bl-3xl z-10">
-          <button onClick={(e) => moverCarpeta(c.id, 'izq', e)} className="p-2 bg-slate-100 rounded-lg">
-            <ChevronUp className="-rotate-90" size={14}/>
-          </button>
-          <button onClick={(e) => moverCarpeta(c.id, 'der', e)} className="p-2 bg-slate-100 rounded-lg">
-            <ChevronDown className="-rotate-90" size={14}/>
-          </button>
-          <button onClick={(e) => editarNombreCarpeta(c.id, c.nombre, e)} className="p-2 bg-blue-50 text-blue-400 rounded-lg">
-            <Edit2 size={14}/>
-          </button>
-          <button onClick={(e) => eliminarCarpeta(c.id, c.nombre, e)} className="p-2 bg-red-50 text-red-300 rounded-lg">
-            <Trash2 size={14}/>
-          </button>
+            return (
+              <div
+                key={c.id}
+                onClick={() => setFolderView(c)}
+                className="group bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 cursor-pointer hover:shadow-2xl transition-all relative"
+              >
+                <div className="absolute top-0 right-0 p-4 flex gap-1 bg-white/60 rounded-bl-3xl z-10">
+                  <button onClick={(e) => moverCarpeta(c.id, 'izq', e)} className="p-2 bg-slate-100 rounded-lg">
+                    <ChevronUp className="-rotate-90" size={14}/>
+                  </button>
+                  <button onClick={(e) => moverCarpeta(c.id, 'der', e)} className="p-2 bg-slate-100 rounded-lg">
+                    <ChevronDown className="-rotate-90" size={14}/>
+                  </button>
+                  <button onClick={(e) => editarNombreCarpeta(c.id, c.nombre, e)} className="p-2 bg-blue-50 text-blue-400 rounded-lg">
+                    <Edit2 size={14}/>
+                  </button>
+                  <button onClick={(e) => eliminarCarpeta(c.id, c.nombre, e)} className="p-2 bg-red-50 text-red-300 rounded-lg">
+                    <Trash2 size={14}/>
+                  </button>
+                </div>
+
+                <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center mb-6">
+                  <Folder size={32} className="text-slate-300"/>
+                </div>
+
+                <h4 className="font-black italic uppercase text-lg mb-2">
+                  {c.nombre}
+                </h4>
+
+                <span className="text-[10px] uppercase text-slate-400">
+                  {pedidosEnCarpeta.length} pedidos
+                </span>
+
+                <div className="mt-3 text-[#8ED4BE] font-black italic">
+                  {Utils.currency(totalCarpeta)}
+                </div>
+              </div>
+            );
+          })}
         </div>
-
-        <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center mb-6">
-          <Folder size={32} className="text-slate-300"/>
-        </div>
-
-        <h4 className="font-black italic uppercase text-lg mb-2">
-          {c.nombre}
-        </h4>
-
-        {/* ✅ CONTADOR REAL */}
-        <span className="text-[10px] uppercase text-slate-400">
-          {pedidosEnCarpeta.length} pedidos
-        </span>
-
-        <div className="mt-3 text-[#8ED4BE] font-black italic">
-          {Utils.currency(totalCarpeta)}
-        </div>
-      </div>
-    );
-  })}
-</div>
       </div>
     );
   }
@@ -721,7 +758,6 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
     <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-20 animate-in fade-in duration-500 font-black">
       <ScrollToTop trigger={pagina} />
 
-      {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-12">
         <div>
           <h2 className="text-4xl font-black italic uppercase tracking-tighter">
@@ -749,7 +785,6 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
         </div>
       </div>
 
-      {/* BUSCADOR */}
       <div className="mb-10 relative">
         <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={20}/>
         <input
@@ -761,12 +796,10 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
         />
       </div>
 
-      {/* LISTADO */}
       <div className="grid grid-cols-1 gap-8">
         {ventasPagina.map(v => renderVentaCard(v))}
       </div>
 
-      {/* PAGINADOR */}
       {totalPaginas > 1 && (
         <div className="mt-14 flex justify-center gap-2">
           <button onClick={() => setPagina(1)} className="px-4 py-2 rounded-xl bg-slate-100">&laquo;</button>
@@ -802,11 +835,16 @@ const FormularioCotizacion = ({ alGuardar }) => {
   const [tel, setTel] = useState('');
   const [provincia, setProvincia] = useState("");
   const [direccion, setDireccion] = useState("");
+  const [encargado, setEncargado] = useState('Encargado...'); // Se elige una sola vez
+  const [comentario, setComentario] = useState(''); // Comentario general opcional
+
   const [items, setItems] = useState([{ id: Date.now(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 0 }]);
   const total = items.reduce((acc, i) => acc + (i.cant * i.precio), 0);
   const esValido = Utils.validateName(nombre) && tel.replace(/\D/g, '').length === 8 && items.length > 0 && items.every(i => i.cat && i.tema);
+
   const agregarLinea = () => setItems([...items, { id: Date.now(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 0 }]);
   const borrarLinea = (id) => setItems(items.filter(i => i.id !== id));
+
   const updItem = (id, field, val) => {
     setItems(items.map(i => {
       if (i.id === id) {
@@ -825,7 +863,18 @@ const FormularioCotizacion = ({ alGuardar }) => {
 
   const guardar = async () => {
     if (!esValido) return;
-    const nueva = { id: Utils.generateId(), nombre, telefono: tel, direccion: (provincia ? provincia + ", " : "") + direccion, items, total, fecha: new Date().toLocaleDateString(), created_at: new Date().toISOString() };
+    const nueva = { 
+      id: Utils.generateId(), 
+      nombre, 
+      telefono: tel, 
+      direccion: (provincia ? provincia + ", " : "") + direccion, 
+      items, 
+      total, 
+      encargado, // Se guarda aquí
+      comentario, // Se guarda aquí
+      fecha: new Date().toLocaleDateString(), 
+      created_at: new Date().toISOString() 
+    };
     await alGuardar(nueva);
     navigate('/ventas');
   };
@@ -835,20 +884,63 @@ const FormularioCotizacion = ({ alGuardar }) => {
       <ScrollToTop />
       <div className="bg-white rounded-[4rem] shadow-2xl overflow-hidden border border-slate-50 font-black">
         <div className="p-8 lg:p-12 bg-slate-900 text-white flex flex-col lg:flex-row justify-between items-center gap-6 font-black">
-          <div className="text-center lg:text-left font-black"><h2 className="text-4xl font-black italic uppercase tracking-tighter font-black">Nueva Cotización<span className="text-[#8ED4BE] font-black">.</span></h2><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-2 font-black">Completa los datos para generar el pedido</p></div>
-          <div className="flex items-center gap-4 bg-white/5 p-4 rounded-4xl border border-white/10 font-black"><div className="text-right font-black"><p className="text-[9px] font-black uppercase text-slate-400 font-black">Total Estimado</p><p className="text-3xl font-black italic text-[#8ED4BE] font-black">{Utils.currency(total)}</p></div><div className="w-12 h-12 bg-[#8ED4BE] rounded-2xl flex items-center justify-center text-slate-900 shadow-lg shadow-[#8ED4BE]/20 font-black"><Package size={24}/></div></div>
+          <div className="text-center lg:text-left font-black">
+            <h2 className="text-4xl font-black italic uppercase tracking-tighter font-black">Nueva Cotización<span className="text-[#8ED4BE] font-black">.</span></h2>
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-2 font-black">Completa los datos para generar el pedido</p>
+          </div>
+          <div className="flex items-center gap-4 bg-white/5 p-4 rounded-4xl border border-white/10 font-black">
+            <div className="text-right font-black">
+              <p className="text-[9px] font-black uppercase text-slate-400 font-black">Total Estimado</p>
+              <p className="text-3xl font-black italic text-[#8ED4BE] font-black">{Utils.currency(total)}</p>
+            </div>
+            <div className="w-12 h-12 bg-[#8ED4BE] rounded-2xl flex items-center justify-center text-slate-900 shadow-lg shadow-[#8ED4BE]/20 font-black"><Package size={24}/></div>
+          </div>
         </div>
+
         <div className="p-8 lg:p-12 space-y-10 font-black text-slate-800">
           <section className="grid grid-cols-1 md:grid-cols-2 gap-8 font-black">
-            <div className="space-y-2 font-black"><label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2 font-black"><User size={14}/> Nombre Completo</label><input type="text" className={`w-full p-6 bg-slate-50 rounded-4xl font-black text-slate-700 outline-none border-2 transition-all font-black ${nombre && !Utils.validateName(nombre) ? 'border-red-100 bg-red-50/30 font-black' : 'border-transparent focus:border-[#8ED4BE] font-black'}`} placeholder="Buscando cliente..." value={nombre} onChange={e => setNombre(Utils.capitalize(e.target.value))} /></div>
-            <div className="space-y-2 font-black"><label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2 font-black"><Clock size={14}/> Teléfono (8 dígitos)</label><input type="text" className="w-full p-6 bg-slate-50 rounded-4xl font-black text-slate-700 outline-none border-2 border-transparent focus:border-[#8ED4BE] transition-all font-black" placeholder="0000-0000" value={tel} onChange={e => setTel(Utils.formatPhone(e.target.value))} /></div>
+            <div className="space-y-2 font-black">
+              <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2 font-black"><User size={14}/> Nombre Completo</label>
+              <input type="text" className={`w-full p-6 bg-slate-50 rounded-4xl font-black text-slate-700 outline-none border-2 transition-all font-black ${nombre && !Utils.validateName(nombre) ? 'border-red-100 bg-red-50/30 font-black' : 'border-transparent focus:border-[#8ED4BE] font-black'}`} placeholder="Buscando cliente..." value={nombre} onChange={e => setNombre(Utils.capitalize(e.target.value))} />
+            </div>
+            <div className="space-y-2 font-black">
+              <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2 font-black"><Clock size={14}/> Teléfono (8 dígitos)</label>
+              <input type="text" className="w-full p-6 bg-slate-50 rounded-4xl font-black text-slate-700 outline-none border-2 border-transparent focus:border-[#8ED4BE] transition-all font-black" placeholder="0000-0000" value={tel} onChange={e => setTel(Utils.formatPhone(e.target.value))} />
+            </div>
           </section>
+
+          {/* SECCIÓN ENCARGADO - UNA SOLA VEZ */}
+          <section className="p-8 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 font-black">
+            <div className="space-y-2 font-black">
+              <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2 font-black"><Check size={14}/> Responsable del Pedido</label>
+              <select 
+                className="w-full p-5 bg-white rounded-2xl font-black uppercase text-xs outline-none shadow-sm font-black border-2 border-transparent focus:border-[#8ED4BE]"
+                value={encargado}
+                onChange={e => setEncargado(e.target.value)}
+              >
+                <option value="Encargado...">Encargado...</option>
+                <option value="Alejandro">Alejandro</option>
+                <option value="Isabel">Isabel</option>
+                <option value="Jason">Jason</option>
+              </select>
+            </div>
+          </section>
+
           <section className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 font-black">
-            <div className="space-y-2 font-black"><label className="text-[10px] font-black uppercase text-slate-400 ml-4 font-black">Provincia</label><select className="w-full p-5 bg-white rounded-2xl font-black uppercase text-xs outline-none shadow-sm font-black" value={provincia} onChange={e => {setProvincia(e.target.value); setDireccion("");}}><option value="" disabled>Seleccione...</option>{Object.keys(UBICACIONES_CR).map(p => <option key={p} value={p} className="font-black">{p}</option>)}</select></div>
-            <div className="space-y-2 font-black"><label className="text-[10px] font-black uppercase text-slate-400 ml-4 font-black">Ubicación Específica</label><select className="w-full p-5 bg-white rounded-2xl font-black uppercase text-xs outline-none shadow-sm font-black" value={direccion} onChange={e => setDireccion(e.target.value)}><option value="" disabled className="font-black">Seleccione...</option>{provincia && UBICACIONES_CR[provincia].map(loc => <option key={loc} value={loc} className="font-black">{loc}</option>)}</select></div>
+            <div className="space-y-2 font-black">
+              <label className="text-[10px] font-black uppercase text-slate-400 ml-4 font-black">Provincia</label>
+              <select className="w-full p-5 bg-white rounded-2xl font-black uppercase text-xs outline-none shadow-sm font-black" value={provincia} onChange={e => {setProvincia(e.target.value); setDireccion("");}}><option value="" disabled>Seleccione...</option>{Object.keys(UBICACIONES_CR).map(p => <option key={p} value={p} className="font-black">{p}</option>)}</select>
+            </div>
+            <div className="space-y-2 font-black">
+              <label className="text-[10px] font-black uppercase text-slate-400 ml-4 font-black">Ubicación Específica</label>
+              <select className="w-full p-5 bg-white rounded-2xl font-black uppercase text-xs outline-none shadow-sm font-black" value={direccion} onChange={e => setDireccion(e.target.value)}><option value="" disabled className="font-black">Seleccione...</option>{provincia && UBICACIONES_CR[provincia].map(loc => <option key={loc} value={loc} className="font-black">{loc}</option>)}</select>
+            </div>
           </section>
+
           <section className="space-y-6 font-black">
-            <div className="flex justify-between items-center px-4 font-black"><h4 className="font-black italic uppercase text-slate-800 flex items-center gap-2 text-sm font-black"><ShoppingBag size={18} className="text-[#8ED4BE] font-black"/> Desglose de Productos</h4></div>
+            <div className="flex justify-between items-center px-4 font-black">
+              <h4 className="font-black italic uppercase text-slate-800 flex items-center gap-2 text-sm font-black"><ShoppingBag size={18} className="text-[#8ED4BE] font-black"/> Desglose de Productos</h4>
+            </div>
             <div className="space-y-4 font-black">
               {items.map((item, idx) => (
                 <div key={item.id} className="group flex flex-col items-stretch lg:flex-row lg:items-center gap-6 p-6 bg-white border-2 border-slate-100 rounded-[2.5rem] hover:border-[#8ED4BE] transition-all relative font-black">
@@ -882,16 +974,38 @@ const FormularioCotizacion = ({ alGuardar }) => {
                 </div>
               ))}
             </div>
-            <button onClick={agregarLinea} className="w-full py-4 border-2 border-dashed border-slate-200 rounded-3xl text-slate-400 font-black uppercase text-xs hover:bg-slate-50 transition-all flex items-center justify-center gap-2 font-black">
-              <Plus size={18}/> Agregar Línea
-            </button>
+
+            <div className="flex flex-col gap-6">
+              <button onClick={agregarLinea} className="w-full py-4 border-2 border-dashed border-slate-200 rounded-3xl text-slate-400 font-black uppercase text-xs hover:bg-slate-50 transition-all flex items-center justify-center gap-2 font-black">
+                <Plus size={18}/> Agregar Línea
+              </button>
+
+              {/* SECCIÓN COMENTARIO OPCIONAL */}
+              <div className="space-y-4">
+                <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2 font-black">
+                  <Edit2 size={14}/> Agregar Comentario (Opcional)
+                </label>
+                <textarea 
+                  className="w-full p-8 bg-slate-50 rounded-[3rem] font-black text-slate-700 outline-none border-2 border-transparent focus:border-[#8ED4BE] transition-all min-h-40 resize-none font-black"
+                  placeholder="Escribe aquí cualquier detalle adicional..."
+                  maxLength={3000}
+                  value={comentario}
+                  onChange={e => setComentario(e.target.value)}
+                />
+              </div>
+            </div>
           </section>
+
           <button disabled={!esValido} onClick={guardar} className={`w-full p-8 rounded-4xl font-black italic uppercase text-xl shadow-2xl transition-all flex items-center justify-center gap-4 font-black ${esValido ? 'bg-slate-900 text-[#8ED4BE] hover:scale-[1.02] shadow-slate-200 font-black' : 'bg-slate-100 text-slate-300 cursor-not-allowed font-black'}`}><Check size={32}/> {esValido ? 'Confirmar y Guardar Pedido' : 'Complete los datos'}</button>
         </div>
       </div>
     </div>
   );
 };
+
+// ==========================================
+// 7. COMPONENTE GESTIÓN INVENTARIO
+// ==========================================
 
 const GestionInventario = () => {
   const [inventario, setInventario] = useState([]);
@@ -900,9 +1014,8 @@ const GestionInventario = () => {
   const [busqueda, setBusqueda] = useState('');
   const [cargando, setCargando] = useState(true);
 
-  // --- NUEVO: ESTADO DE PAGINACIÓN ---
   const [pagina, setPagina] = useState(1);
-  const itemsPorPagina = 21; // Lo que pediste
+  const itemsPorPagina = 21;
 
   useEffect(() => { fetchInv(); }, []);
 
@@ -961,7 +1074,6 @@ const GestionInventario = () => {
     }
   };
 
-  // LOGICA DE FILTRO Y ORDEN (Toda la tuya intacta)
   const todosLosFiltrados = (
     catFiltro === 'Todo'
       ? inventario
@@ -976,7 +1088,6 @@ const GestionInventario = () => {
       return a.tema.localeCompare(b.tema, 'es', { sensitivity: 'base' });
     });
 
-  // --- NUEVO: CÁLCULO DE PAGINACIÓN ---
   const totalPaginas = Math.ceil(todosLosFiltrados.length / itemsPorPagina);
   const filtrados = todosLosFiltrados.slice(
     (pagina - 1) * itemsPorPagina,
@@ -1006,7 +1117,7 @@ const GestionInventario = () => {
           type="text"
           placeholder="Buscar diseño..."
           value={busqueda}
-          onChange={e => { setBusqueda(e.target.value); setPagina(1); }} // Reinicia pagina al buscar
+          onChange={e => { setBusqueda(e.target.value); setPagina(1); }}
           className="flex-1 px-4 py-3 rounded-xl bg-white shadow-sm text-xs uppercase tracking-widest outline-none font-black"
         />
         <div className="flex gap-2">
@@ -1079,7 +1190,6 @@ const GestionInventario = () => {
             )}
           </div>
 
-          {/* --- BOTONES DE PÁGINAS --- */}
           {totalPaginas > 1 && (
             <div className="flex justify-center items-center gap-3 mt-12 flex-wrap">
               <button 
