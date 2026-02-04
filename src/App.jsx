@@ -458,7 +458,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
                     </select>
                     {/* EDITAR ENCARGADO */}
                     <select className="text-sm font-bold border-b outline-none bg-transparent text-[#8ED4BE]" value={data.encargado || "Encargado..."} onChange={e => setEditCache({...editCache, encargado: e.target.value})}>
-                        <option value="Encargado...">Encargado...</option>
+                        <option value="Vendedor...">Vendedor...</option>
                         <option value="Alejandro">Alejandro</option>
                         <option value="Isabel">Isabel</option>
                         <option value="Jason">Jason</option>
@@ -835,7 +835,7 @@ const FormularioCotizacion = ({ alGuardar }) => {
   const [tel, setTel] = useState('');
   const [provincia, setProvincia] = useState("");
   const [direccion, setDireccion] = useState("");
-  const [encargado, setEncargado] = useState('Encargado...'); // Se elige una sola vez
+  const [encargado, setEncargado] = useState('Vendedor...'); // Se elige una sola vez
   const [comentario, setComentario] = useState(''); // Comentario general opcional
 
   const [items, setItems] = useState([{ id: Date.now(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 0 }]);
@@ -918,7 +918,7 @@ const FormularioCotizacion = ({ alGuardar }) => {
                 value={encargado}
                 onChange={e => setEncargado(e.target.value)}
               >
-                <option value="Encargado...">Encargado...</option>
+                <option value="Vendedor...">Vendedor...</option>
                 <option value="Alejandro">Alejandro</option>
                 <option value="Isabel">Isabel</option>
                 <option value="Jason">Jason</option>
