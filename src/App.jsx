@@ -1326,10 +1326,12 @@ export default function App() {
     else await fetchVentas();
     Swal.fire({ title: '¡Pedido Guardado!', icon: 'success', confirmButtonColor: '#8ED4BE', customClass: { popup: 'rounded-[3rem] font-black italic font-black' } });
   };
+
   const alEliminar = async (id) => {
     const res = await Swal.fire({ title: '¿Eliminar Venta?', text: "Esta acción no se puede revertir", icon: 'warning', showCancelButton: true, confirmButtonColor: '#F79598', cancelButtonColor: '#cbd5e1' });
     if (res.isConfirmed) { await supabase.from('ventas').delete().eq('id', id); setVentas(ventas.filter(v => v.id !== id)); }
   };
+
   const alActualizar = async (id, dataEditada) => {
     const { error } = await supabase.from('ventas').update(dataEditada).eq('id', id);
     if (error) return Swal.fire('Error', error.message, 'error');
@@ -1340,9 +1342,12 @@ export default function App() {
   return (
     <Router>
       <ScrollToTop />
-      <div className="flex flex-col lg:flex-row h-screen bg-slate-50 font-sans overflow-hidden font-black">
+      {/* Se cambia h-screen por h-[100dvh] para corregir el error en móviles */}
+      <div className="flex flex-col lg:flex-row h-[100dvh] bg-slate-50 font-sans overflow-hidden font-black">
         <aside className="hidden lg:flex w-32 bg-white border-r border-slate-100 flex-col items-center py-10 gap-8 z-50 font-black">
-          <div className="w-16 h-16 bg-[#8ED4BE] rounded-[1.8rem] items-center justify-center shadow-lg shadow-[#8ED4BE]/30 mb-6 flex font-black"><Package className="text-slate-800 font-black" size={28}/></div>
+          <div className="w-16 h-16 bg-[#8ED4BE] rounded-[1.8rem] items-center justify-center shadow-lg shadow-[#8ED4BE]/30 mb-6 flex font-black">
+            <Package className="text-slate-800 font-black" size={28}/>
+          </div>
           <nav className="flex flex-col gap-8 justify-center w-full font-black">
             <NavLink to="/" icon={<Home size={24}/>} label="Home" isMobile={false} />
             <NavLink to="/cotizar" icon={<Plus size={24}/>} label="Nueva" isMobile={false} />
@@ -1354,6 +1359,7 @@ export default function App() {
             <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center font-bold text-[#8ED4BE] text-xs font-black">IV</div>
           </div>
         </aside>
+
         <main className="flex-1 overflow-y-auto bg-slate-50/30 font-black">
           <Routes>
             <Route path="/" element={<DashboardHome historial={ventas} />} />
@@ -1363,6 +1369,7 @@ export default function App() {
             <Route path="/inventario" element={<GestionInventario />} />
           </Routes>
         </main>
+
         <footer className="lg:hidden w-full bg-white border-t border-slate-100 flex items-center justify-around py-4 px-2 z-50 font-black">
           <nav className="flex w-full justify-around items-center font-black">
             <NavLink to="/" icon={<Home size={22}/>} label="Home" isMobile={true} />

@@ -40,3 +40,8 @@
 .read-the-docs {
   color: #888;
 }
+
+.h-screen {
+  height: 100vh; 
+  height: 100dvh;
+}
