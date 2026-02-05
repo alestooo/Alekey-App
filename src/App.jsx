@@ -456,12 +456,18 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
                     <select className="text-sm font-bold border-b outline-none bg-transparent" value={data.direccion} onChange={e => setEditCache({...editCache, direccion: e.target.value})}>
                       {UBICACIONES_CR[provinciaEdit].map(loc => <option key={loc} value={loc}>{loc}</option>)}
                     </select>
-                    {/* EDITAR ENCARGADO */}
-                    <select className="text-sm font-bold border-b outline-none bg-transparent text-[#8ED4BE]" value={data.encargado || "Encargado..."} onChange={e => setEditCache({...editCache, encargado: e.target.value})}>
+                    {/* EDITAR VENDEDOR Y PAGO */}
+                    <select className="text-sm font-bold border-b outline-none bg-transparent text-[#8ED4BE]" value={data.encargado || "Vendedor..."} onChange={e => setEditCache({...editCache, encargado: e.target.value})}>
                         <option value="Vendedor...">Vendedor...</option>
                         <option value="Alejandro">Alejandro</option>
                         <option value="Isabel">Isabel</option>
                         <option value="Jason">Jason</option>
+                    </select>
+                    <select className="text-sm font-bold border-b outline-none bg-transparent text-purple-600" value={data.metodo_pago || "Pago..."} onChange={e => setEditCache({...editCache, metodo_pago: e.target.value})}>
+                        <option value="Pago...">Pago...</option>
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="Tarjeta">Tarjeta</option>
+                        <option value="Centro Educativo">Centro Educativo</option>
                     </select>
                   </div>
                 </div>
@@ -474,12 +480,19 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
                       {data.fecha} • {data.telefono} • {data.direccion}
                     </p>
                   </div>
-                  {/* ENCARGADO VISUAL */}
-                  {data.encargado && data.encargado !== 'Encargado...' && (
-                    <span className="text-[9px] font-black bg-[#8ED4BE]/10 text-[#8ED4BE] px-3 py-1 rounded-full uppercase tracking-tighter">
-                      💼 {data.encargado}
-                    </span>
-                  )}
+                  {/* BADGES VISUALES */}
+                  <div className="flex gap-2">
+                    {data.encargado && data.encargado !== 'Vendedor...' && (
+                      <span className="text-[9px] font-black bg-[#8ED4BE]/10 text-[#8ED4BE] px-3 py-1 rounded-full uppercase tracking-tighter">
+                        💼 {data.encargado}
+                      </span>
+                    )}
+                    {data.metodo_pago && data.metodo_pago !== 'Pago...' && (
+                      <span className="text-[9px] font-black bg-purple-50 text-purple-600 px-3 py-1 rounded-full uppercase tracking-tighter border border-purple-100">
+                        💳 {data.metodo_pago}
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -582,7 +595,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
     );
   };
 
-   if (folderView) {
+  if (folderView) {
     const pedidos = ventas.filter(v =>
       (folderView.ids_ventas || []).includes(v.id)
     );
@@ -606,9 +619,9 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
 
         <div className="mb-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-4xl shadow-lg border border-slate-50">
           <div>
-            <h2 className="text-2xl lg:text-3xl font-black italic uppercase tracking-tighter">
+            <h2 className="text-2xl lg:text-3xl font-black italic uppercase tracking-tighter text-purple-600">
               {folderView.nombre}
-              <span className="text-[#8ED4BE]"> ({pedidos.length})</span>
+              <span className="text-purple-400"> ({pedidos.length})</span>
             </h2>
 
             <div className="mt-4 relative w-full sm:w-64">
@@ -616,7 +629,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
               <input
                 type="text"
                 placeholder="Buscar en centro..."
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 rounded-xl text-xs outline-none border focus:border-[#8ED4BE]"
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 rounded-xl text-xs outline-none border focus:border-purple-400"
                 value={filtroFolder}
                 onChange={(e) => setFiltroFolder(e.target.value)}
               />
@@ -627,7 +640,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
             <span className="text-[10px] text-slate-400 uppercase">
               Total Acumulado
             </span>
-            <div className="text-2xl font-black italic text-[#8ED4BE]">
+            <div className="text-2xl font-black italic text-purple-600">
               {Utils.currency(pedidos.reduce((s, v) => s + v.total, 0))}
             </div>
           </div>
@@ -656,7 +669,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
         <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-12">
           <div>
             <h2 className="text-4xl font-black italic uppercase tracking-tighter">
-              Centros Educativos<span className="text-[#8ED4BE]">.</span>
+              Centros Educativos<span className="text-purple-600">.</span>
             </h2>
             <p className="text-[10px] text-slate-400 uppercase tracking-[0.2em] mt-1">
               Organiza tus pedidos por instituciones
@@ -666,14 +679,14 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
           <div className="flex gap-3">
             <button
               onClick={() => setMode('normal')}
-              className="px-6 py-4 bg-white shadow-lg rounded-2xl uppercase text-xs text-slate-400 hover:text-slate-800"
+              className="px-6 py-4 bg-white shadow-lg rounded-2xl uppercase text-xs text-slate-400 hover:text-slate-800 font-black"
             >
               Historial
             </button>
 
             <button
               onClick={crearCarpeta}
-              className="px-6 py-4 bg-[#8ED4BE] text-slate-800 shadow-lg rounded-2xl uppercase text-xs flex items-center gap-2 hover:scale-105"
+              className="px-6 py-4 bg-purple-600 text-white shadow-lg rounded-2xl uppercase text-xs flex items-center gap-2 hover:scale-105 font-black"
             >
               <FolderPlus size={18}/> Nuevo Centro
             </button>
@@ -694,7 +707,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
               <div
                 key={c.id}
                 onClick={() => setFolderView(c)}
-                className="group bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 cursor-pointer hover:shadow-2xl transition-all relative"
+                className="group bg-white p-8 rounded-[3rem] shadow-xl border-l-10 border-purple-600 cursor-pointer hover:shadow-2xl transition-all relative"
               >
                 <div className="absolute top-0 right-0 p-4 flex gap-1 bg-white/60 rounded-bl-3xl z-10">
                   <button onClick={(e) => moverCarpeta(c.id, 'izq', e)} className="p-2 bg-slate-100 rounded-lg">
@@ -711,19 +724,19 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
                   </button>
                 </div>
 
-                <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center mb-6">
-                  <Folder size={32} className="text-slate-300"/>
+                <div className="w-16 h-16 bg-purple-50 rounded-3xl flex items-center justify-center mb-6">
+                  <Folder size={32} className="text-purple-300"/>
                 </div>
 
                 <h4 className="font-black italic uppercase text-lg mb-2">
                   {c.nombre}
                 </h4>
 
-                <span className="text-[10px] uppercase text-slate-400">
+                <span className="text-[10px] uppercase text-slate-400 font-black">
                   {pedidosEnCarpeta.length} pedidos
                 </span>
 
-                <div className="mt-3 text-[#8ED4BE] font-black italic">
+                <div className="mt-3 text-purple-600 font-black italic">
                   {Utils.currency(totalCarpeta)}
                 </div>
               </div>
@@ -771,14 +784,14 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
         <div className="flex gap-3">
           <button
             onClick={() => setMode('carpetas')}
-            className="px-6 py-4 bg-white shadow-lg rounded-2xl uppercase text-xs text-slate-400 hover:text-slate-800 flex items-center gap-2"
+            className="px-6 py-4 bg-white shadow-lg rounded-2xl uppercase text-xs text-slate-400 hover:text-slate-800 flex items-center gap-2 font-black"
           >
             <Folder size={18}/> Ver Centros
           </button>
 
           <Link
             to="/cotizar"
-            className="px-6 py-4 bg-[#F79598] text-white shadow-lg rounded-2xl uppercase text-xs flex items-center gap-2 hover:scale-105"
+            className="px-6 py-4 bg-[#F79598] text-white shadow-lg rounded-2xl uppercase text-xs flex items-center gap-2 hover:scale-105 font-black"
           >
             <Plus size={18}/> Nueva Venta
           </Link>
@@ -810,7 +823,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
               key={p}
               onClick={() => setPagina(p)}
               className={`px-4 py-2 rounded-xl ${
-                p === pagina ? 'bg-[#F79598] text-white' : 'bg-slate-100'
+                p === pagina ? 'bg-[#F79598] text-white' : 'bg-slate-100 font-black'
               }`}
             >
               {p}
@@ -835,8 +848,9 @@ const FormularioCotizacion = ({ alGuardar }) => {
   const [tel, setTel] = useState('');
   const [provincia, setProvincia] = useState("");
   const [direccion, setDireccion] = useState("");
-  const [encargado, setEncargado] = useState('Vendedor...'); // Se elige una sola vez
-  const [comentario, setComentario] = useState(''); // Comentario general opcional
+  const [encargado, setEncargado] = useState('Vendedor...');
+  const [metodoPago, setMetodoPago] = useState('Pago...'); // Nuevo estado
+  const [comentario, setComentario] = useState('');
 
   const [items, setItems] = useState([{ id: Date.now(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 0 }]);
   const total = items.reduce((acc, i) => acc + (i.cant * i.precio), 0);
@@ -870,8 +884,9 @@ const FormularioCotizacion = ({ alGuardar }) => {
       direccion: (provincia ? provincia + ", " : "") + direccion, 
       items, 
       total, 
-      encargado, // Se guarda aquí
-      comentario, // Se guarda aquí
+      encargado, 
+      metodo_pago: metodoPago, // Se guarda en la base de datos
+      comentario, 
       fecha: new Date().toLocaleDateString(), 
       created_at: new Date().toISOString() 
     };
@@ -909,12 +924,12 @@ const FormularioCotizacion = ({ alGuardar }) => {
             </div>
           </section>
 
-          {/* SECCIÓN ENCARGADO - UNA SOLA VEZ */}
-          <section className="p-8 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 font-black">
+          {/* SECCIÓN VENDEDOR Y PAGO - A LA PAR */}
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 font-black">
             <div className="space-y-2 font-black">
-              <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2 font-black"><Check size={14}/> Responsable del Pedido</label>
+              <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2 font-black"><Check size={14} className="text-[#8ED4BE]"/> Responsable</label>
               <select 
-                className="w-full p-5 bg-white rounded-2xl font-black uppercase text-xs outline-none shadow-sm font-black border-2 border-transparent focus:border-[#8ED4BE]"
+                className="w-full p-5 bg-white rounded-2xl font-black uppercase text-xs outline-none shadow-sm font-black border-2 border-transparent focus:border-[#8ED4BE] text-slate-700"
                 value={encargado}
                 onChange={e => setEncargado(e.target.value)}
               >
@@ -924,17 +939,25 @@ const FormularioCotizacion = ({ alGuardar }) => {
                 <option value="Jason">Jason</option>
               </select>
             </div>
+            <div className="space-y-2 font-black">
+              <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2 font-black"><TrendingUp size={14} className="text-purple-500"/> Método de Pago</label>
+              <select 
+                className="w-full p-5 bg-white rounded-2xl font-black uppercase text-xs outline-none shadow-sm font-black border-2 border-transparent focus:border-purple-400 text-purple-600"
+                value={metodoPago}
+                onChange={e => setMetodoPago(e.target.value)}
+              >
+                <option value="Pago...">Pago...</option>
+                <option value="Efectivo">Efectivo</option>
+                <option value="Tarjeta">Tarjeta</option>
+                <option value="Sinpe">Sinpe</option>
+                <option value="Centro Educativo">Centro Educativo</option>
+              </select>
+            </div>
           </section>
 
           <section className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 font-black">
-            <div className="space-y-2 font-black">
-              <label className="text-[10px] font-black uppercase text-slate-400 ml-4 font-black">Provincia</label>
-              <select className="w-full p-5 bg-white rounded-2xl font-black uppercase text-xs outline-none shadow-sm font-black" value={provincia} onChange={e => {setProvincia(e.target.value); setDireccion("");}}><option value="" disabled>Seleccione...</option>{Object.keys(UBICACIONES_CR).map(p => <option key={p} value={p} className="font-black">{p}</option>)}</select>
-            </div>
-            <div className="space-y-2 font-black">
-              <label className="text-[10px] font-black uppercase text-slate-400 ml-4 font-black">Ubicación Específica</label>
-              <select className="w-full p-5 bg-white rounded-2xl font-black uppercase text-xs outline-none shadow-sm font-black" value={direccion} onChange={e => setDireccion(e.target.value)}><option value="" disabled className="font-black">Seleccione...</option>{provincia && UBICACIONES_CR[provincia].map(loc => <option key={loc} value={loc} className="font-black">{loc}</option>)}</select>
-            </div>
+            <div className="space-y-2 font-black"><label className="text-[10px] font-black uppercase text-slate-400 ml-4 font-black">Provincia</label><select className="w-full p-5 bg-white rounded-2xl font-black uppercase text-xs outline-none shadow-sm font-black border-2 border-transparent focus:border-purple-400 text-purple-600" value={provincia} onChange={e => {setProvincia(e.target.value); setDireccion("");}}><option value="" disabled>Seleccione...</option>{Object.keys(UBICACIONES_CR).map(p => <option key={p} value={p} className="font-black">{p}</option>)}</select></div>
+            <div className="space-y-2 font-black"><label className="text-[10px] font-black uppercase text-slate-400 ml-4 font-black">Ubicación Específica</label><select className="w-full p-5 bg-white rounded-2xl font-black uppercase text-xs outline-none shadow-sm font-black border-2 border-transparent focus:border-purple-400 text-purple-600" value={direccion} onChange={e => setDireccion(e.target.value)}><option value="" disabled className="font-black">Seleccione...</option>{provincia && UBICACIONES_CR[provincia].map(loc => <option key={loc} value={loc} className="font-black">{loc}</option>)}</select></div>
           </section>
 
           <section className="space-y-6 font-black">
