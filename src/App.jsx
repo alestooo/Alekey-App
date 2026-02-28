@@ -321,7 +321,7 @@ const Estadisticas = ({ ventas }) => {
 };
 
 // ==========================================
-// 5. COMPONENTE VENTAS
+// 5. COMPONENTE VENTAS (Actualizado)
 // ==========================================
 
 const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
@@ -366,11 +366,13 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
     const result = await Swal.fire({ title: `¿Eliminar centro?`, text: `Se borrará "${nombre}". Los pedidos NO se borran del historial general.`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#F79598' });
     if (result.isConfirmed) { await supabase.from('carpetas_centros').delete().eq('id', id); obtenerCarpetas(); setFolderView(null); }
   };
+
   const editarNombreCarpeta = async (id, actual, e) => {
     if (e) e.stopPropagation();
     const { value: nombre } = await Swal.fire({ title: 'Editar Nombre', input: 'text', inputValue: actual, showCancelButton: true });
     if (nombre) { await supabase.from('carpetas_centros').update({ nombre }).eq('id', id); obtenerCarpetas(); }
   };
+
   const moverCarpeta = async (id, direccion, e) => {
     if (e) e.stopPropagation();
     const index = carpetas.findIndex(c => c.id === id);
@@ -383,6 +385,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
     const updates = nuevas.map((c, i) => supabase.from('carpetas_centros').update({ orden: i }).eq('id', c.id));
     await Promise.all(updates);
   };
+
   const agregarACarpeta = async (ventaId) => {
     if (!carpetas.length) return Swal.fire('Error', 'Primero crea un centro', 'error');
     const { value: folderId } = await Swal.fire({ title: 'Seleccionar Centro', input: 'select', inputOptions: Object.fromEntries(carpetas.map(c => [c.id, c.nombre])), showCancelButton: true });
@@ -395,11 +398,13 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
       }
     }
   };
+
   const deseleccionarDeCarpeta = async (ventaId, folder) => {
     const nuevosIds = folder.ids_ventas.filter(id => id !== ventaId);
     await supabase.from('carpetas_centros').update({ ids_ventas: nuevosIds }).eq('id', folder.id);
     setFolderView({ ...folder, ids_ventas: nuevosIds }); obtenerCarpetas();
   };
+
   const handleEditItem = (itemId, field, value) => {
     setEditCache(prev => {
       const updatedItems = prev.items.map(item => {
@@ -438,7 +443,11 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
     const editing = editId === v.id;
     const data = editing ? editCache : v;
     const tienePendientes = (data.items || []).some(i => i.pendiente > 0);
-    const editValido = Utils.validateName(data.nombre || "") && (data.telefono || "").replace(/\D/g, '').length === 8 && (data.items || []).length > 0;
+    
+    // CAMBIO: Ahora acepta números y caracteres (solo valida que no esté vacío)
+    const editValido = (data.nombre || "").trim().length > 0 && 
+                       (data.telefono || "").replace(/\D/g, '').length === 8 && 
+                       (data.items || []).length > 0;
     
     return (
       <div key={v.id} className="bg-white rounded-4xl shadow-xl border-l-12 flex flex-col overflow-hidden transition-colors duration-300 font-black" style={{ borderLeftColor: tienePendientes ? '#F79598' : '#8ED4BE' }}>
@@ -447,7 +456,12 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
             <div className="flex-1 w-full text-slate-800">
               {editing ? (
                 <div className="space-y-4">
-                  <input className={`text-xl lg:text-2xl font-black italic border-b-2 outline-none w-full bg-slate-50 p-2 ${!Utils.validateName(data.nombre) ? 'border-red-300' : 'border-[#8ED4BE]'}`} value={data.nombre} onChange={e => setEditCache({...editCache, nombre: Utils.capitalize(e.target.value)})} />
+                  {/* CAMBIO: Se permite cualquier carácter en el nombre al editar */}
+                  <input 
+                    className="text-xl lg:text-2xl font-black italic border-b-2 outline-none w-full bg-slate-50 p-2 border-[#8ED4BE]" 
+                    value={data.nombre} 
+                    onChange={e => setEditCache({...editCache, nombre: e.target.value})} 
+                  />
                   <div className="flex flex-wrap gap-3">
                     <input className="text-sm font-bold border-b outline-none w-32 bg-transparent" value={data.telefono} onChange={e => setEditCache({...editCache, telefono: Utils.formatPhone(e.target.value)})} />
                     <select className="text-sm font-bold border-b outline-none bg-transparent" value={provinciaEdit} onChange={e => setProvinciaEdit(e.target.value)}>
@@ -456,7 +470,6 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
                     <select className="text-sm font-bold border-b outline-none bg-transparent" value={data.direccion} onChange={e => setEditCache({...editCache, direccion: e.target.value})}>
                       {UBICACIONES_CR[provinciaEdit].map(loc => <option key={loc} value={loc}>{loc}</option>)}
                     </select>
-                    {/* EDITAR VENDEDOR Y PAGO */}
                     <select className="text-sm font-bold border-b outline-none bg-transparent text-[#8ED4BE]" value={data.encargado || "Vendedor..."} onChange={e => setEditCache({...editCache, encargado: e.target.value})}>
                         <option value="Vendedor...">Vendedor...</option>
                         <option value="Alejandro">Alejandro</option>
@@ -467,6 +480,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
                         <option value="Pago...">Pago...</option>
                         <option value="Efectivo">Efectivo</option>
                         <option value="Tarjeta">Tarjeta</option>
+                        <option value="Sinpe">Sinpe</option>
                         <option value="Centro Educativo">Centro Educativo</option>
                     </select>
                   </div>
@@ -480,7 +494,6 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
                       {data.fecha} • {data.telefono} • {data.direccion}
                     </p>
                   </div>
-                  {/* BADGES VISUALES */}
                   <div className="flex gap-2">
                     {data.encargado && data.encargado !== 'Vendedor...' && (
                       <span className="text-[9px] font-black bg-[#8ED4BE]/10 text-[#8ED4BE] px-3 py-1 rounded-full uppercase tracking-tighter">
@@ -529,15 +542,15 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
                   <td className="py-3 text-[11px] font-black uppercase text-slate-700 font-black">
                     {editing ? (
                       <div className="flex flex-col gap-1 font-black">
-                        <input list="productos-list" className="border rounded p-1 w-full font-black" value={item.cat} onChange={e => handleEditItem(item.id, 'cat', e.target.value)} />
+                        <input list="productos-list" className={`border rounded p-1 w-full font-black ${item.cat === "OTROS..." ? 'text-purple-600 border-purple-200' : ''}`} value={item.cat} onChange={e => handleEditItem(item.id, 'cat', e.target.value)} />
                         {item.cat === "OTROS..." && (
-                          <input type="number" placeholder="Precio manual" className="border rounded p-1 w-full text-purple-600 font-bold font-black" value={item.precio} onChange={e => handleEditItem(item.id, 'precio', parseFloat(e.target.value) || 0)} />
+                          <input type="number" placeholder="Precio manual" className="border rounded p-1 w-full text-purple-600 font-bold font-black bg-purple-50" value={item.precio} onChange={e => handleEditItem(item.id, 'precio', parseFloat(e.target.value) || 0)} />
                         )}
                         <input list="temas-list" className="border rounded p-1 w-full font-black" value={item.tema} onChange={e => handleEditItem(item.id, 'tema', e.target.value)} />
                       </div>
                     ) : (
                       <div className="flex items-center gap-2 font-black">
-                        <span className={`px-2 py-0.5 rounded-full text-[8px] font-black ${Utils.getThemeColorClass(item.cat)}`}>{item.cat}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[8px] font-black ${item.cat === "OTROS..." ? 'bg-purple-50 text-purple-600 border border-purple-100' : Utils.getThemeColorClass(item.cat)}`}>{item.cat}</span>
                         {item.tema}
                       </div>
                     )}
@@ -569,7 +582,6 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
             </button>
           )}
 
-          {/* ÁREA DE COMENTARIOS */}
           <div className="mt-4 p-4 bg-white/50 rounded-2xl border border-slate-100">
             <p className="text-[9px] uppercase font-black text-slate-300 mb-2 tracking-widest">Notas / Comentarios</p>
             {editing ? (
@@ -849,12 +861,18 @@ const FormularioCotizacion = ({ alGuardar }) => {
   const [provincia, setProvincia] = useState("");
   const [direccion, setDireccion] = useState("");
   const [encargado, setEncargado] = useState('Vendedor...');
-  const [metodoPago, setMetodoPago] = useState('Pago...'); // Nuevo estado
+  const [metodoPago, setMetodoPago] = useState('Pago...');
   const [comentario, setComentario] = useState('');
 
   const [items, setItems] = useState([{ id: Date.now(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 0 }]);
+  
   const total = items.reduce((acc, i) => acc + (i.cant * i.precio), 0);
-  const esValido = Utils.validateName(nombre) && tel.replace(/\D/g, '').length === 8 && items.length > 0 && items.every(i => i.cat && i.tema);
+
+  // CAMBIO: Ahora solo valida que el nombre no esté vacío (acepta números/caracteres)
+  const esValido = nombre.trim().length > 0 && 
+                   tel.replace(/\D/g, '').length === 8 && 
+                   items.length > 0 && 
+                   items.every(i => i.cat && i.tema);
 
   const agregarLinea = () => setItems([...items, { id: Date.now(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 0 }]);
   const borrarLinea = (id) => setItems(items.filter(i => i.id !== id));
@@ -885,7 +903,7 @@ const FormularioCotizacion = ({ alGuardar }) => {
       items, 
       total, 
       encargado, 
-      metodo_pago: metodoPago, // Se guarda en la base de datos
+      metodo_pago: metodoPago, 
       comentario, 
       fecha: new Date().toLocaleDateString(), 
       created_at: new Date().toISOString() 
@@ -915,8 +933,15 @@ const FormularioCotizacion = ({ alGuardar }) => {
         <div className="p-8 lg:p-12 space-y-10 font-black text-slate-800">
           <section className="grid grid-cols-1 md:grid-cols-2 gap-8 font-black">
             <div className="space-y-2 font-black">
-              <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2 font-black"><User size={14}/> Nombre Completo</label>
-              <input type="text" className={`w-full p-6 bg-slate-50 rounded-4xl font-black text-slate-700 outline-none border-2 transition-all font-black ${nombre && !Utils.validateName(nombre) ? 'border-red-100 bg-red-50/30 font-black' : 'border-transparent focus:border-[#8ED4BE] font-black'}`} placeholder="Buscando cliente..." value={nombre} onChange={e => setNombre(Utils.capitalize(e.target.value))} />
+              <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2 font-black"><User size={14}/> Nombre Completo / Entidad</label>
+              {/* CAMBIO: Eliminado Utils.validateName para permitir cualquier caracter */}
+              <input 
+                type="text" 
+                className="w-full p-6 bg-slate-50 rounded-4xl font-black text-slate-700 outline-none border-2 border-transparent focus:border-[#8ED4BE] transition-all font-black" 
+                placeholder="Nombre, empresa o institución..." 
+                value={nombre} 
+                onChange={e => setNombre(e.target.value)} 
+              />
             </div>
             <div className="space-y-2 font-black">
               <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2 font-black"><Clock size={14}/> Teléfono (8 dígitos)</label>
@@ -924,7 +949,6 @@ const FormularioCotizacion = ({ alGuardar }) => {
             </div>
           </section>
 
-          {/* SECCIÓN VENDEDOR Y PAGO - A LA PAR */}
           <section className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 font-black">
             <div className="space-y-2 font-black">
               <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2 font-black"><Check size={14} className="text-[#8ED4BE]"/> Responsable</label>
@@ -969,9 +993,10 @@ const FormularioCotizacion = ({ alGuardar }) => {
                 <div key={item.id} className="group flex flex-col items-stretch lg:flex-row lg:items-center gap-6 p-6 bg-white border-2 border-slate-100 rounded-[2.5rem] hover:border-[#8ED4BE] transition-all relative font-black">
                   <span className="font-black italic text-slate-200 text-2xl lg:text-3xl w-10 text-center lg:text-left font-black">#{idx+1}</span>
                   <div className="flex-1 w-full grid grid-cols-1 gap-4 font-black">
-                    <input list="productos-list" className={`w-full p-4 bg-slate-50 rounded-4xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE] font-black ${item.cat === "OTROS..." ? 'text-purple-600' : ''}`} placeholder="Buscar categoría..." value={item.cat} onChange={e => updItem(item.id, 'cat', e.target.value)} />
+                    {/* ESTILO: El texto se pone Púrpura si es "OTROS..." */}
+                    <input list="productos-list" className={`w-full p-4 bg-slate-50 rounded-4xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE] font-black ${item.cat === "OTROS..." ? 'text-purple-600 border-purple-100' : ''}`} placeholder="Buscar categoría..." value={item.cat} onChange={e => updItem(item.id, 'cat', e.target.value)} />
                     {item.cat === "OTROS..." && (
-                      <input type="number" placeholder="Precio manual" className="w-full p-4 bg-purple-50 rounded-4xl font-black text-purple-600 text-[10px] outline-none border-2 border-purple-100 focus:border-purple-300 font-black" value={item.precio || ""} onChange={e => updItem(item.id, 'precio', parseFloat(e.target.value) || 0)} />
+                      <input type="number" placeholder="Precio manual" className="w-full p-4 bg-purple-50 rounded-4xl font-black text-purple-600 text-[10px] outline-none border-2 border-purple-100 focus:border-purple-300 font-black animate-in zoom-in-95" value={item.precio || ""} onChange={e => updItem(item.id, 'precio', parseFloat(e.target.value) || 0)} />
                     )}
                     <input list="temas-list" className="w-full p-4 bg-slate-50 rounded-4xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE] font-black" placeholder="Buscar tema..." value={item.tema} onChange={e => updItem(item.id, 'tema', e.target.value)} />
                   </div>
@@ -1003,7 +1028,6 @@ const FormularioCotizacion = ({ alGuardar }) => {
                 <Plus size={18}/> Agregar Línea
               </button>
 
-              {/* SECCIÓN COMENTARIO OPCIONAL */}
               <div className="space-y-4">
                 <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2 font-black">
                   <Edit2 size={14}/> Agregar Comentario (Opcional)
