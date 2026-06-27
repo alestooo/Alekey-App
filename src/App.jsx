@@ -30,31 +30,8 @@ const UBICACIONES_CR = {
   "Limón": ["Limón", "Pococí", "Siquirres", "Talamanca", "Matina", "Guácimo"]
 };
 
-const PRODUCTOS_PRECIOS = {
-  "Abecedarios": 5000, "Areas": 4500, "Asistencia": 2500, "Bienvenidos": 4750,
-  "Borde decorado": 4500, "Borde liso": 2500, "Calendario 1": 1500, "Calendario 2": 2500,
-  "Calendario 3": 3750, "Cumpleaños": 1500, "Cumpleaños MR-2": 2500, "DG - amarilla": 1350,
-  "DCC": 3750, "Distintivo": 1350, "Distintivo foto": 1350, "DM - celeste": 700,
-  "DP - rosado": 500, "Fechero": 4750, "Fechero completo": 8500, "Laminario 5": 2250,
-  "Laminario 6": 2750, "Laminario 7": 3150, "Laminario 8": 3500, "Mural-1":1500, "Mural Laminado 1":2500, "MR-2": 2500,
-  "MR-6": 6500, "MR-8": 8000, "Nombres": 1500, "Pasafecha": 12500, "Pasalista": 5500, "Puerta": 1500, "Puerta grande": 2500,
-  "Rótulo 60 cm": 2750, "Tablas": 2000, "Velcro": 1250, "Welcome": 4750, "OTROS...": 0
-};
-
-const TEMAS_PREDEFINIDOS = [
-  "Abeja Acuarela", "Abeja Cute","Abeja Spelling","Alicia","Amarillo","Arcoiris","Arcoliris Pastel","Autismo","Avenger","Azul","Be Happy","Bosque","Bosque Acuarela",
-  "Bosque CR","Búho","Caballito de mar","Cactus","Campamento","Cangrejo","Capibara","Celeste","Chimuelos","Circo","Circo 1","Circo 2","Colores arcoiris","Colores arcoiris cafe",
-  "Colores arcoiris navidad","Colores arcoiris pastel","Confeti café","Confeti colores","Confeti negro","Crayola","Crayola Niños","Crayola Pastel","Cumpleaños","Deporte","Dino Baby",
-  "Dinosaurio","Elefante","Escolar","Espacio","Espacio Azul","Espantapajaros","Feria Cientifica","Flor café","Fucsia","Gato","Granja 1","Granja 2","Granja Acuarela","Granja New","Granjeros",
-  "Harry Potter","Insectos","Intensamente","Jirafa","Kirby","Koala","Leones","Leones Pareja","Llama","Mar","Mar fondo blanco","Mar New","Margarita","Mario Bros","Mariquita","Mariquita Educlip",
-  "Mariquita insecto","Medio Ambiente","Melonheadz","Menta","Mickey","Mickey Safari","Mono","Monster Inc","Monstruos 1","Monstruos 2","Monstruos 3","Morado", "Motivación","Música","Naranja","Navidad",
-  "Negro","Niños Corazón 1","Niños Corazón 2","Niños Jovenes","OFERTA","Oso Cariñoso","Oso Miel","Oso Sandia","Oso Teddy","Oso the Pond","Pacman","Pajaro Acuarela","Pajaro Educlip",
-  "Panda","Panda Cute","Patrio Desfile","Patrio Niños Campesinos","Perro","Pingüino","Pirata","Pirata Meryta","Plaza Sesamo","Principito","Puntos Amarillos","Puntos Azul","Puntos Celeste",
-  "Puntos colores fondo blanco","Puntos colores fondo negro","Puntos Fucsia","Puntos Naranja","Puntos Negro","Puntos Rainbow","Puntos Rojo","Puntos Rosado","Puntos Turquesa","Puntos Verde",
-  "Rana","Rana the Pond","Raya Bullying","Raya Café","Raya Cumpleaños","Robot 1","Robot 2","Robot 3","Rojo","Rombo","Rompecabezas","Rosado","Safari","Safari Cute","San Valentin",
-  "Selva","Sloth","Snoopy","Snoopy colores","Snoopy rojo","Snoopy y amigos","Spring","Star Wars","Stitch 1","Stitch 2","Suculentas 1","Suculentas 2","Super Heroes","Toy Story","Tortuga",
-  "Turquesa","UP","Verde Limon","Verde Oscuro","Zootopia","LAMINADO...","ENVIO...","FALTA..."
-];
+// Las categorías, temas, precios y stock ahora vienen desde Supabase (tabla public.inventario).
+// "OTROS..." se conserva como opción manual para productos que no existan todavía en inventario.
 
 // ==========================================
 // 2. UTILIDADES GLOBALES
@@ -324,7 +301,7 @@ const Estadisticas = ({ ventas }) => {
 // 5. COMPONENTE VENTAS (Actualizado)
 // ==========================================
 
-const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
+const HistorialVentas = ({ ventas, onDelete, onUpdate, inventarioCatalog = [] }) => {
   const [mode, setMode] = useState('normal');
   const [filtro, setFiltro] = useState('');
   const [filtroFolder, setFiltroFolder] = useState('');
@@ -333,6 +310,14 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
   const [carpetas, setCarpetas] = useState([]);
   const [folderView, setFolderView] = useState(null);
   const [provinciaEdit, setProvinciaEdit] = useState("Heredia");
+
+  const inventarioActivo = useMemo(() => (inventarioCatalog || []).filter(i => i.activo !== false), [inventarioCatalog]);
+  const obtenerItemInventario = (categoria, tema) => inventarioActivo.find(i => i.categoria === categoria && i.tema === tema) || null;
+  const obtenerPrecioCategoria = (categoria) => {
+    if (!categoria || categoria === 'OTROS...') return 0;
+    const item = inventarioActivo.find(i => i.categoria === categoria && (i.precio || 0) > 0);
+    return item ? (item.precio || 0) : 0;
+  };
 
   /* ================= PAGINACIÓN ================= */
   const ITEMS_POR_PAGINA = 20;
@@ -405,24 +390,75 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
     setFolderView({ ...folder, ids_ventas: nuevosIds }); obtenerCarpetas();
   };
 
-  const handleEditItem = (itemId, field, value) => {
-    setEditCache(prev => {
-      const updatedItems = prev.items.map(item => {
-        if (item.id === itemId) {
-          if (field === 'cant') { 
-            const v = Math.max(1, Math.min(99, value)); 
-            return { ...item, cant: v, pendiente: Math.min(item.pendiente, v) }; 
-          }
-          if (field === 'pendiente') return { ...item, pendiente: Math.max(0, Math.min(item.cant, value)) };
-          if (field === 'precio' && item.cat === "OTROS...") return { ...item, precio: Math.max(0, value) };
-          if (field === 'cat') return { ...item, cat: value, precio: PRODUCTOS_PRECIOS[value] || 0 };
-          return { ...item, [field]: value };
+const handleEditItem = (itemId, field, value) => {
+  setEditCache(prev => {
+    const updatedItems = prev.items.map(item => {
+      if (item.id === itemId) {
+        if (field === 'cant') {
+          const v = Math.max(1, Math.min(99, value));
+          const stockDisponible = Math.max(0, item.stock_disponible ?? item.stock ?? 0);
+          const pendienteAuto = Math.max(0, v - stockDisponible);
+
+          return {
+            ...item,
+            cant: v,
+            pendiente: pendienteAuto
+          };
         }
-        return item;
-      });
-      return { ...prev, items: updatedItems, total: updatedItems.reduce((s, i) => s + (i.cant * i.precio), 0) };
+
+        if (field === 'pendiente') {
+          return {
+            ...item,
+            pendiente: Math.max(0, Math.min(item.cant, value))
+          };
+        }
+
+        if (field === 'precio' && item.cat === "OTROS...") {
+          return { ...item, precio: Math.max(0, value) };
+        }
+
+        if (field === 'cat') {
+          return {
+            ...item,
+            cat: value,
+            tema: '',
+            precio: obtenerPrecioCategoria(value),
+            inventario_id: null,
+            stock: 0,
+            stock_disponible: 0,
+            pendiente: 0
+          };
+        }
+
+        if (field === 'tema') {
+          const producto = obtenerItemInventario(item.cat, value);
+          const stockDisponible = Math.max(0, producto?.stock ?? 0);
+          const pendienteAuto = Math.max(0, item.cant - stockDisponible);
+
+          return {
+            ...item,
+            tema: value,
+            precio: producto?.precio || item.precio || obtenerPrecioCategoria(item.cat),
+            inventario_id: producto?.id || null,
+            stock: stockDisponible,
+            stock_disponible: stockDisponible,
+            pendiente: pendienteAuto
+          };
+        }
+
+        return { ...item, [field]: value };
+      }
+
+      return item;
     });
-  };
+
+    return {
+      ...prev,
+      items: updatedItems,
+      total: updatedItems.reduce((s, i) => s + (i.cant * i.precio), 0)
+    };
+  });
+};
 
   const agregarLineaEnEdicion = () => {
     const nuevo = { id: Date.now(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 0 };
@@ -854,7 +890,7 @@ const HistorialVentas = ({ ventas, onDelete, onUpdate }) => {
 // 6. COMPONENTE FORMULARIO
 // ==========================================
 
-const FormularioCotizacion = ({ alGuardar }) => {
+const FormularioCotizacion = ({ alGuardar, inventarioCatalog = [], refrescarInventario }) => {
   const navigate = useNavigate();
   const [nombre, setNombre] = useState('');
   const [tel, setTel] = useState('');
@@ -864,43 +900,150 @@ const FormularioCotizacion = ({ alGuardar }) => {
   const [metodoPago, setMetodoPago] = useState('Pago...');
   const [comentario, setComentario] = useState('');
 
-  const [items, setItems] = useState([{ id: Date.now(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 0 }]);
+  const [items, setItems] = useState([{ id: Date.now(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 0, inventario_id: null, stock_disponible: null }]);
   
+  const inventarioActivo = useMemo(() => (inventarioCatalog || []).filter(i => i.activo !== false), [inventarioCatalog]);
+  const categoriasInventario = useMemo(() => {
+    const cats = [...new Set(inventarioActivo.map(i => i.categoria).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+    return [...cats, 'OTROS...'];
+  }, [inventarioActivo]);
+
+  const temasPorCategoria = (categoria) => {
+    if (categoria === 'OTROS...') return [];
+    return [...new Set(
+      inventarioActivo
+        .filter(i => i.categoria === categoria)
+        .map(i => i.tema)
+        .filter(Boolean)
+    )].sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+  };
+
+  const buscarProducto = (categoria, tema) => {
+    if (!categoria || !tema || categoria === 'OTROS...') return null;
+    return inventarioActivo.find(i => i.categoria === categoria && i.tema === tema) || null;
+  };
+
+  const precioBaseCategoria = (categoria) => {
+    if (!categoria || categoria === 'OTROS...') return 0;
+    const item = inventarioActivo.find(i => i.categoria === categoria && (i.precio || 0) > 0);
+    return item ? (item.precio || 0) : 0;
+  };
+
   const total = items.reduce((acc, i) => acc + (i.cant * i.precio), 0);
 
-  // CAMBIO: Ahora solo valida que el nombre no esté vacío (acepta números/caracteres)
   const esValido = nombre.trim().length > 0 && 
                    tel.replace(/\D/g, '').length === 8 && 
                    items.length > 0 && 
-                   items.every(i => i.cat && i.tema);
+                   items.every(i => i.cat && i.tema && (i.cat === 'OTROS...' || i.inventario_id));
 
-  const agregarLinea = () => setItems([...items, { id: Date.now(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 0 }]);
+  const agregarLinea = () => setItems([...items, { id: Date.now(), cant: 1, cat: '', tema: '', precio: 0, pendiente: 0, inventario_id: null, stock_disponible: null }]);
   const borrarLinea = (id) => setItems(items.filter(i => i.id !== id));
 
-  const updItem = (id, field, val) => {
-    setItems(items.map(i => {
-      if (i.id === id) {
-        if (field === 'cat') return { ...i, cat: val, precio: PRODUCTOS_PRECIOS[val] || 0 };
-        if (field === 'cant') {
-          const newCant = Math.max(1, Math.min(99, val));
-          return { ...i, cant: newCant, pendiente: Math.min(i.pendiente, newCant) };
-        }
-        if (field === 'pendiente') return { ...i, pendiente: Math.max(0, Math.min(i.cant, val)) };
-        if (field === 'precio' && i.cat === "OTROS...") return { ...i, precio: Math.max(0, val) };
-        return { ...i, [field]: val };
+const updItem = (id, field, val) => {
+  setItems(items.map(i => {
+    if (i.id !== id) return i;
+
+    if (field === 'cat') {
+      const precio = val === 'OTROS...' ? 0 : precioBaseCategoria(val);
+
+      return {
+        ...i,
+        cat: val,
+        tema: '',
+        precio,
+        pendiente: 0,
+        inventario_id: null,
+        stock_disponible: 0
+      };
+    }
+
+    if (field === 'tema') {
+      const producto = buscarProducto(i.cat, val);
+      const stockDisponible = Math.max(0, producto?.stock ?? 0);
+      const pendienteAuto = Math.max(0, i.cant - stockDisponible);
+
+      if (producto) {
+        return {
+          ...i,
+          tema: val,
+          precio: producto.precio || precioBaseCategoria(i.cat),
+          inventario_id: producto.id,
+          stock_disponible: stockDisponible,
+          pendiente: pendienteAuto
+        };
       }
-      return i;
-    }));
+
+      return {
+        ...i,
+        tema: val,
+        inventario_id: null,
+        stock_disponible: 0,
+        pendiente: 0
+      };
+    }
+
+    if (field === 'cant') {
+      const newCant = Math.max(1, Math.min(99, val));
+      const stockDisponible = Math.max(0, i.stock_disponible ?? 0);
+      const pendienteAuto = Math.max(0, newCant - stockDisponible);
+
+      return {
+        ...i,
+        cant: newCant,
+        pendiente: pendienteAuto
+      };
+    }
+
+    if (field === 'pendiente') {
+      return {
+        ...i,
+        pendiente: Math.max(0, Math.min(i.cant, val))
+      };
+    }
+
+    if (field === 'precio' && i.cat === 'OTROS...') {
+      return {
+        ...i,
+        precio: Math.max(0, val)
+      };
+    }
+
+    return { ...i, [field]: val };
+  }));
+};
+
+  const descontarInventario = async () => {
+    const productos = items.filter(i => i.inventario_id && i.cat !== 'OTROS...');
+    for (const item of productos) {
+      const nuevoStock = Math.max(0, (item.stock_disponible ?? 0) - (item.cant || 0));
+      await supabase
+        .from('inventario')
+        .update({ stock: nuevoStock, updated_at: new Date().toISOString() })
+        .eq('id', item.inventario_id);
+    }
+    if (refrescarInventario) await refrescarInventario();
   };
 
   const guardar = async () => {
     if (!esValido) return;
+
+    const ventaItems = items.map(i => ({
+      id: i.id,
+      cant: i.cant,
+      cat: i.cat,
+      tema: i.tema,
+      precio: i.precio,
+      pendiente: i.pendiente,
+      inventario_id: i.inventario_id || null
+    }));
+
     const nueva = { 
       id: Utils.generateId(), 
       nombre, 
       telefono: tel, 
       direccion: (provincia ? provincia + ", " : "") + direccion, 
-      items, 
+      items: ventaItems, 
       total, 
       encargado, 
       metodo_pago: metodoPago, 
@@ -908,8 +1051,12 @@ const FormularioCotizacion = ({ alGuardar }) => {
       fecha: new Date().toLocaleDateString(), 
       created_at: new Date().toISOString() 
     };
-    await alGuardar(nueva);
-    navigate('/ventas');
+
+    const ok = await alGuardar(nueva);
+    if (ok !== false) {
+      await descontarInventario();
+      navigate('/ventas');
+    }
   };
 
   return (
@@ -934,14 +1081,7 @@ const FormularioCotizacion = ({ alGuardar }) => {
           <section className="grid grid-cols-1 md:grid-cols-2 gap-8 font-black">
             <div className="space-y-2 font-black">
               <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2 font-black"><User size={14}/> Nombre Completo / Entidad</label>
-              {/* CAMBIO: Eliminado Utils.validateName para permitir cualquier caracter */}
-              <input 
-                type="text" 
-                className="w-full p-6 bg-slate-50 rounded-4xl font-black text-slate-700 outline-none border-2 border-transparent focus:border-[#8ED4BE] transition-all font-black" 
-                placeholder="Nombre, empresa o institución..." 
-                value={nombre} 
-                onChange={e => setNombre(e.target.value)} 
-              />
+              <input type="text" className="w-full p-6 bg-slate-50 rounded-4xl font-black text-slate-700 outline-none border-2 border-transparent focus:border-[#8ED4BE] transition-all font-black" placeholder="Nombre, empresa o institución..." value={nombre} onChange={e => setNombre(e.target.value)} />
             </div>
             <div className="space-y-2 font-black">
               <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2 font-black"><Clock size={14}/> Teléfono (8 dígitos)</label>
@@ -952,11 +1092,7 @@ const FormularioCotizacion = ({ alGuardar }) => {
           <section className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 font-black">
             <div className="space-y-2 font-black">
               <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2 font-black"><Check size={14} className="text-[#8ED4BE]"/> Responsable</label>
-              <select 
-                className="w-full p-5 bg-white rounded-2xl font-black uppercase text-xs outline-none shadow-sm font-black border-2 border-transparent focus:border-[#8ED4BE] text-slate-700"
-                value={encargado}
-                onChange={e => setEncargado(e.target.value)}
-              >
+              <select className="w-full p-5 bg-white rounded-2xl font-black uppercase text-xs outline-none shadow-sm font-black border-2 border-transparent focus:border-[#8ED4BE] text-slate-700" value={encargado} onChange={e => setEncargado(e.target.value)}>
                 <option value="Vendedor...">Vendedor...</option>
                 <option value="Alejandro">Alejandro</option>
                 <option value="Isabel">Isabel</option>
@@ -965,11 +1101,7 @@ const FormularioCotizacion = ({ alGuardar }) => {
             </div>
             <div className="space-y-2 font-black">
               <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2 font-black"><TrendingUp size={14} className="text-purple-500"/> Método de Pago</label>
-              <select 
-                className="w-full p-5 bg-white rounded-2xl font-black uppercase text-xs outline-none shadow-sm font-black border-2 border-transparent focus:border-purple-400 text-purple-600"
-                value={metodoPago}
-                onChange={e => setMetodoPago(e.target.value)}
-              >
+              <select className="w-full p-5 bg-white rounded-2xl font-black uppercase text-xs outline-none shadow-sm font-black border-2 border-transparent focus:border-purple-400 text-purple-600" value={metodoPago} onChange={e => setMetodoPago(e.target.value)}>
                 <option value="Pago...">Pago...</option>
                 <option value="Efectivo">Efectivo</option>
                 <option value="Tarjeta">Tarjeta</option>
@@ -989,56 +1121,54 @@ const FormularioCotizacion = ({ alGuardar }) => {
               <h4 className="font-black italic uppercase text-slate-800 flex items-center gap-2 text-sm font-black"><ShoppingBag size={18} className="text-[#8ED4BE] font-black"/> Desglose de Productos</h4>
             </div>
             <div className="space-y-4 font-black">
-              {items.map((item, idx) => (
-                <div key={item.id} className="group flex flex-col items-stretch lg:flex-row lg:items-center gap-6 p-6 bg-white border-2 border-slate-100 rounded-[2.5rem] hover:border-[#8ED4BE] transition-all relative font-black">
-                  <span className="font-black italic text-slate-200 text-2xl lg:text-3xl w-10 text-center lg:text-left font-black">#{idx+1}</span>
-                  <div className="flex-1 w-full grid grid-cols-1 gap-4 font-black">
-                    {/* ESTILO: El texto se pone Púrpura si es "OTROS..." */}
-                    <input list="productos-list" className={`w-full p-4 bg-slate-50 rounded-4xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE] font-black ${item.cat === "OTROS..." ? 'text-purple-600 border-purple-100' : ''}`} placeholder="Buscar categoría..." value={item.cat} onChange={e => updItem(item.id, 'cat', e.target.value)} />
-                    {item.cat === "OTROS..." && (
-                      <input type="number" placeholder="Precio manual" className="w-full p-4 bg-purple-50 rounded-4xl font-black text-purple-600 text-[10px] outline-none border-2 border-purple-100 focus:border-purple-300 font-black animate-in zoom-in-95" value={item.precio || ""} onChange={e => updItem(item.id, 'precio', parseFloat(e.target.value) || 0)} />
-                    )}
-                    <input list="temas-list" className="w-full p-4 bg-slate-50 rounded-4xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE] font-black" placeholder="Buscar tema..." value={item.tema} onChange={e => updItem(item.id, 'tema', e.target.value)} />
-                  </div>
-                  <div className="grid grid-cols-3 items-center gap-2 sm:gap-6 pt-4 lg:pt-0 border-t lg:border-t-0 font-black">
-                    <div className="flex flex-col items-center flex-1 min-w-17.5 font-black">
-                       <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase mb-2 font-black">Cant.</span>
-                       <QuantityControls value={item.cant} onChange={v => updItem(item.id, 'cant', v)} min={1} max={99} />
+              {items.map((item, idx) => {
+                const temasDisponibles = temasPorCategoria(item.cat);
+                return (
+                  <div key={item.id} className="group flex flex-col items-stretch lg:flex-row lg:items-center gap-6 p-6 bg-white border-2 border-slate-100 rounded-[2.5rem] hover:border-[#8ED4BE] transition-all relative font-black">
+                    <span className="font-black italic text-slate-200 text-2xl lg:text-3xl w-10 text-center lg:text-left font-black">#{idx+1}</span>
+                    <div className="flex-1 w-full grid grid-cols-1 gap-4 font-black">
+                      <input list="productos-list" className={`w-full p-4 bg-slate-50 rounded-4xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE] font-black ${item.cat === 'OTROS...' ? 'text-purple-600 border-purple-100' : ''}`} placeholder="Buscar categoría..." value={item.cat} onChange={e => updItem(item.id, 'cat', e.target.value)} />
+                      {item.cat === 'OTROS...' && (
+                        <input type="number" placeholder="Precio manual" className="w-full p-4 bg-purple-50 rounded-4xl font-black text-purple-600 text-[10px] outline-none border-2 border-purple-100 focus:border-purple-300 font-black animate-in zoom-in-95" value={item.precio || ""} onChange={e => updItem(item.id, 'precio', parseFloat(e.target.value) || 0)} />
+                      )}
+                      <input list={`temas-list-${item.id}`} className="w-full p-4 bg-slate-50 rounded-4xl font-black uppercase text-[10px] outline-none border-2 border-transparent focus:border-[#8ED4BE] font-black" placeholder={item.cat ? "Buscar tema..." : "Primero elige categoría..."} value={item.tema} onChange={e => updItem(item.id, 'tema', e.target.value)} disabled={!item.cat} />
+                      <datalist id={`temas-list-${item.id}`}>{temasDisponibles.map(t => <option key={t} value={t} className="font-black" />)}</datalist>
+                      {item.cat && item.cat !== 'OTROS...' && item.tema && !item.inventario_id && (
+                        <p className="text-[9px] text-red-400 uppercase font-black px-4">Ese tema no existe en esta categoría.</p>
+                      )}
+                      {item.inventario_id && (
+                        <p className="text-[9px] text-slate-400 uppercase font-black px-4">Stock actual: {item.stock_disponible ?? 0} pzs • Precio: {Utils.currency(item.precio)}</p>
+                      )}
                     </div>
-                    <div className="flex flex-col items-center flex-1 min-w-17.5 font-black">
-                       <span className="text-[9px] font-black text-slate-400 uppercase mb-2 font-black">Pend.</span>
-                       <QuantityControls value={item.pendiente} onChange={v => updItem(item.id, 'pendiente', v)} min={0} max={item.cant} colorClass="bg-red-50" textClass="text-red-500" />
-                    </div>
-                    <div className="flex flex-col items-end flex-1 min-w-22.5 pr-2 font-black">
-                       <p className="text-[8px] sm:text-[9px] font-black text-slate-300 uppercase font-black">Subtotal</p>
-                       <p className="font-black italic text-slate-800 text-sm sm:text-lg whitespace-nowrap font-black">{Utils.currency(item.cant * item.precio)}</p>
-                    </div>
-                    {items.length > 1 && (
-                      <div className="absolute top-4 right-4 lg:static font-black">
-                        <button onClick={() => borrarLinea(item.id)} className="p-2 bg-red-50 text-red-400 rounded-xl hover:bg-red-500 hover:text-white transition-all font-black"><Trash2 size={16}/></button>
+                    <div className="grid grid-cols-3 items-center gap-2 sm:gap-6 pt-4 lg:pt-0 border-t lg:border-t-0 font-black">
+                      <div className="flex flex-col items-center flex-1 min-w-17.5 font-black">
+                        <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase mb-2 font-black">Cant.</span>
+                        <QuantityControls value={item.cant} onChange={v => updItem(item.id, 'cant', v)} min={1} max={99} />
                       </div>
-                    )}
+                      <div className="flex flex-col items-center flex-1 min-w-17.5 font-black">
+                        <span className="text-[9px] font-black text-slate-400 uppercase mb-2 font-black">Pend.</span>
+                        <QuantityControls value={item.pendiente} onChange={v => updItem(item.id, 'pendiente', v)} min={0} max={item.cant} colorClass="bg-red-50" textClass="text-red-500" />
+                      </div>
+                      <div className="flex flex-col items-end flex-1 min-w-22.5 pr-2 font-black">
+                        <p className="text-[8px] sm:text-[9px] font-black text-slate-300 uppercase font-black">Subtotal</p>
+                        <p className="font-black italic text-slate-800 text-sm sm:text-lg whitespace-nowrap font-black">{Utils.currency(item.cant * item.precio)}</p>
+                      </div>
+                      {items.length > 1 && (
+                        <div className="absolute top-4 right-4 lg:static font-black">
+                          <button onClick={() => borrarLinea(item.id)} className="p-2 bg-red-50 text-red-400 rounded-xl hover:bg-red-500 hover:text-white transition-all font-black"><Trash2 size={16}/></button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="flex flex-col gap-6">
-              <button onClick={agregarLinea} className="w-full py-4 border-2 border-dashed border-slate-200 rounded-3xl text-slate-400 font-black uppercase text-xs hover:bg-slate-50 transition-all flex items-center justify-center gap-2 font-black">
-                <Plus size={18}/> Agregar Línea
-              </button>
-
+              <button onClick={agregarLinea} className="w-full py-4 border-2 border-dashed border-slate-200 rounded-3xl text-slate-400 font-black uppercase text-xs hover:bg-slate-50 transition-all flex items-center justify-center gap-2 font-black"><Plus size={18}/> Agregar Línea</button>
               <div className="space-y-4">
-                <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2 font-black">
-                  <Edit2 size={14}/> Agregar Comentario (Opcional)
-                </label>
-                <textarea 
-                  className="w-full p-8 bg-slate-50 rounded-[3rem] font-black text-slate-700 outline-none border-2 border-transparent focus:border-[#8ED4BE] transition-all min-h-40 resize-none font-black"
-                  placeholder="Escribe aquí cualquier detalle adicional..."
-                  maxLength={3000}
-                  value={comentario}
-                  onChange={e => setComentario(e.target.value)}
-                />
+                <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-2 font-black"><Edit2 size={14}/> Agregar Comentario (Opcional)</label>
+                <textarea className="w-full p-8 bg-slate-50 rounded-[3rem] font-black text-slate-700 outline-none border-2 border-transparent focus:border-[#8ED4BE] transition-all min-h-40 resize-none font-black" placeholder="Escribe aquí cualquier detalle adicional..." maxLength={3000} value={comentario} onChange={e => setComentario(e.target.value)} />
               </div>
             </div>
           </section>
@@ -1054,7 +1184,7 @@ const FormularioCotizacion = ({ alGuardar }) => {
 // 7. COMPONENTE GESTIÓN INVENTARIO
 // ==========================================
 
-const GestionInventario = () => {
+const GestionInventario = ({ inventarioCatalog = [], setInventarioCatalog }) => {
   const [inventario, setInventario] = useState([]);
   const [catFiltro, setCatFiltro] = useState('Todo');
   const [orden, setOrden] = useState('alfabetico');
@@ -1068,21 +1198,38 @@ const GestionInventario = () => {
 
   const fetchInv = async () => {
     setCargando(true);
-    const { data } = await supabase.from('inventario').select('*').order('tema', { ascending: true });
-    if (data) setInventario(data);
+    const { data, error } = await supabase
+      .from('inventario')
+      .select('*')
+      .order('categoria', { ascending: true })
+      .order('tema', { ascending: true });
+
+    if (!error && data) {
+      setInventario(data);
+      if (setInventarioCatalog) setInventarioCatalog(data);
+    }
     setCargando(false);
   };
 
   const actualizarStock = async (id, nuevoStock) => {
-    const { error } = await supabase.from('inventario').update({ stock_actual: nuevoStock }).eq('id', id);
-    if (!error) setInventario(inventario.map(i => i.id === id ? { ...i, stock_actual: nuevoStock } : i));
+    const limpio = Math.max(0, parseInt(nuevoStock) || 0);
+    const { error } = await supabase
+      .from('inventario')
+      .update({ stock: limpio, updated_at: new Date().toISOString() })
+      .eq('id', id);
+
+    if (!error) {
+      const nuevos = inventario.map(i => i.id === id ? { ...i, stock: limpio } : i);
+      setInventario(nuevos);
+      if (setInventarioCatalog) setInventarioCatalog(nuevos);
+    }
   };
 
   const editarStockManual = async (item) => {
     const { value } = await Swal.fire({
       title: 'Editar Stock Manual',
       input: 'number',
-      inputValue: item.stock_actual,
+      inputValue: item.stock || 0,
       inputAttributes: { min: 0 },
       showCancelButton: true,
       confirmButtonColor: '#C0C976'
@@ -1093,23 +1240,42 @@ const GestionInventario = () => {
   };
 
   const agregarNuevo = async () => {
+    const categorias = [...new Set(inventario.map(i => i.categoria).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
     const { value: formValues } = await Swal.fire({
       title: 'Nuevo Item de Inventario',
       html:
-        `<input id="swal-cat" list="productos-list" class="swal2-input" placeholder="Categoría (DCC, MR-6...)">` +
-        `<input id="swal-tema" list="temas-list" class="swal2-input" placeholder="Tema (Abeja, Bosque...)">` +
-        `<input id="swal-stock" type="number" class="swal2-input" placeholder="Cantidad Inicial">`,
+        `<input id="swal-cat" list="productos-list" class="swal2-input" placeholder="Categoría">` +
+        `<input id="swal-tema" class="swal2-input" placeholder="Tema o diseño">` +
+        `<input id="swal-stock" type="number" class="swal2-input" placeholder="Cantidad / Stock inicial">` +
+        `<input id="swal-precio" type="number" class="swal2-input" placeholder="Precio">` +
+        `<datalist id="productos-list">${categorias.map(c => `<option value="${c}"></option>`).join('')}<option value="OTROS..."></option></datalist>`,
       focusConfirm: false,
       preConfirm: () => ({
+        hoja_origen: 'APP',
         categoria: document.getElementById('swal-cat').value,
+        titulo_interno_original: 'APP',
+        numero: 0,
         tema: document.getElementById('swal-tema').value,
-        stock_actual: parseInt(document.getElementById('swal-stock').value) || 0
+        cantidad: parseInt(document.getElementById('swal-stock').value) || 0,
+        vendidos: 0,
+        x_mayor: 0,
+        stock: parseInt(document.getElementById('swal-stock').value) || 0,
+        precio: parseInt(document.getElementById('swal-precio').value) || 0,
+        precio_mayor: 0,
+        total: 0,
+        notas: 'Agregado desde la app',
+        cantidad_stock_igual: 'Sí',
+        activo: true
       })
     });
 
     if (formValues && formValues.categoria && formValues.tema) {
       const { data, error } = await supabase.from('inventario').insert([formValues]).select();
-      if (!error && data) setInventario([...inventario, data[0]]);
+      if (!error && data) {
+        const nuevos = [...inventario, data[0]];
+        setInventario(nuevos);
+        if (setInventarioCatalog) setInventarioCatalog(nuevos);
+      }
     }
   };
 
@@ -1117,22 +1283,32 @@ const GestionInventario = () => {
     const res = await Swal.fire({ title: '¿Borrar de inventario?', icon: 'warning', showCancelButton: true });
     if (res.isConfirmed) {
       await supabase.from('inventario').delete().eq('id', id);
-      setInventario(inventario.filter(i => i.id !== id));
+      const nuevos = inventario.filter(i => i.id !== id);
+      setInventario(nuevos);
+      if (setInventarioCatalog) setInventarioCatalog(nuevos);
     }
   };
+
+  const categorias = useMemo(() => {
+    return ['Todo', ...new Set(inventario.map(i => i.categoria).filter(Boolean))]
+      .sort((a, b) => a === 'Todo' ? -1 : b === 'Todo' ? 1 : a.localeCompare(b, 'es', { sensitivity: 'base' }));
+  }, [inventario]);
 
   const todosLosFiltrados = (
     catFiltro === 'Todo'
       ? inventario
       : inventario.filter(i => i.categoria === catFiltro)
   )
-    .filter(i => i.tema.toLowerCase().includes(busqueda.toLowerCase()))
+    .filter(i => {
+      const q = busqueda.toLowerCase();
+      return (i.tema || '').toLowerCase().includes(q) || (i.categoria || '').toLowerCase().includes(q);
+    })
     .slice()
     .sort((a, b) => {
       if (orden === 'cantidad') {
-        return (b.stock_actual || 0) - (a.stock_actual || 0);
+        return (b.stock || 0) - (a.stock || 0);
       }
-      return a.tema.localeCompare(b.tema, 'es', { sensitivity: 'base' });
+      return (a.tema || '').localeCompare(b.tema || '', 'es', { sensitivity: 'base' });
     });
 
   const totalPaginas = Math.ceil(todosLosFiltrados.length / itemsPorPagina);
@@ -1162,7 +1338,7 @@ const GestionInventario = () => {
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <input
           type="text"
-          placeholder="Buscar diseño..."
+          placeholder="Buscar diseño o categoría..."
           value={busqueda}
           onChange={e => { setBusqueda(e.target.value); setPagina(1); }}
           className="flex-1 px-4 py-3 rounded-xl bg-white shadow-sm text-xs uppercase tracking-widest outline-none font-black"
@@ -1178,7 +1354,7 @@ const GestionInventario = () => {
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-4 mb-8">
-        {['Todo', 'DCC', 'MR-6', 'Borde decorado', 'Distintivo', 'DG - amarilla'].map(cat => (
+        {categorias.map(cat => (
           <button key={cat} onClick={() => { setCatFiltro(cat); setPagina(1); }} className={`px-6 py-3 rounded-xl text-[10px] uppercase whitespace-nowrap transition-all font-black ${catFiltro === cat ? 'bg-slate-900 text-white shadow-xl scale-105' : 'bg-white text-slate-400 shadow-sm'}`}>
             {cat}
           </button>
@@ -1211,15 +1387,18 @@ const GestionInventario = () => {
                     <p className="text-[9px] text-slate-400 uppercase tracking-widest font-black">
                       Stock Actual
                     </p>
-                    <p className={`text-2xl italic font-black ${item.stock_actual < 5 ? 'text-red-400' : 'text-slate-800'}`}>
-                      {item.stock_actual} Pzs
+                    <p className={`text-2xl italic font-black ${(item.stock || 0) < 5 ? 'text-red-400' : 'text-slate-800'}`}>
+                      {item.stock || 0} Pzs
+                    </p>
+                    <p className="text-[9px] text-slate-400 uppercase tracking-widest font-black mt-2">
+                      {Utils.currency(item.precio || 0)}
                     </p>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <button onClick={() => actualizarStock(item.id, item.stock_actual + 1)} className="p-2 bg-white rounded-lg shadow-sm text-[#C0C976] hover:bg-[#C0C976] hover:text-white transition-all">
+                    <button onClick={() => actualizarStock(item.id, (item.stock || 0) + 1)} className="p-2 bg-white rounded-lg shadow-sm text-[#C0C976] hover:bg-[#C0C976] hover:text-white transition-all">
                       <ChevronUp size={16}/>
                     </button>
-                    <button onClick={() => actualizarStock(item.id, Math.max(0, item.stock_actual - 1))} className="p-2 bg-white rounded-lg shadow-sm text-[#C0C976] hover:bg-[#C0C976] hover:text-white transition-all">
+                    <button onClick={() => actualizarStock(item.id, Math.max(0, (item.stock || 0) - 1))} className="p-2 bg-white rounded-lg shadow-sm text-[#C0C976] hover:bg-[#C0C976] hover:text-white transition-all">
                       <ChevronDown size={16}/>
                     </button>
                     <button onClick={() => editarStockManual(item)} className="text-[9px] uppercase text-slate-400 hover:text-slate-800 mt-1 font-black">
@@ -1239,35 +1418,19 @@ const GestionInventario = () => {
 
           {totalPaginas > 1 && (
             <div className="flex justify-center items-center gap-3 mt-12 flex-wrap">
-              <button 
-                disabled={pagina === 1}
-                onClick={() => setPagina(p => p - 1)}
-                className="p-4 bg-white rounded-2xl shadow-sm disabled:opacity-20 text-slate-600 font-black"
-              >
+              <button disabled={pagina === 1} onClick={() => setPagina(p => p - 1)} className="p-4 bg-white rounded-2xl shadow-sm disabled:opacity-20 text-slate-600 font-black">
                 <ArrowLeft size={18} />
               </button>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap justify-center">
                 {[...Array(totalPaginas)].map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setPagina(i + 1)}
-                    className={`w-12 h-12 rounded-2xl text-[10px] font-black transition-all ${
-                      pagina === i + 1 
-                      ? 'bg-slate-900 text-[#C0C976] shadow-xl scale-110' 
-                      : 'bg-white text-slate-400 hover:bg-slate-50'
-                    }`}
-                  >
+                  <button key={i} onClick={() => setPagina(i + 1)} className={`w-12 h-12 rounded-2xl text-[10px] font-black transition-all ${pagina === i + 1 ? 'bg-slate-900 text-[#C0C976] shadow-xl scale-110' : 'bg-white text-slate-400 hover:bg-slate-50'}`}>
                     {i + 1}
                   </button>
                 ))}
               </div>
 
-              <button 
-                disabled={pagina === totalPaginas}
-                onClick={() => setPagina(p => p + 1)}
-                className="p-4 bg-white rounded-2xl shadow-sm disabled:opacity-20 text-slate-600 font-black"
-              >
+              <button disabled={pagina === totalPaginas} onClick={() => setPagina(p => p + 1)} className="p-4 bg-white rounded-2xl shadow-sm disabled:opacity-20 text-slate-600 font-black">
                 <div className="rotate-180"><ArrowLeft size={18} /></div>
               </button>
             </div>
@@ -1330,12 +1493,14 @@ const DashboardHome = ({ historial }) => {
 
 export default function App() {
   const [ventas, setVentas] = useState([]);
+  const [inventarioCatalog, setInventarioCatalog] = useState([]);
   const [showSplash, setShowSplash] = useState(false);
 
   useEffect(() => {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
     if (isStandalone) { setShowSplash(true); setTimeout(() => setShowSplash(false), 2500); }
     fetchVentas(); 
+    fetchInventarioCatalog();
   }, []);
 
   async function fetchVentas() {
@@ -1343,12 +1508,34 @@ export default function App() {
     if (data) setVentas(data);
   }
 
+  async function fetchInventarioCatalog() {
+    const { data } = await supabase
+      .from('inventario')
+      .select('*')
+      .eq('activo', true)
+      .order('categoria', { ascending: true })
+      .order('tema', { ascending: true });
+    if (data) setInventarioCatalog(data);
+  }
+
+  const categoriasDatalist = useMemo(() => {
+    const cats = [...new Set((inventarioCatalog || []).map(i => i.categoria).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+    return [...cats, 'OTROS...'];
+  }, [inventarioCatalog]);
+
+  const temasDatalist = useMemo(() => {
+    return [...new Set((inventarioCatalog || []).map(i => i.tema).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+  }, [inventarioCatalog]);
+
   const alGuardarEnNube = async (nuevaVenta) => {
     const { data, error } = await supabase.from('ventas').insert([nuevaVenta]).select();
-    if (error) return Swal.fire('Error', error.message, 'error');
+    if (error) { Swal.fire('Error', error.message, 'error'); return false; }
     if (data && data.length > 0) setVentas([data[0], ...ventas]);
     else await fetchVentas();
     Swal.fire({ title: '¡Pedido Guardado!', icon: 'success', confirmButtonColor: '#8ED4BE', customClass: { popup: 'rounded-[3rem] font-black italic font-black' } });
+    return true;
   };
 
   const alEliminar = async (id) => {
@@ -1358,7 +1545,7 @@ export default function App() {
 
   const alActualizar = async (id, dataEditada) => {
     const { error } = await supabase.from('ventas').update(dataEditada).eq('id', id);
-    if (error) return Swal.fire('Error', error.message, 'error');
+    if (error) { Swal.fire('Error', error.message, 'error'); return false; }
     setVentas(ventas.map(v => v.id === id ? { ...v, ...dataEditada } : v));
     Swal.fire({ title: '¡Actualizado!', icon: 'success', timer: 1500, showConfirmButton: false });
   };
@@ -1387,10 +1574,10 @@ export default function App() {
         <main className="flex-1 overflow-y-auto bg-slate-50/30 font-black">
           <Routes>
             <Route path="/" element={<DashboardHome historial={ventas} />} />
-            <Route path="/cotizar" element={<FormularioCotizacion alGuardar={alGuardarEnNube} />} />
-            <Route path="/ventas" element={<HistorialVentas ventas={ventas} onDelete={alEliminar} onUpdate={alActualizar} />} />
+            <Route path="/cotizar" element={<FormularioCotizacion alGuardar={alGuardarEnNube} inventarioCatalog={inventarioCatalog} refrescarInventario={fetchInventarioCatalog} />} />
+            <Route path="/ventas" element={<HistorialVentas ventas={ventas} onDelete={alEliminar} onUpdate={alActualizar} inventarioCatalog={inventarioCatalog} />} />
             <Route path="/stats" element={<Estadisticas ventas={ventas} />} />
-            <Route path="/inventario" element={<GestionInventario />} />
+            <Route path="/inventario" element={<GestionInventario inventarioCatalog={inventarioCatalog} setInventarioCatalog={setInventarioCatalog} />} />
           </Routes>
         </main>
 
@@ -1404,8 +1591,8 @@ export default function App() {
           </nav>
         </footer>
       </div>
-      <datalist id="productos-list">{Object.keys(PRODUCTOS_PRECIOS).map(p => <option key={p} value={p} className="font-black" />)}</datalist>
-      <datalist id="temas-list">{TEMAS_PREDEFINIDOS.map(t => <option key={t} value={t} className="font-black" />)}</datalist>
+      <datalist id="productos-list">{categoriasDatalist.map(p => <option key={p} value={p} className="font-black" />)}</datalist>
+      <datalist id="temas-list">{temasDatalist.map(t => <option key={t} value={t} className="font-black" />)}</datalist>
     </Router>
   );
 }
