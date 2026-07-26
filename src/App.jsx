@@ -1197,19 +1197,49 @@ const GestionInventario = ({ inventarioCatalog = [], setInventarioCatalog }) => 
   useEffect(() => { fetchInv(); }, []);
 
   const fetchInv = async () => {
-    setCargando(true);
-    const { data, error } = await supabase
-      .from('inventario')
-      .select('*')
-      .order('categoria', { ascending: true })
-      .order('tema', { ascending: true });
+  setCargando(true);
 
-    if (!error && data) {
-      setInventario(data);
-      if (setInventarioCatalog) setInventarioCatalog(data);
+  try {
+    const TAMANO_BLOQUE = 1000;
+    let desde = 0;
+    let todosLosItems = [];
+    let hayMas = true;
+
+    while (hayMas) {
+      const { data, error } = await supabase
+        .from('inventario')
+        .select('*')
+        .order('categoria', { ascending: true })
+        .order('tema', { ascending: true })
+        .range(desde, desde + TAMANO_BLOQUE - 1);
+
+      if (error) throw error;
+
+      const bloque = data || [];
+      todosLosItems = [...todosLosItems, ...bloque];
+
+      hayMas = bloque.length === TAMANO_BLOQUE;
+      desde += TAMANO_BLOQUE;
     }
+
+    setInventario(todosLosItems);
+
+    if (setInventarioCatalog) {
+      setInventarioCatalog(todosLosItems);
+    }
+  } catch (error) {
+    console.error('Error cargando el inventario:', error);
+
+    Swal.fire({
+      title: 'Error',
+      text: 'No se pudo cargar el inventario completo.',
+      icon: 'error',
+      confirmButtonColor: '#C0C976'
+    });
+  } finally {
     setCargando(false);
-  };
+  }
+};
 
   const actualizarStock = async (id, nuevoStock) => {
     const limpio = Math.max(0, parseInt(nuevoStock) || 0);
@@ -1279,37 +1309,117 @@ const GestionInventario = ({ inventarioCatalog = [], setInventarioCatalog }) => 
     }
   };
 
-  const borrarItem = async (id) => {
-    const res = await Swal.fire({ title: '¿Borrar de inventario?', icon: 'warning', showCancelButton: true });
-    if (res.isConfirmed) {
-      await supabase.from('inventario').delete().eq('id', id);
-      const nuevos = inventario.filter(i => i.id !== id);
-      setInventario(nuevos);
-      if (setInventarioCatalog) setInventarioCatalog(nuevos);
+const borrarItem = async (id) => {
+  const res = await Swal.fire({
+    title: '¿Eliminar producto?',
+    text: 'El producto se eliminará permanentemente del inventario.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#F79598',
+    cancelButtonColor: '#64748b'
+  });
+
+  if (!res.isConfirmed) return;
+
+  try {
+    const { data, error } = await supabase
+      .from('inventario')
+      .delete()
+      .eq('id', id)
+      .select();
+
+    if (error) {
+      throw error;
     }
-  };
+
+    // Si Supabase no eliminó ninguna fila
+    if (!data || data.length === 0) {
+      throw new Error(
+        'Supabase no permitió eliminar el registro. Revisa las políticas RLS.'
+      );
+    }
+
+    const nuevos = inventario.filter(item => item.id !== id);
+
+    setInventario(nuevos);
+
+    if (setInventarioCatalog) {
+      setInventarioCatalog(nuevos);
+    }
+
+    Swal.fire({
+      title: 'Producto eliminado',
+      text: 'El registro fue eliminado correctamente de Supabase.',
+      icon: 'success',
+      confirmButtonColor: '#C0C976'
+    });
+  } catch (error) {
+    console.error('Error eliminando producto:', error);
+
+    Swal.fire({
+      title: 'No se pudo eliminar',
+      text: error.message || 'Ocurrió un error al eliminar el producto.',
+      icon: 'error',
+      confirmButtonColor: '#F79598'
+    });
+  }
+};
 
   const categorias = useMemo(() => {
     return ['Todo', ...new Set(inventario.map(i => i.categoria).filter(Boolean))]
       .sort((a, b) => a === 'Todo' ? -1 : b === 'Todo' ? 1 : a.localeCompare(b, 'es', { sensitivity: 'base' }));
   }, [inventario]);
 
-  const todosLosFiltrados = (
+ const todosLosFiltrados = useMemo(() => {
+  const textoBusqueda = busqueda.trim().toLowerCase();
+
+  return (
     catFiltro === 'Todo'
       ? inventario
-      : inventario.filter(i => i.categoria === catFiltro)
+      : inventario.filter(item => item.categoria === catFiltro)
   )
-    .filter(i => {
-      const q = busqueda.toLowerCase();
-      return (i.tema || '').toLowerCase().includes(q) || (i.categoria || '').toLowerCase().includes(q);
+    .filter(item => {
+      if (!textoBusqueda) return true;
+
+      return (
+        (item.tema || '').toLowerCase().includes(textoBusqueda) ||
+        (item.categoria || '').toLowerCase().includes(textoBusqueda)
+      );
     })
     .slice()
     .sort((a, b) => {
       if (orden === 'cantidad') {
         return (b.stock || 0) - (a.stock || 0);
       }
-      return (a.tema || '').localeCompare(b.tema || '', 'es', { sensitivity: 'base' });
+
+      return (a.tema || '').localeCompare(
+        b.tema || '',
+        'es',
+        { sensitivity: 'base' }
+      );
     });
+}, [inventario, catFiltro, busqueda, orden]);
+
+const resumenInventario = useMemo(() => {
+  const categoriasVisibles = new Set(
+    todosLosFiltrados
+      .map(item => item.categoria)
+      .filter(Boolean)
+  );
+
+  const totalStock = todosLosFiltrados.reduce(
+    (acumulado, item) => acumulado + (Number(item.stock) || 0),
+    0
+  );
+
+  return {
+    totalItems: todosLosFiltrados.length,
+    totalCategorias: categoriasVisibles.size,
+    totalStock
+  };
+}, [todosLosFiltrados]);
 
   const totalPaginas = Math.ceil(todosLosFiltrados.length / itemsPorPagina);
   const filtrados = todosLosFiltrados.slice(
@@ -1326,9 +1436,54 @@ const GestionInventario = ({ inventarioCatalog = [], setInventarioCatalog }) => 
           <h2 className="text-4xl italic uppercase tracking-tighter">
             Inventario Alekey<span className="text-[#C0C976]">.</span>
           </h2>
-          <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">
-            Control de Stock en Tiempo Real ({todosLosFiltrados.length} items)
-          </p>
+        <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">
+          Control de Stock en Tiempo Real
+        </p>
+
+<div className="mt-2 flex flex-wrap items-center gap-2">
+  {catFiltro === 'Todo' ? (
+    <>
+      <span className="px-3 py-1 bg-[#C0C976]/15 text-[#909944] rounded-full text-[9px] uppercase tracking-widest">
+        {resumenInventario.totalCategorias}{' '}
+        {resumenInventario.totalCategorias === 1
+          ? 'categoría'
+          : 'categorías'}
+      </span>
+
+      <span className="px-3 py-1 bg-slate-900 text-white rounded-full text-[9px] uppercase tracking-widest">
+        {resumenInventario.totalItems}{' '}
+        {resumenInventario.totalItems === 1 ? 'ítem' : 'ítems'}
+      </span>
+
+      <span className="px-3 py-1 bg-[#8ED4BE]/15 text-[#529b84] rounded-full text-[9px] uppercase tracking-widest">
+        {resumenInventario.totalStock}{' '}
+        {resumenInventario.totalStock === 1 ? 'unidad' : 'unidades'}
+      </span>
+    </>
+  ) : (
+    <>
+      <span className="px-3 py-1 bg-[#C0C976]/15 text-[#909944] rounded-full text-[9px] uppercase tracking-widest">
+        Categoría: {catFiltro}
+      </span>
+
+      <span className="px-3 py-1 bg-slate-900 text-white rounded-full text-[9px] uppercase tracking-widest">
+        {resumenInventario.totalItems}{' '}
+        {resumenInventario.totalItems === 1 ? 'ítem' : 'ítems'}
+      </span>
+
+      <span className="px-3 py-1 bg-[#8ED4BE]/15 text-[#529b84] rounded-full text-[9px] uppercase tracking-widest">
+        {resumenInventario.totalStock}{' '}
+        {resumenInventario.totalStock === 1 ? 'unidad' : 'unidades'}
+      </span>
+    </>
+  )}
+
+  {busqueda.trim() && (
+    <span className="px-3 py-1 bg-blue-50 text-blue-500 rounded-full text-[9px] uppercase tracking-widest">
+      Búsqueda: “{busqueda.trim()}”
+    </span>
+  )}
+</div>
         </div>
         <button onClick={agregarNuevo} className="px-8 py-4 bg-[#C0C976] text-slate-800 rounded-2xl uppercase text-xs flex items-center gap-2 shadow-lg hover:scale-105 transition-all">
           <Plus size={18}/> Agregar Item
@@ -1509,14 +1664,35 @@ export default function App() {
   }
 
   async function fetchInventarioCatalog() {
-    const { data } = await supabase
-      .from('inventario')
-      .select('*')
-      .eq('activo', true)
-      .order('categoria', { ascending: true })
-      .order('tema', { ascending: true });
-    if (data) setInventarioCatalog(data);
+  try {
+    const TAMANO_BLOQUE = 1000;
+    let desde = 0;
+    let catalogoCompleto = [];
+    let hayMas = true;
+
+    while (hayMas) {
+      const { data, error } = await supabase
+        .from('inventario')
+        .select('*')
+        .eq('activo', true)
+        .order('categoria', { ascending: true })
+        .order('tema', { ascending: true })
+        .range(desde, desde + TAMANO_BLOQUE - 1);
+
+      if (error) throw error;
+
+      const bloque = data || [];
+      catalogoCompleto = [...catalogoCompleto, ...bloque];
+
+      hayMas = bloque.length === TAMANO_BLOQUE;
+      desde += TAMANO_BLOQUE;
+    }
+
+    setInventarioCatalog(catalogoCompleto);
+  } catch (error) {
+    console.error('Error cargando el catálogo completo:', error);
   }
+}
 
   const categoriasDatalist = useMemo(() => {
     const cats = [...new Set((inventarioCatalog || []).map(i => i.categoria).filter(Boolean))]
