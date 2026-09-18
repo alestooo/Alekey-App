@@ -13,8 +13,7 @@ export const formatPhone = (value) => {
 };
 
 export const capitalize = (value) => {
-  const clean = (value || "")
-    .replace(/[0-9]/g, "");
+  const clean = (value || "").replace(/\d/g, "");
 
   return clean
     .toLowerCase()
@@ -28,9 +27,9 @@ export const capitalize = (value) => {
 };
 
 export const generateId = () => {
-  const random = Math.random()
-    .toString(36)
-    .substring(2, 7)
+  const random = crypto
+    .randomUUID()
+    .split("-")[0]
     .toUpperCase();
 
   return `ALK-${Date.now()

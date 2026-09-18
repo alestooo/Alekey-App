@@ -2,7 +2,11 @@
 
 @layer base {
   body {
-    @apply bg-[#F8FAFC] text-slate-900 antialiased;
+    background-color: #f8fafc;
+    color: #0f172a;
+
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
