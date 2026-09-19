@@ -971,7 +971,7 @@ export default function SaleForm({
           sm:rounded-[2.7rem]
           lg:rounded-[4rem]
 
-          shadow-xl
+          shadow-[0_18px_48px_rgba(15,23,42,0.10),0_5px_16px_rgba(15,23,42,0.05)]
 
           overflow-hidden
 
@@ -1117,9 +1117,7 @@ export default function SaleForm({
             text-slate-800
           "
         >
-          {/* ===============================
-              CLIENT
-          =============================== */}
+          {/* CLIENT */}
 
           <FormSection
             icon={User}
@@ -1194,9 +1192,7 @@ export default function SaleForm({
             </div>
           </FormSection>
 
-          {/* ===============================
-              SALE INFO
-          =============================== */}
+          {/* SALE INFO */}
 
           <FormSection
             icon={ShoppingBag}
@@ -1406,9 +1402,7 @@ export default function SaleForm({
             </div>
           )}
 
-          {/* ===============================
-              LOCATION
-          =============================== */}
+          {/* LOCATION */}
 
           <FormSection
             icon={MapPin}
@@ -1538,9 +1532,7 @@ export default function SaleForm({
             </div>
           </FormSection>
 
-          {/* ===============================
-              PRODUCTS
-          =============================== */}
+          {/* PRODUCTS */}
 
           <section>
             <div
@@ -1549,7 +1541,6 @@ export default function SaleForm({
 
                 flex
                 items-center
-                justify-between
                 gap-4
               "
             >
@@ -1558,59 +1549,6 @@ export default function SaleForm({
                 title="Productos"
                 subtitle={`${items.length} líneas · ${piezasPendientes} pendientes`}
               />
-
-              <button
-                type="button"
-                onClick={
-                  agregarLinea
-                }
-                className="
-                  shrink-0
-
-                  h-11
-                  px-4
-
-                  rounded-2xl
-
-                  bg-slate-900
-                  text-white
-
-                  flex
-                  items-center
-                  justify-center
-                  gap-2
-
-                  text-[8px]
-                  uppercase
-
-                  hover:bg-[#8ED4BE]
-                  hover:text-slate-900
-
-                  transition-all
-                "
-              >
-                <Plus
-                  size={15}
-                />
-
-                <span
-                  className="
-                    hidden
-                    sm:inline
-                  "
-                >
-                  Agregar
-                  producto
-                </span>
-
-                <span
-                  className="
-                    sm:hidden
-                  "
-                >
-                  Agregar
-                </span>
-              </button>
             </div>
 
             <div className="space-y-4">
@@ -1659,12 +1597,58 @@ export default function SaleForm({
                   />
                 )
               )}
+
+              {/* AGREGAR LÍNEA ABAJO */}
+
+              <button
+                type="button"
+                onClick={
+                  agregarLinea
+                }
+                className="
+                  w-full
+
+                  min-h-14
+                  px-5
+
+                  rounded-[1.4rem]
+
+                  border-2
+                  border-dashed
+                  border-slate-200
+
+                  bg-slate-50/40
+                  text-slate-400
+
+                  flex
+                  items-center
+                  justify-center
+                  gap-2
+
+                  text-[8px]
+                  sm:text-[9px]
+                  uppercase
+                  tracking-widest
+
+                  shadow-[0_8px_20px_rgba(15,23,42,0.035)]
+
+                  hover:border-[#8ED4BE]
+                  hover:bg-[#8ED4BE]/5
+                  hover:text-[#58B99A]
+
+                  transition-all
+                "
+              >
+                <Plus
+                  size={16}
+                />
+
+                Agregar línea
+              </button>
             </div>
           </section>
 
-          {/* ===============================
-              COMMENT
-          =============================== */}
+          {/* COMMENT */}
 
           <FormSection
             icon={TrendingUp}
@@ -1693,9 +1677,7 @@ export default function SaleForm({
             />
           </FormSection>
 
-          {/* ===============================
-              SUMMARY
-          =============================== */}
+          {/* SUMMARY */}
 
           <div
             className="
@@ -1732,9 +1714,7 @@ export default function SaleForm({
             />
           </div>
 
-          {/* ===============================
-              SAVE
-          =============================== */}
+          {/* SAVE */}
 
           <div
             className="
@@ -1796,7 +1776,7 @@ export default function SaleForm({
                 text-[9px]
                 uppercase
 
-                shadow-lg
+                shadow-[0_12px_28px_rgba(15,23,42,0.12)]
 
                 ${
                   isDebtPayment(
@@ -1873,6 +1853,8 @@ function ProductRow({
       className={`
         sale-product-card
 
+        shadow-[0_10px_26px_rgba(15,23,42,0.055)]
+
         ${
           pendiente > 0
             ? "sale-product-card-pending"
@@ -1880,8 +1862,6 @@ function ProductRow({
         }
       `}
     >
-      {/* TOP */}
-
       <div
         className="
           flex
@@ -1982,8 +1962,6 @@ function ProductRow({
           />
         </button>
       </div>
-
-      {/* CATEGORY / THEME */}
 
       <div
         className="
@@ -2118,8 +2096,6 @@ function ProductRow({
         </Field>
       </div>
 
-      {/* PRICE */}
-
       <div
         className="
           mt-3
@@ -2176,8 +2152,6 @@ function ProductRow({
           </strong>
         )}
       </div>
-
-      {/* MOBILE-FRIENDLY QUANTITY / PENDING */}
 
       <div
         className="
@@ -2256,8 +2230,6 @@ function ProductRow({
           />
         </div>
       </div>
-
-      {/* FOOT */}
 
       <div
         className="
@@ -2359,6 +2331,8 @@ function FormSection({
     <section
       className={`
         sale-form-section
+
+        shadow-[0_8px_22px_rgba(15,23,42,0.04)]
 
         ${
           soft
@@ -2542,6 +2516,8 @@ function SummaryCard({
         border
 
         min-w-0
+
+        shadow-[0_6px_18px_rgba(15,23,42,0.04)]
 
         ${
           danger

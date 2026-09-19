@@ -17,6 +17,8 @@ export default function InventoryFilters({
 
   resumen,
 
+  showAllStats = true,
+
   itemsPerPage,
 
   onAdd,
@@ -81,7 +83,9 @@ export default function InventoryFilters({
             bg-[#C0C976]
             text-slate-900
             rounded-2xl
-            shadow-lg
+
+            shadow-[0_12px_28px_rgba(15,23,42,0.10)]
+
             flex
             items-center
             justify-center
@@ -105,14 +109,19 @@ export default function InventoryFilters({
       {/* MÉTRICAS */}
 
       <div
-        className="
+        className={`
           grid
           grid-cols-2
-          xl:grid-cols-4
           gap-3
           lg:gap-4
           mb-7
-        "
+
+          ${
+            showAllStats
+              ? "xl:grid-cols-4"
+              : "xl:grid-cols-2"
+          }
+        `}
       >
         <InventoryStat
           icon={Box}
@@ -123,14 +132,16 @@ export default function InventoryFilters({
           color="dark"
         />
 
-        <InventoryStat
-          icon={Tags}
-          label="Categorías"
-          value={
-            resumen.totalCategorias
-          }
-          color="mint"
-        />
+        {showAllStats && (
+          <InventoryStat
+            icon={Tags}
+            label="Categorías"
+            value={
+              resumen.totalCategorias
+            }
+            color="mint"
+          />
+        )}
 
         <InventoryStat
           icon={
@@ -143,17 +154,19 @@ export default function InventoryFilters({
           color="green"
         />
 
-        <InventoryStat
-          icon={
-            AlertTriangle
-          }
-          label="Stock Bajo"
-          value={
-            resumen.stockBajo
-          }
-          color="red"
-          subtitle="Requieren reposición"
-        />
+        {showAllStats && (
+          <InventoryStat
+            icon={
+              AlertTriangle
+            }
+            label="Stock Bajo"
+            value={
+              resumen.stockBajo
+            }
+            color="red"
+            subtitle="Requieren reposición"
+          />
+        )}
       </div>
 
       {/* BUSCADOR + ORDEN */}
@@ -207,7 +220,9 @@ export default function InventoryFilters({
               border
               border-slate-100
               rounded-2xl
-              shadow-sm
+
+              shadow-[0_9px_24px_rgba(15,23,42,0.065)]
+
               text-xs
               text-slate-700
               outline-none
@@ -238,10 +253,12 @@ export default function InventoryFilters({
               tracking-wide
               transition-all
 
+              shadow-[0_8px_20px_rgba(15,23,42,0.055)]
+
               ${
                 orden ===
                 "alfabetico"
-                  ? "bg-slate-900 text-white shadow-lg"
+                  ? "bg-slate-900 text-white"
                   : "bg-white text-slate-400 border border-slate-100"
               }
             `}
@@ -265,10 +282,12 @@ export default function InventoryFilters({
               tracking-wide
               transition-all
 
+              shadow-[0_8px_20px_rgba(15,23,42,0.055)]
+
               ${
                 orden ===
                 "cantidad"
-                  ? "bg-slate-900 text-white shadow-lg"
+                  ? "bg-slate-900 text-white"
                   : "bg-white text-slate-400 border border-slate-100"
               }
             `}
@@ -287,7 +306,7 @@ export default function InventoryFilters({
           [&::-webkit-scrollbar]:h-2
           [&::-webkit-scrollbar-track]:bg-slate-100
           [&::-webkit-scrollbar-track]:rounded-full
-          [&::-webkit-scrollbar-thumb]:bg-slate-300
+          [&::-webkit-scrollbar-thumb]:bg-[#DDAEB5]
           [&::-webkit-scrollbar-thumb]:rounded-full
         "
       >
@@ -334,9 +353,11 @@ export default function InventoryFilters({
                     whitespace-nowrap
                     transition-all
 
+                    shadow-[0_5px_14px_rgba(15,23,42,0.035)]
+
                     ${
                       active
-                        ? "bg-slate-900 text-white border-slate-900 shadow-md"
+                        ? "bg-slate-900 text-white border-slate-900"
                         : "bg-white text-slate-400 border-slate-100 hover:border-slate-300 hover:text-slate-700"
                     }
                   `}
@@ -354,7 +375,24 @@ export default function InventoryFilters({
                       }
                     `}
                   >
-                    ({count})
+                    ({categoria ===
+                    "Todo"
+                      ? categoryCounts[
+                          categoria
+                        ] ??
+                        Object.values(
+                          categoryCounts
+                        ).reduce(
+                          (
+                            total,
+                            value
+                          ) =>
+                            total +
+                            value,
+                          0
+                        )
+                      : count}
+                    )
                   </span>
                 </button>
               );
@@ -406,6 +444,9 @@ export default function InventoryFilters({
             border
             border-slate-100
             rounded-xl
+
+            shadow-[0_6px_16px_rgba(15,23,42,0.045)]
+
             text-[9px]
             text-slate-600
             outline-none
@@ -476,12 +517,17 @@ function InventoryStat({
     <article
       className="
         bg-white
+
         p-4
         lg:p-5
+
         rounded-[1.6rem]
-        shadow-lg
+
+        shadow-[0_14px_34px_rgba(15,23,42,0.085),0_4px_12px_rgba(15,23,42,0.04)]
+
         border
         border-slate-50
+
         flex
         items-center
         gap-3

@@ -1,19 +1,24 @@
 import {
+  useMemo,
+} from "react";
+
+import {
+  useNavigate,
+} from "react-router-dom";
+
+import {
+  AlertCircle,
   BarChart3,
   Box,
-  Clock3,
   Package,
   Plus,
   Search,
-  ShoppingCart,
+  ShoppingBag,
+  Tags,
   TrendingUp,
-  Trophy,
   Users,
+  Zap,
 } from "lucide-react";
-
-import {
-  Link,
-} from "react-router-dom";
 
 import {
   Area,
@@ -25,13 +30,9 @@ import {
   YAxis,
 } from "recharts";
 
-import {
-  useMemo,
-} from "react";
+import ScrollToTop from "../components/common/ScrollToTop";
 
 import logoAlekey from "../assets/images/alekey-logo.jpeg";
-
-import ScrollToTop from "../components/common/ScrollToTop";
 
 import {
   currency,
@@ -43,31 +44,41 @@ import {
  * ========================================
  */
 
-const startOfDay = (
+const getDateKey = (
   date
 ) => {
-  const copy =
-    new Date(date);
+  const year =
+    date.getFullYear();
 
-  copy.setHours(
-    0,
-    0,
-    0,
-    0
-  );
+  const month =
+    String(
+      date.getMonth() +
+        1
+    ).padStart(
+      2,
+      "0"
+    );
 
-  return copy;
+  const day =
+    String(
+      date.getDate()
+    ).padStart(
+      2,
+      "0"
+    );
+
+  return `${year}-${month}-${day}`;
 };
 
-const getSaleDate = (
-  venta
+const parseSaleDate = (
+  sale
 ) => {
   if (
-    venta.created_at
+    sale?.created_at
   ) {
     const parsed =
       new Date(
-        venta.created_at
+        sale.created_at
       );
 
     if (
@@ -80,29 +91,31 @@ const getSaleDate = (
   }
 
   /*
-   * Compatibilidad con ventas
-   * antiguas que solo tengan
-   * fecha como dd/mm/yyyy.
+   * Soporte para fechas antiguas
+   * guardadas como:
+   * 18/9/2026
    */
-
   if (
-    venta.fecha
+    sale?.fecha
   ) {
     const parts =
       String(
-        venta.fecha
-      ).split("/");
+        sale.fecha
+      )
+        .split("/")
+        .map(
+          Number
+        );
 
     if (
-      parts.length === 3
+      parts.length ===
+      3
     ) {
       const [
         day,
         month,
         year,
-      ] = parts.map(
-        Number
-      );
+      ] = parts;
 
       const parsed =
         new Date(
@@ -124,95 +137,93 @@ const getSaleDate = (
   return null;
 };
 
-const tienePendientes = (
-  venta
-) => {
-  return (
-    venta.items || []
-  ).some(
-    (item) =>
-      Number(
-        item.pendiente
-      ) > 0
-  );
-};
+const getLastSevenDays =
+  () => {
+    const today =
+      new Date();
+
+    today.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+
+    return Array.from(
+      {
+        length: 7,
+      },
+      (
+        _,
+        index
+      ) => {
+        const date =
+          new Date(
+            today
+          );
+
+        date.setDate(
+          today.getDate() -
+            (6 - index)
+        );
+
+        return date;
+      }
+    );
+  };
 
 /*
  * ========================================
- * COMPONENTE
+ * PAGE
  * ========================================
  */
 
 export default function DashboardPage({
   historial = [],
 }) {
-  const now =
-    new Date();
+  const navigate =
+    useNavigate();
 
   /*
    * ========================================
-   * ESTADÍSTICAS GENERALES
+   * RESUMEN
    * ========================================
    */
 
-  const stats =
+  const summary =
     useMemo(() => {
-      const totalVentas =
-        historial.reduce(
+      const ventas =
+        historial || [];
+
+      const total =
+        ventas.reduce(
           (
-            total,
+            accumulator,
             venta
           ) =>
-            total +
+            accumulator +
             (Number(
               venta.total
             ) || 0),
           0
         );
 
-      const pedidos =
-        historial.length;
-
-      const piezasVendidas =
-        historial.reduce(
+      const pendientes =
+        ventas.reduce(
           (
-            total,
+            accumulator,
             venta
           ) =>
-            total +
+            accumulator +
             (
               venta.items ||
               []
             ).reduce(
               (
-                subtotal,
+                sum,
                 item
               ) =>
-                subtotal +
-                (Number(
-                  item.cant
-                ) || 0),
-              0
-            ),
-          0
-        );
-
-      const piezasPendientes =
-        historial.reduce(
-          (
-            total,
-            venta
-          ) =>
-            total +
-            (
-              venta.items ||
-              []
-            ).reduce(
-              (
-                subtotal,
-                item
-              ) =>
-                subtotal +
+                sum +
                 (Number(
                   item.pendiente
                 ) || 0),
@@ -221,25 +232,40 @@ export default function DashboardPage({
           0
         );
 
-      const pedidosPendientes =
-        historial.filter(
-          tienePendientes
-        ).length;
-
-      const pedidosListos =
-        Math.max(
-          0,
-          pedidos -
-            pedidosPendientes
+      const piezas =
+        ventas.reduce(
+          (
+            accumulator,
+            venta
+          ) =>
+            accumulator +
+            (
+              venta.items ||
+              []
+            ).reduce(
+              (
+                sum,
+                item
+              ) =>
+                sum +
+                (Number(
+                  item.cant
+                ) || 0),
+              0
+            ),
+          0
         );
 
       const clientes =
         new Set(
-          historial
+          ventas
             .map(
               (venta) =>
-                venta.nombre
-                  ?.trim()
+                String(
+                  venta.nombre ||
+                    ""
+                )
+                  .trim()
                   .toLowerCase()
             )
             .filter(Boolean)
@@ -247,7 +273,7 @@ export default function DashboardPage({
 
       const categorias =
         new Set(
-          historial.flatMap(
+          ventas.flatMap(
             (venta) =>
               (
                 venta.items ||
@@ -262,12 +288,11 @@ export default function DashboardPage({
         ).size;
 
       return {
-        totalVentas,
-        pedidos,
-        piezasVendidas,
-        piezasPendientes,
-        pedidosPendientes,
-        pedidosListos,
+        total,
+        pendientes,
+        pedidos:
+          ventas.length,
+        piezas,
         clientes,
         categorias,
       };
@@ -283,90 +308,86 @@ export default function DashboardPage({
 
   const chartData =
     useMemo(() => {
-      return Array.from(
-        {
-          length: 7,
-        },
-        (
-          _,
-          index
-        ) => {
+      const dias =
+        getLastSevenDays();
+
+      const totals =
+        new Map(
+          dias.map(
+            (date) => [
+              getDateKey(
+                date
+              ),
+              0,
+            ]
+          )
+        );
+
+      (
+        historial || []
+      ).forEach(
+        (venta) => {
           const date =
-            new Date();
+            parseSaleDate(
+              venta
+            );
 
-          date.setDate(
-            date.getDate() -
-              (6 - index)
-          );
+          if (!date) {
+            return;
+          }
 
-          const dayStart =
-            startOfDay(
+          const key =
+            getDateKey(
               date
             );
 
-          const nextDay =
-            new Date(
-              dayStart
-            );
+          if (
+            !totals.has(
+              key
+            )
+          ) {
+            return;
+          }
 
-          nextDay.setDate(
-            nextDay.getDate() +
-              1
+          totals.set(
+            key,
+            totals.get(
+              key
+            ) +
+              (Number(
+                venta.total
+              ) || 0)
           );
+        }
+      );
 
-          const ventasDia =
-            historial.filter(
-              (venta) => {
-                const saleDate =
-                  getSaleDate(
-                    venta
-                  );
-
-                if (
-                  !saleDate
-                ) {
-                  return false;
-                }
-
-                return (
-                  saleDate >=
-                    dayStart &&
-                  saleDate <
-                    nextDay
-                );
-              }
-            );
-
-          const total =
-            ventasDia.reduce(
-              (
-                sum,
-                venta
-              ) =>
-                sum +
-                (Number(
-                  venta.total
-                ) || 0),
-              0
+      return dias.map(
+        (date) => {
+          const key =
+            getDateKey(
+              date
             );
 
           return {
-            fecha:
+            date:
+              key,
+
+            label:
               date.toLocaleDateString(
                 "es-CR",
                 {
                   day:
-                    "2-digit",
+                    "numeric",
 
                   month:
                     "short",
                 }
               ),
 
-            total,
-
-            pedidos:
-              ventasDia.length,
+            total:
+              totals.get(
+                key
+              ) || 0,
           };
         }
       );
@@ -376,319 +397,318 @@ export default function DashboardPage({
 
   /*
    * ========================================
-   * TOP CLIENTE
+   * FECHA HEADER
    * ========================================
    */
 
-  const topCliente =
-    useMemo(() => {
-      const clientes =
-        new Map();
+  const today =
+    new Date().toLocaleDateString(
+      "es-CR",
+      {
+        day:
+          "numeric",
 
-      historial.forEach(
-        (venta) => {
-          const nombre =
-            venta.nombre?.trim();
-
-          if (!nombre) {
-            return;
-          }
-
-          const key =
-            nombre.toLowerCase();
-
-          const actual =
-            clientes.get(
-              key
-            ) || {
-              nombre,
-              total: 0,
-              pedidos: 0,
-            };
-
-          actual.total +=
-            Number(
-              venta.total
-            ) || 0;
-
-          actual.pedidos +=
-            1;
-
-          clientes.set(
-            key,
-            actual
-          );
-        }
-      );
-
-      return (
-        [
-          ...clientes.values(),
-        ].sort(
-          (a, b) =>
-            b.total -
-            a.total
-        )[0] || null
-      );
-    }, [
-      historial,
-    ]);
-
-  /*
-   * ========================================
-   * ÚLTIMOS PEDIDOS
-   * ========================================
-   */
-
-  const ultimosPedidos =
-    useMemo(() => {
-      return [
-        ...historial,
-      ]
-        .sort(
-          (a, b) => {
-            const dateA =
-              getSaleDate(
-                a
-              );
-
-            const dateB =
-              getSaleDate(
-                b
-              );
-
-            return (
-              (dateB?.getTime() ||
-                0) -
-              (dateA?.getTime() ||
-                0)
-            );
-          }
-        )
-        .slice(
-          0,
-          5
-        );
-    }, [
-      historial,
-    ]);
-
-  /*
-   * ========================================
-   * RENDER
-   * ========================================
-   */
+        month:
+          "long",
+      }
+    );
 
   return (
     <div
       className="
-        p-4
+        p-3
+        sm:p-4
         lg:p-8
         xl:p-10
-        max-w-[1500px]
+
+        max-w-[1380px]
         mx-auto
+
         pb-28
+
         font-black
+        animate-in
       "
     >
       <ScrollToTop />
 
-      {/* ===================================
-          HERO
-      =================================== */}
+      {/* ====================================
+          1. HEADER
+      ==================================== */}
 
-      <section
+      <header
         className="
-          bg-white
-          rounded-[3rem]
-          shadow-xl
-          border
-          border-slate-50
-          p-6
-          lg:p-8
-          xl:p-10
-          mb-8
+          mb-6
+          lg:mb-8
 
-          flex
-          flex-col
-          lg:flex-row
-          items-center
-          justify-between
-          gap-6
+          bg-white
+
+          rounded-[2.5rem]
+          lg:rounded-[3.5rem]
+
+          border
+          border-slate-100
+
+          shadow-[0_16px_40px_rgba(15,23,42,0.08),0_4px_14px_rgba(15,23,42,0.04)]
+
+          px-5
+          py-7
+          sm:p-8
+          lg:px-10
+          lg:py-8
         "
       >
         <div
           className="
             flex
-            items-center
-            gap-5
-            w-full
-            lg:w-auto
+            flex-col
+            lg:flex-row
+
+            lg:items-center
+            justify-between
+
+            gap-7
           "
         >
+          {/* LOGO + SALUDO */}
+
           <div
             className="
-              w-16
-              h-16
-              lg:w-20
-              lg:h-20
-              rounded-[1.7rem]
-              bg-slate-900
-              p-2
-              shadow-lg
-              shrink-0
+              flex
+              items-center
+              justify-center
+              lg:justify-start
+
+              gap-4
+              lg:gap-6
             "
           >
-            <img
-              src={
-                logoAlekey
-              }
-              alt="Alekey"
+            <div
               className="
-                w-full
-                h-full
-                object-cover
-                rounded-[1.2rem]
-              "
-            />
-          </div>
+                w-16
+                h-16
+                lg:w-20
+                lg:h-20
 
-          <div>
-            <h1
-              className="
-                text-3xl
-                lg:text-4xl
-                xl:text-5xl
-                italic
-                uppercase
-                tracking-tighter
-                text-slate-900
+                bg-slate-900
+
+                rounded-[1.5rem]
+                lg:rounded-[1.8rem]
+
+                flex
+                items-center
+                justify-center
+
+                shadow-xl
+
+                shrink-0
               "
             >
-              Hola, Alekey
-              <span className="text-[#8ED4BE]">
-                .
-              </span>
-            </h1>
+              <img
+                src={
+                  logoAlekey
+                }
+                alt="Alekey"
+                className="
+                  w-12
+                  h-12
+                  lg:w-14
+                  lg:h-14
+
+                  object-contain
+                  rounded-xl
+                "
+              />
+            </div>
+
+            <div>
+              <h1
+                className="
+                  text-2xl
+                  sm:text-3xl
+                  lg:text-4xl
+
+                  italic
+                  uppercase
+                  tracking-tighter
+
+                  text-slate-900
+                "
+              >
+                Hola,
+                Alekey
+                <span className="text-[#8ED4BE]">
+                  .
+                </span>
+              </h1>
+
+              <p
+                className="
+                  mt-1
+
+                  text-[7px]
+                  sm:text-[8px]
+                  lg:text-[9px]
+
+                  uppercase
+                  tracking-[0.22em]
+
+                  text-slate-400
+                "
+              >
+                Gestión
+                Administrativa{" "}
+                {
+                  new Date().getFullYear()
+                }
+              </p>
+            </div>
+          </div>
+
+          {/* FECHA */}
+
+          <div
+            className="
+              self-center
+              lg:self-auto
+
+              min-w-[180px]
+
+              bg-slate-50
+
+              px-6
+              py-4
+
+              rounded-[1.8rem]
+
+              text-center
+
+              border-b-4
+              border-[#8ED4BE]
+            "
+          >
+            <p
+              className="
+                text-[7px]
+                uppercase
+                tracking-widest
+                text-slate-400
+              "
+            >
+              Hoy es
+            </p>
 
             <p
               className="
                 mt-1
-                text-[9px]
-                lg:text-[10px]
-                uppercase
-                tracking-[0.2em]
-                text-slate-400
+
+                text-sm
+                italic
+                text-slate-800
               "
             >
-              Gestión
-              Administrativa
-              2026
+              {today}
             </p>
           </div>
         </div>
+      </header>
 
-        <div
-          className="
-            bg-slate-50
-            rounded-[1.8rem]
-            px-6
-            py-4
-            text-center
-            min-w-[180px]
-            border-b-4
-            border-[#8ED4BE]
-          "
-        >
-          <p
-            className="
-              text-[8px]
-              uppercase
-              tracking-widest
-              text-slate-400
-            "
-          >
-            Hoy es
-          </p>
+      {/* ====================================
+          2. ACCIONES RÁPIDAS — SOLO MÓVIL
+      ==================================== */}
 
-          <p
-            className="
-              mt-1
-              text-sm
-              italic
-              text-slate-800
-            "
-          >
-            {now.toLocaleDateString(
-              "es-CR",
-              {
-                day:
-                  "numeric",
+      <div
+        className="
+          lg:hidden
+          mb-6
+        "
+      >
+        <QuickActions
+          navigate={
+            navigate
+          }
+          mobile
+        />
+      </div>
 
-                month:
-                  "long",
-              }
-            )}
-          </p>
-        </div>
-      </section>
-
-      {/* ===================================
-          KPIs
-      =================================== */}
+      {/* ====================================
+          3. MÉTRICAS
+      ==================================== */}
 
       <section
         className="
           grid
           grid-cols-1
           md:grid-cols-3
-          gap-5
-          mb-8
+
+          gap-4
+          lg:gap-5
+
+          mb-6
+          lg:mb-8
         "
       >
-        <DashboardStat
+        <MetricCard
           icon={
             TrendingUp
           }
           label="Ventas Totales"
           value={currency(
-            stats.totalVentas
+            summary.total
           )}
-          accent="mint"
+          iconClass="
+            bg-emerald-500/10
+            text-emerald-500
+          "
+          accent="#8ED4BE"
         />
 
-        <DashboardStat
-          icon={Package}
+        <MetricCard
+          icon={
+            AlertCircle
+          }
           label="Piezas Pendientes"
           value={
-            stats.piezasPendientes
+            summary.pendientes
           }
-          accent="pink"
+          iconClass="
+            bg-red-500/10
+            text-[#F79598]
+          "
+          accent="#F79598"
         />
 
-        <DashboardStat
+        <MetricCard
           icon={
-            ShoppingCart
+            ShoppingBag
           }
           label="Pedidos Realizados"
           value={
-            stats.pedidos
+            summary.pedidos
           }
-          accent="yellow"
+          iconClass="
+            bg-[#C0C976]/10
+            text-[#C0C976]
+          "
+          accent="#C0C976"
         />
       </section>
 
-      {/* ===================================
-          GRÁFICA + RESUMEN
-      =================================== */}
+      {/* ====================================
+          4. GRÁFICA + RESUMEN
+      ==================================== */}
 
       <section
         className="
           grid
           grid-cols-1
           xl:grid-cols-[2fr_1fr]
-          gap-6
-          mb-8
+
+          gap-5
+          lg:gap-6
+
+          mb-6
+          lg:mb-8
         "
       >
         {/* GRÁFICA */}
@@ -696,33 +716,39 @@ export default function DashboardPage({
         <article
           className="
             bg-white
-            rounded-[2.5rem]
-            shadow-xl
+
+            rounded-[2.2rem]
+            lg:rounded-[3rem]
+
             border
-            border-slate-50
+            border-slate-100
+
+            shadow-[0_14px_36px_rgba(15,23,42,0.07),0_4px_12px_rgba(15,23,42,0.035)]
+
             p-5
-            lg:p-7
+            sm:p-6
+            lg:p-8
           "
         >
           <div
             className="
               flex
-              flex-col
-              sm:flex-row
-              justify-between
               items-start
-              sm:items-center
-              gap-3
+              justify-between
+              gap-4
+
               mb-6
             "
           >
             <div>
               <h2
                 className="
-                  text-lg
-                  lg:text-xl
+                  text-base
+                  lg:text-lg
+
                   italic
                   uppercase
+
                   text-slate-800
                 "
               >
@@ -732,11 +758,13 @@ export default function DashboardPage({
 
               <p
                 className="
-                  text-[8px]
+                  mt-1
+
+                  text-[7px]
                   uppercase
                   tracking-widest
-                  text-slate-300
-                  mt-1
+
+                  text-slate-400
                 "
               >
                 Ingresos por día
@@ -745,12 +773,18 @@ export default function DashboardPage({
 
             <span
               className="
+                hidden
+                sm:inline-flex
+
                 px-4
                 py-2
+
+                rounded-xl
+
                 bg-emerald-50
                 text-emerald-500
-                rounded-xl
-                text-[9px]
+
+                text-[7px]
                 uppercase
                 tracking-widest
               "
@@ -761,9 +795,11 @@ export default function DashboardPage({
 
           <div
             className="
+              h-[240px]
+              sm:h-[300px]
+              lg:h-[320px]
+
               w-full
-              h-[290px]
-              lg:h-[330px]
             "
           >
             <ResponsiveContainer
@@ -776,7 +812,7 @@ export default function DashboardPage({
                 }
                 margin={{
                   top: 10,
-                  right: 10,
+                  right: 8,
                   left: 0,
                   bottom: 0,
                 }}
@@ -793,7 +829,7 @@ export default function DashboardPage({
                       offset="5%"
                       stopColor="#8ED4BE"
                       stopOpacity={
-                        0.45
+                        0.32
                       }
                     />
 
@@ -801,7 +837,7 @@ export default function DashboardPage({
                       offset="95%"
                       stopColor="#8ED4BE"
                       stopOpacity={
-                        0.02
+                        0
                       }
                     />
                   </linearGradient>
@@ -809,12 +845,17 @@ export default function DashboardPage({
 
                 <CartesianGrid
                   strokeDasharray="3 3"
-                  vertical={false}
-                  stroke="#F1F5F9"
+                  vertical={
+                    false
+                  }
+                  stroke="#cbd5e1"
+                  strokeOpacity={
+                    0.35
+                  }
                 />
 
                 <XAxis
-                  dataKey="fecha"
+                  dataKey="label"
                   axisLine={
                     false
                   }
@@ -822,9 +863,14 @@ export default function DashboardPage({
                     false
                   }
                   tick={{
+                    fontSize:
+                      9,
+
+                    fontWeight:
+                      800,
+
                     fill:
-                      "#94A3B8",
-                    fontSize: 10,
+                      "#94a3b8",
                   }}
                 />
 
@@ -835,37 +881,84 @@ export default function DashboardPage({
                   tickLine={
                     false
                   }
-                  width={65}
+                  width={56}
                   tick={{
+                    fontSize:
+                      9,
+
+                    fontWeight:
+                      800,
+
                     fill:
-                      "#94A3B8",
-                    fontSize: 10,
+                      "#94a3b8",
                   }}
                   tickFormatter={(
                     value
-                  ) =>
-                    value >=
-                    1000000
-                      ? `C ${(
-                          value /
-                          1000000
-                        ).toFixed(
-                          1
-                        )}M`
-                      : value >=
-                        1000
-                      ? `C ${Math.round(
-                          value /
-                            1000
-                        )}K`
-                      : `C ${value}`
-                  }
+                  ) => {
+                    if (
+                      value >=
+                      1000000
+                    ) {
+                      return `₡${(
+                        value /
+                        1000000
+                      ).toFixed(
+                        1
+                      )}M`;
+                    }
+
+                    if (
+                      value >=
+                      1000
+                    ) {
+                      return `₡${Math.round(
+                        value /
+                          1000
+                      )}K`;
+                    }
+
+                    return `₡${value}`;
+                  }}
                 />
 
                 <Tooltip
-                  content={
-                    <DashboardTooltip />
-                  }
+                  cursor={{
+                    stroke:
+                      "#8ED4BE",
+
+                    strokeWidth:
+                      1,
+
+                    strokeDasharray:
+                      "4 4",
+                  }}
+                  contentStyle={{
+                    border:
+                      "none",
+
+                    borderRadius:
+                      "16px",
+
+                    boxShadow:
+                      "0 12px 30px rgba(15,23,42,.14)",
+
+                    fontSize:
+                      "11px",
+
+                    fontWeight:
+                      800,
+                  }}
+                  formatter={(
+                    value
+                  ) => [
+                    currency(
+                      Number(
+                        value
+                      ) || 0
+                    ),
+
+                    "Ventas",
+                  ]}
                 />
 
                 <Area
@@ -878,12 +971,15 @@ export default function DashboardPage({
                   fill="url(#dashboardSalesGradient)"
                   activeDot={{
                     r: 6,
-                    strokeWidth:
-                      3,
-                    stroke:
-                      "#FFFFFF",
+
                     fill:
                       "#58B99A",
+
+                    stroke:
+                      "#ffffff",
+
+                    strokeWidth:
+                      3,
                   }}
                 />
               </AreaChart>
@@ -896,83 +992,129 @@ export default function DashboardPage({
         <article
           className="
             bg-white
-            rounded-[2.5rem]
-            shadow-xl
+
+            rounded-[2.2rem]
+            lg:rounded-[3rem]
+
             border
-            border-slate-50
+            border-slate-100
+
+            shadow-[0_14px_36px_rgba(15,23,42,0.07),0_4px_12px_rgba(15,23,42,0.035)]
+
             p-5
-            lg:p-7
+            sm:p-6
+            lg:p-8
           "
         >
           <h2
             className="
-              text-lg
+              text-base
+              lg:text-lg
+
               italic
               uppercase
+
               text-slate-800
+
               mb-6
             "
           >
             Resumen rápido
           </h2>
 
-          <div className="space-y-3">
-            <SummaryItem
+          <div
+            className="
+              space-y-3
+            "
+          >
+            <QuickSummaryRow
               icon={
-                ShoppingCart
+                ShoppingBag
+              }
+              value={
+                summary.pedidos
               }
               label="Pedidos"
-              value={
-                stats.pedidos
-              }
-              color="mint"
+              iconClass="
+                bg-emerald-500/10
+                text-emerald-500
+              "
             />
 
-            <SummaryItem
-              icon={Box}
+            <QuickSummaryRow
+              icon={
+                Box
+              }
+              value={
+                summary.piezas
+              }
               label="Piezas vendidas"
-              value={
-                stats.piezasVendidas
-              }
-              color="yellow"
+              iconClass="
+                bg-amber-500/10
+                text-amber-500
+              "
             />
 
-            <SummaryItem
-              icon={Users}
+            <QuickSummaryRow
+              icon={
+                Users
+              }
+              value={
+                summary.clientes
+              }
               label="Clientes"
-              value={
-                stats.clientes
-              }
-              color="blue"
+              iconClass="
+                bg-blue-500/10
+                text-blue-500
+              "
             />
 
-            <SummaryItem
-              icon={Package}
-              label="Categorías vendidas"
-              value={
-                stats.categorias
+            <QuickSummaryRow
+              icon={
+                Tags
               }
-              color="purple"
+              value={
+                summary.categorias
+              }
+              label="Categorías vendidas"
+              iconClass="
+                bg-purple-500/10
+                text-purple-500
+              "
             />
           </div>
 
-          <Link
-            to="/stats"
+          <button
+            type="button"
+            onClick={() =>
+              navigate(
+                "/stats"
+              )
+            }
             className="
-              mt-5
+              mt-6
+
               w-full
-              p-4
+
+              px-4
+              py-4
+
               rounded-2xl
+
               bg-slate-50
-              text-[9px]
-              uppercase
-              tracking-widest
               text-slate-500
+
               flex
               items-center
               justify-between
+
+              text-[8px]
+              uppercase
+              tracking-widest
+
               hover:bg-slate-900
               hover:text-white
+
               transition-all
             "
           >
@@ -982,617 +1124,369 @@ export default function DashboardPage({
             <BarChart3
               size={15}
             />
-          </Link>
+          </button>
         </article>
       </section>
 
-      {/* ===================================
-          ACCIONES RÁPIDAS
-      =================================== */}
+      {/* ====================================
+          5. ACCIONES RÁPIDAS — PC
+      ==================================== */}
 
-      <section
+      <div
         className="
-          bg-white
-          rounded-[2.5rem]
-          shadow-xl
-          border
-          border-slate-50
-          p-5
-          lg:p-7
-          mb-8
+          hidden
+          lg:block
         "
       >
-        <h2
-          className="
-            text-lg
-            italic
-            uppercase
-            text-slate-800
-            mb-5
-          "
-        >
-          Acciones rápidas
-        </h2>
-
-        <div
-          className="
-            grid
-            grid-cols-2
-            lg:grid-cols-4
-            gap-4
-          "
-        >
-          <QuickAction
-            to="/cotizar"
-            icon={Plus}
-            title="Nueva Venta"
-            subtitle="Crear cotización"
-            primary
-          />
-
-          <QuickAction
-            to="/inventario"
-            icon={Box}
-            title="Inventario"
-            subtitle="Gestionar stock"
-          />
-
-          <QuickAction
-            to="/ventas"
-            icon={Search}
-            title="Historial"
-            subtitle="Ver pedidos"
-          />
-
-          <QuickAction
-            to="/stats"
-            icon={
-              BarChart3
-            }
-            title="Estadísticas"
-            subtitle="Ver métricas"
-          />
-        </div>
-      </section>
-
-      {/* ===================================
-          INFERIOR
-      =================================== */}
-
-      <section
-        className="
-          grid
-          grid-cols-1
-          xl:grid-cols-[1fr_2fr]
-          gap-6
-        "
-      >
-        {/* ESTADO */}
-
-        <article
-          className="
-            bg-white
-            rounded-[2.5rem]
-            shadow-xl
-            border
-            border-slate-50
-            p-6
-          "
-        >
-          <h2
-            className="
-              text-lg
-              italic
-              uppercase
-              text-slate-800
-              mb-6
-            "
-          >
-            Estado de pedidos
-          </h2>
-
-          <div
-            className="
-              flex
-              flex-col
-              sm:flex-row
-              xl:flex-col
-              2xl:flex-row
-              gap-6
-              items-center
-            "
-          >
-            <div
-              className="
-                w-36
-                h-36
-                rounded-full
-                relative
-                flex
-                items-center
-                justify-center
-              "
-              style={{
-                background:
-                  stats.pedidos >
-                  0
-                    ? `conic-gradient(
-                        #8ED4BE 0 ${
-                          (
-                            stats.pedidosListos /
-                            stats.pedidos
-                          ) *
-                          100
-                        }%,
-                        #F79598 ${
-                          (
-                            stats.pedidosListos /
-                            stats.pedidos
-                          ) *
-                          100
-                        }% 100%
-                      )`
-                    : "#F1F5F9",
-              }}
-            >
-              <div
-                className="
-                  absolute
-                  inset-[18px]
-                  bg-white
-                  rounded-full
-                  flex
-                  flex-col
-                  items-center
-                  justify-center
-                "
-              >
-                <span
-                  className="
-                    text-2xl
-                    italic
-                    text-slate-900
-                  "
-                >
-                  {
-                    stats.pedidos
-                  }
-                </span>
-
-                <span
-                  className="
-                    text-[8px]
-                    uppercase
-                    tracking-widest
-                    text-slate-400
-                  "
-                >
-                  Pedidos
-                </span>
-              </div>
-            </div>
-
-            <div className="flex-1 w-full space-y-4">
-              <OrderStatus
-                color="bg-[#8ED4BE]"
-                label="Listos"
-                value={
-                  stats.pedidosListos
-                }
-                total={
-                  stats.pedidos
-                }
-              />
-
-              <OrderStatus
-                color="bg-[#F79598]"
-                label="Pendientes"
-                value={
-                  stats.pedidosPendientes
-                }
-                total={
-                  stats.pedidos
-                }
-              />
-            </div>
-          </div>
-
-          {topCliente && (
-            <div
-              className="
-                mt-6
-                p-4
-                rounded-2xl
-                bg-emerald-50
-                border
-                border-emerald-100
-              "
-            >
-              <div
-                className="
-                  flex
-                  items-center
-                  gap-2
-                  text-emerald-500
-                  mb-2
-                "
-              >
-                <Trophy
-                  size={15}
-                />
-
-                <span
-                  className="
-                    text-[9px]
-                    uppercase
-                    tracking-widest
-                  "
-                >
-                  Top cliente
-                </span>
-              </div>
-
-              <p
-                className="
-                  text-sm
-                  italic
-                  uppercase
-                  text-slate-800
-                  break-words
-                "
-              >
-                {
-                  topCliente.nombre
-                }
-              </p>
-
-              <p
-                className="
-                  mt-1
-                  text-[10px]
-                  text-slate-500
-                "
-              >
-                {currency(
-                  topCliente.total
-                )}{" "}
-                ·{" "}
-                {
-                  topCliente.pedidos
-                }{" "}
-                pedidos
-              </p>
-            </div>
-          )}
-        </article>
-
-        {/* ÚLTIMOS PEDIDOS */}
-
-        <article
-          className="
-            bg-white
-            rounded-[2.5rem]
-            shadow-xl
-            border
-            border-slate-50
-            p-5
-            lg:p-6
-            overflow-hidden
-          "
-        >
-          <div
-            className="
-              flex
-              items-center
-              justify-between
-              gap-4
-              mb-5
-            "
-          >
-            <div
-              className="
-                flex
-                items-center
-                gap-3
-              "
-            >
-              <div
-                className="
-                  w-10
-                  h-10
-                  rounded-xl
-                  bg-emerald-50
-                  text-emerald-500
-                  flex
-                  items-center
-                  justify-center
-                "
-              >
-                <Clock3
-                  size={18}
-                />
-              </div>
-
-              <h2
-                className="
-                  text-lg
-                  italic
-                  uppercase
-                  text-slate-800
-                "
-              >
-                Últimos pedidos
-              </h2>
-            </div>
-
-            <Link
-              to="/ventas"
-              className="
-                px-4
-                py-2
-                bg-slate-50
-                rounded-xl
-                text-[8px]
-                uppercase
-                tracking-widest
-                text-slate-500
-                hover:bg-slate-900
-                hover:text-white
-                transition-all
-              "
-            >
-              Ver todos
-            </Link>
-          </div>
-
-          {ultimosPedidos.length ? (
-            <div className="overflow-x-auto">
-              <table
-                className="
-                  w-full
-                  min-w-[650px]
-                "
-              >
-                <thead>
-                  <tr
-                    className="
-                      text-[8px]
-                      uppercase
-                      tracking-widest
-                      text-slate-300
-                      border-b
-                      border-slate-100
-                    "
-                  >
-                    <th className="text-left py-3">
-                      Pedido
-                    </th>
-
-                    <th className="text-left py-3">
-                      Cliente
-                    </th>
-
-                    <th className="text-right py-3">
-                      Total
-                    </th>
-
-                    <th className="text-center py-3">
-                      Estado
-                    </th>
-
-                    <th className="text-right py-3">
-                      Fecha
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {ultimosPedidos.map(
-                    (venta) => {
-                      const pendiente =
-                        tienePendientes(
-                          venta
-                        );
-
-                      return (
-                        <tr
-                          key={
-                            venta.id
-                          }
-                          className="
-                            border-b
-                            border-slate-50
-                            last:border-0
-                          "
-                        >
-                          <td
-                            className="
-                              py-4
-                              text-[10px]
-                              text-slate-400
-                            "
-                          >
-                            #
-                            {
-                              venta.id
-                            }
-                          </td>
-
-                          <td
-                            className="
-                              py-4
-                              text-[10px]
-                              text-slate-700
-                              uppercase
-                            "
-                          >
-                            {
-                              venta.nombre
-                            }
-                          </td>
-
-                          <td
-                            className="
-                              py-4
-                              text-right
-                              text-[10px]
-                              text-slate-700
-                            "
-                          >
-                            {currency(
-                              Number(
-                                venta.total
-                              ) ||
-                                0
-                            )}
-                          </td>
-
-                          <td className="py-4 text-center">
-                            <span
-                              className={`
-                                inline-flex
-                                items-center
-                                gap-2
-                                px-3
-                                py-1.5
-                                rounded-xl
-                                text-[8px]
-                                uppercase
-
-                                ${
-                                  pendiente
-                                    ? "bg-red-50 text-[#F79598]"
-                                    : "bg-emerald-50 text-emerald-500"
-                                }
-                              `}
-                            >
-                              <span
-                                className={`
-                                  w-1.5
-                                  h-1.5
-                                  rounded-full
-
-                                  ${
-                                    pendiente
-                                      ? "bg-[#F79598]"
-                                      : "bg-emerald-500"
-                                  }
-                                `}
-                              />
-
-                              {pendiente
-                                ? "Pendiente"
-                                : "Listo"}
-                            </span>
-                          </td>
-
-                          <td
-                            className="
-                              py-4
-                              text-right
-                              text-[9px]
-                              text-slate-400
-                            "
-                          >
-                            {
-                              venta.fecha
-                            }
-                          </td>
-                        </tr>
-                      );
-                    }
-                  )}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div
-              className="
-                py-16
-                text-center
-                text-slate-300
-                uppercase
-                italic
-                text-sm
-              "
-            >
-              No hay pedidos
-              todavía
-            </div>
-          )}
-        </article>
-      </section>
+        <QuickActions
+          navigate={
+            navigate
+          }
+        />
+      </div>
     </div>
   );
 }
 
 /*
  * ========================================
- * KPI
+ * QUICK ACTIONS
  * ========================================
  */
 
-function DashboardStat({
+function QuickActions({
+  navigate,
+  mobile = false,
+}) {
+  const actions = [
+    {
+      title:
+        "Nueva Venta",
+
+      subtitle:
+        "Crear pedido",
+
+      icon:
+        Plus,
+
+      path:
+        "/cotizar",
+
+      primary:
+        true,
+    },
+
+    {
+      title:
+        "Inventario",
+
+      subtitle:
+        "Gestionar stock",
+
+      icon:
+        Package,
+
+      path:
+        "/inventario",
+    },
+
+    {
+      title:
+        "Historial",
+
+      subtitle:
+        "Ver pedidos",
+
+      icon:
+        Search,
+
+      path:
+        "/ventas",
+    },
+
+    {
+      title:
+        "Estadísticas",
+
+      subtitle:
+        "Ver métricas",
+
+      icon:
+        BarChart3,
+
+      path:
+        "/stats",
+    },
+  ];
+
+  return (
+    <section
+      className={`
+        bg-white
+
+        rounded-[2.2rem]
+        lg:rounded-[3rem]
+
+        border
+        border-slate-100
+
+        shadow-[0_14px_36px_rgba(15,23,42,0.07),0_4px_12px_rgba(15,23,42,0.035)]
+
+        ${
+          mobile
+            ? "p-4"
+            : "p-6 lg:p-8"
+        }
+      `}
+    >
+      <div
+        className="
+          flex
+          items-center
+          gap-3
+
+          mb-4
+        "
+      >
+        <div
+          className="
+            w-9
+            h-9
+
+            rounded-xl
+
+            bg-[#8ED4BE]/15
+            text-[#58B99A]
+
+            flex
+            items-center
+            justify-center
+          "
+        >
+          <Zap
+            size={17}
+          />
+        </div>
+
+        <div>
+          <h2
+            className="
+              text-sm
+              lg:text-base
+
+              italic
+              uppercase
+
+              text-slate-800
+            "
+          >
+            Acciones rápidas
+          </h2>
+
+          {!mobile && (
+            <p
+              className="
+                mt-0.5
+
+                text-[7px]
+                uppercase
+                tracking-widest
+
+                text-slate-400
+              "
+            >
+              Accesos principales
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div
+        className="
+          grid
+          grid-cols-2
+          lg:grid-cols-4
+
+          gap-3
+        "
+      >
+        {actions.map(
+          ({
+            title,
+            subtitle,
+            icon:
+              Icon,
+            path,
+            primary,
+          }) => (
+            <button
+              type="button"
+              key={
+                path
+              }
+              onClick={() =>
+                navigate(
+                  path
+                )
+              }
+              className={`
+                group
+
+                min-h-[105px]
+                lg:min-h-[125px]
+
+                p-4
+                lg:p-5
+
+                rounded-[1.5rem]
+                lg:rounded-[1.8rem]
+
+                text-left
+
+                border
+
+                transition-all
+
+                ${
+                  primary
+                    ? `
+                      bg-slate-900
+                      border-slate-900
+                      text-white
+
+                      shadow-[0_12px_26px_rgba(15,23,42,0.16)]
+                    `
+                    : `
+                      bg-slate-50
+                      border-slate-100
+                      text-slate-800
+
+                      hover:bg-white
+                      hover:shadow-lg
+                    `
+                }
+
+                hover:-translate-y-0.5
+              `}
+            >
+              <div
+                className={`
+                  w-9
+                  h-9
+
+                  lg:w-10
+                  lg:h-10
+
+                  rounded-xl
+
+                  flex
+                  items-center
+                  justify-center
+
+                  mb-4
+
+                  ${
+                    primary
+                      ? "bg-[#8ED4BE] text-slate-900"
+                      : "bg-white text-slate-500"
+                  }
+                `}
+              >
+                <Icon
+                  size={18}
+                />
+              </div>
+
+              <h3
+                className="
+                  text-[10px]
+                  sm:text-xs
+                  lg:text-sm
+
+                  italic
+                  uppercase
+
+                  leading-tight
+                "
+              >
+                {title}
+              </h3>
+
+              <p
+                className={`
+                  mt-1
+
+                  text-[6px]
+                  sm:text-[7px]
+
+                  uppercase
+                  tracking-widest
+
+                  ${
+                    primary
+                      ? "text-slate-400"
+                      : "text-slate-400"
+                  }
+                `}
+              >
+                {subtitle}
+              </p>
+            </button>
+          )
+        )}
+      </div>
+    </section>
+  );
+}
+
+/*
+ * ========================================
+ * METRIC CARD
+ * ========================================
+ */
+
+function MetricCard({
   icon: Icon,
   label,
   value,
+  iconClass,
   accent,
 }) {
-  const styles = {
-    mint: {
-      line:
-        "border-[#8ED4BE]",
-
-      icon:
-        "bg-emerald-50 text-emerald-400",
-    },
-
-    pink: {
-      line:
-        "border-[#F79598]",
-
-      icon:
-        "bg-red-50 text-[#F79598]",
-    },
-
-    yellow: {
-      line:
-        "border-[#C0C976]",
-
-      icon:
-        "bg-yellow-50 text-[#AEB64B]",
-    },
-  };
-
-  const selected =
-    styles[accent];
-
   return (
     <article
-      className={`
+      style={{
+        borderBottomColor:
+          accent,
+      }}
+      className="
         bg-white
-        rounded-[2.5rem]
-        shadow-xl
-        border
-        border-slate-50
-        border-b-[8px]
-        p-6
-        lg:p-7
 
-        ${selected.line}
-      `}
+        p-5
+        sm:p-6
+
+        rounded-[2.2rem]
+
+        border
+        border-slate-100
+        border-b-[7px]
+
+        shadow-[0_14px_34px_rgba(15,23,42,0.075),0_4px_12px_rgba(15,23,42,0.035)]
+      "
     >
       <div
         className={`
           w-11
           h-11
+
           rounded-2xl
+
           flex
           items-center
           justify-center
+
           mb-5
 
-          ${selected.icon}
+          ${iconClass}
         `}
       >
         <Icon
@@ -1602,9 +1496,10 @@ function DashboardStat({
 
       <p
         className="
-          text-[9px]
+          text-[8px]
           uppercase
           tracking-[0.18em]
+
           text-slate-400
         "
       >
@@ -1614,9 +1509,12 @@ function DashboardStat({
       <p
         className="
           mt-2
+
           text-2xl
           lg:text-3xl
+
           italic
+
           text-slate-900
         "
       >
@@ -1628,55 +1526,51 @@ function DashboardStat({
 
 /*
  * ========================================
- * RESUMEN
+ * QUICK SUMMARY
  * ========================================
  */
 
-function SummaryItem({
+function QuickSummaryRow({
   icon: Icon,
-  label,
   value,
-  color,
+  label,
+  iconClass,
 }) {
-  const colors = {
-    mint:
-      "bg-emerald-50 text-emerald-500",
-
-    yellow:
-      "bg-yellow-50 text-amber-500",
-
-    blue:
-      "bg-blue-50 text-blue-500",
-
-    purple:
-      "bg-purple-50 text-purple-500",
-  };
-
   return (
     <div
       className="
         flex
         items-center
+
         gap-4
-        p-4
-        bg-slate-50
+
+        p-3
+
         rounded-2xl
+
+        hover:bg-slate-50
+
+        transition-colors
       "
     >
       <div
         className={`
           w-11
           h-11
+
           rounded-xl
+
           flex
           items-center
           justify-center
 
-          ${colors[color]}
+          shrink-0
+
+          ${iconClass}
         `}
       >
         <Icon
-          size={19}
+          size={18}
         />
       </div>
 
@@ -1684,8 +1578,10 @@ function SummaryItem({
         <p
           className="
             text-lg
+            lg:text-xl
+
             italic
-            text-slate-900
+            text-slate-800
           "
         >
           {value}
@@ -1693,258 +1589,16 @@ function SummaryItem({
 
         <p
           className="
-            text-[9px]
+            text-[7px]
             uppercase
             tracking-widest
+
             text-slate-400
           "
         >
           {label}
         </p>
       </div>
-    </div>
-  );
-}
-
-/*
- * ========================================
- * ACCIÓN RÁPIDA
- * ========================================
- */
-
-function QuickAction({
-  to,
-  icon: Icon,
-  title,
-  subtitle,
-  primary = false,
-}) {
-  return (
-    <Link
-      to={to}
-      className={`
-        p-5
-        rounded-2xl
-        min-h-[125px]
-        flex
-        flex-col
-        justify-between
-        transition-all
-        hover:-translate-y-1
-        hover:shadow-lg
-
-        ${
-          primary
-            ? "bg-slate-900 text-white"
-            : "bg-slate-50 text-slate-800"
-        }
-      `}
-    >
-      <div
-        className={`
-          w-11
-          h-11
-          rounded-xl
-          flex
-          items-center
-          justify-center
-
-          ${
-            primary
-              ? "bg-[#8ED4BE] text-slate-900"
-              : "bg-white text-purple-500"
-          }
-        `}
-      >
-        <Icon
-          size={20}
-        />
-      </div>
-
-      <div>
-        <p
-          className="
-            text-sm
-            italic
-            uppercase
-          "
-        >
-          {title}
-        </p>
-
-        <p
-          className={`
-            text-[8px]
-            uppercase
-            tracking-widest
-            mt-1
-
-            ${
-              primary
-                ? "text-slate-400"
-                : "text-slate-400"
-            }
-          `}
-        >
-          {subtitle}
-        </p>
-      </div>
-    </Link>
-  );
-}
-
-/*
- * ========================================
- * ESTADO PEDIDO
- * ========================================
- */
-
-function OrderStatus({
-  color,
-  label,
-  value,
-  total,
-}) {
-  const percent =
-    total > 0
-      ? Math.round(
-          (value /
-            total) *
-            100
-        )
-      : 0;
-
-  return (
-    <div
-      className="
-        flex
-        items-center
-        gap-3
-      "
-    >
-      <span
-        className={`
-          w-3
-          h-3
-          rounded-full
-          ${color}
-        `}
-      />
-
-      <div className="flex-1">
-        <div
-          className="
-            flex
-            justify-between
-            gap-3
-          "
-        >
-          <span
-            className="
-              text-[10px]
-              uppercase
-              text-slate-500
-            "
-          >
-            {label}
-          </span>
-
-          <span
-            className="
-              text-[10px]
-              text-slate-700
-            "
-          >
-            {percent}%
-          </span>
-        </div>
-
-        <p
-          className="
-            text-[9px]
-            text-slate-300
-            mt-0.5
-          "
-        >
-          {value} pedidos
-        </p>
-      </div>
-    </div>
-  );
-}
-
-/*
- * ========================================
- * TOOLTIP
- * ========================================
- */
-
-function DashboardTooltip({
-  active,
-  payload,
-  label,
-}) {
-  if (
-    !active ||
-    !payload?.length
-  ) {
-    return null;
-  }
-
-  const data =
-    payload[0]
-      ?.payload;
-
-  return (
-    <div
-      className="
-        bg-slate-900
-        text-white
-        p-3
-        rounded-xl
-        shadow-xl
-        border
-        border-white/10
-      "
-    >
-      <p
-        className="
-          text-[8px]
-          uppercase
-          tracking-widest
-          text-slate-400
-        "
-      >
-        {label}
-      </p>
-
-      <p
-        className="
-          text-sm
-          italic
-          text-[#8ED4BE]
-          mt-1
-        "
-      >
-        {currency(
-          data?.total ||
-            0
-        )}
-      </p>
-
-      <p
-        className="
-          text-[8px]
-          text-slate-400
-          mt-1
-        "
-      >
-        {
-          data?.pedidos ||
-          0
-        }{" "}
-        pedidos
-      </p>
     </div>
   );
 }

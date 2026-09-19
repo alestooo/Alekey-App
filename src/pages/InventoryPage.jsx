@@ -365,8 +365,7 @@ export default function InventoryPage({
           ] =
             (counts[
               categoria
-            ] || 0) +
-            1;
+            ] || 0) + 1;
 
           return counts;
         },
@@ -375,6 +374,12 @@ export default function InventoryPage({
     }, [
       inventario,
     ]);
+
+  /*
+   * ========================================
+   * RESUMEN GLOBAL
+   * ========================================
+   */
 
   const resumen =
     useMemo(() => {
@@ -421,6 +426,65 @@ export default function InventoryPage({
       };
     }, [
       inventario,
+    ]);
+
+  /*
+   * ========================================
+   * RESUMEN CATEGORÍA SELECCIONADA
+   * ========================================
+   */
+
+  const resumenCategoria =
+    useMemo(() => {
+      if (
+        catFiltro ===
+        "Todo"
+      ) {
+        return resumen;
+      }
+
+      const itemsCategoria =
+        inventario.filter(
+          (item) =>
+            item.categoria ===
+            catFiltro
+        );
+
+      const totalStock =
+        itemsCategoria.reduce(
+          (
+            total,
+            item
+          ) =>
+            total +
+            (Number(
+              item.stock
+            ) || 0),
+          0
+        );
+
+      return {
+        totalItems:
+          itemsCategoria.length,
+
+        totalCategorias:
+          resumen.totalCategorias,
+
+        totalStock,
+
+        stockBajo:
+          itemsCategoria.filter(
+            (item) =>
+              (Number(
+                item.stock
+              ) || 0) <=
+              4
+          ).length,
+      };
+    }, [
+      catFiltro,
+      inventario,
+      resumen,
     ]);
 
   const actualizarStock =
@@ -975,9 +1039,19 @@ export default function InventoryPage({
         busqueda={
           busqueda
         }
+
         resumen={
-          resumen
+          catFiltro ===
+          "Todo"
+            ? resumen
+            : resumenCategoria
         }
+
+        showAllStats={
+          catFiltro ===
+          "Todo"
+        }
+
         itemsPerPage={
           inventoryPerPage
         }
@@ -1107,7 +1181,9 @@ export default function InventoryPage({
                 rounded-[2rem]
                 border
                 border-slate-100
-                shadow-lg
+
+                shadow-[0_14px_36px_rgba(15,23,42,0.085),0_4px_12px_rgba(15,23,42,0.04)]
+
                 p-4
                 flex
                 flex-col
