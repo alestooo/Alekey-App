@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -6,11 +7,18 @@ import {
 
 import {
   ArrowLeft,
+  ArrowRight,
 } from "lucide-react";
 
 import Swal from "sweetalert2";
 
-import { supabase } from "../lib/supabase";
+import {
+  supabase,
+} from "../lib/supabase";
+
+import {
+  useAppSettings,
+} from "../contexts/AppSettingsContext";
 
 import ScrollToTop from "../components/common/ScrollToTop";
 
@@ -19,20 +27,153 @@ import InventoryCard from "../components/inventory/InventoryCard";
 import InventoryFilters from "../components/inventory/InventoryFilters";
 
 import {
+  openInventoryEditForm,
   openInventoryForm,
 } from "../components/inventory/InventoryForm";
 
-const ITEMS_POR_PAGINA = 21;
+import {
+  currency,
+} from "../utils/formatters";
+
+const BLOCK_SIZE = 1000;
+
+const escapeHtml = (
+  value = ""
+) => {
+  return String(value).replace(
+    /[&<>"']/g,
+    (character) => {
+      const entities = {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;",
+      };
+
+      return entities[
+        character
+      ];
+    }
+  );
+};
+
+const getStockStatus = (
+  stockValue
+) => {
+  const stock =
+    Number(
+      stockValue
+    ) || 0;
+
+  if (stock <= 0) {
+    return {
+      label:
+        "Sin stock",
+
+      color:
+        "#ef4444",
+
+      background:
+        "#fef2f2",
+    };
+  }
+
+  if (stock <= 4) {
+    return {
+      label:
+        "Stock bajo",
+
+      color:
+        "#f59e0b",
+
+      background:
+        "#fffbeb",
+    };
+  }
+
+  return {
+    label:
+      "En stock",
+
+    color:
+      "#10b981",
+
+    background:
+      "#ecfdf5",
+  };
+};
+
+const getVisiblePages = (
+  page,
+  totalPages
+) => {
+  if (
+    totalPages <= 7
+  ) {
+    return Array.from(
+      {
+        length:
+          totalPages,
+      },
+      (_, index) =>
+        index + 1
+    );
+  }
+
+  if (page <= 4) {
+    return [
+      1,
+      2,
+      3,
+      4,
+      5,
+      "...",
+      totalPages,
+    ];
+  }
+
+  if (
+    page >=
+    totalPages - 3
+  ) {
+    return [
+      1,
+      "...",
+      totalPages - 4,
+      totalPages - 3,
+      totalPages - 2,
+      totalPages - 1,
+      totalPages,
+    ];
+  }
+
+  return [
+    1,
+    "...",
+    page - 1,
+    page,
+    page + 1,
+    "...",
+    totalPages,
+  ];
+};
 
 export default function InventoryPage({
   inventarioCatalog = [],
   setInventarioCatalog,
 }) {
+  const {
+    inventoryPerPage,
+    setInventoryPerPage,
+  } = useAppSettings();
+
   const [
     inventario,
     setInventario,
   ] = useState(
-    inventarioCatalog || []
+    inventarioCatalog ||
+      []
   );
 
   const [
@@ -62,61 +203,67 @@ export default function InventoryPage({
     setPagina,
   ] = useState(1);
 
-  useEffect(() => {
-    fetchInv();
-  }, []);
+  const [
+    paginaBuscada,
+    setPaginaBuscada,
+  ] = useState("");
 
-  /*
-   * =========================
-   * CARGAR INVENTARIO
-   * =========================
-   */
+  const updateLocalInventory =
+    useCallback(
+      (
+        nuevosItems
+      ) => {
+        setInventario(
+          nuevosItems
+        );
 
-  const fetchInv =
-    async () => {
+        setInventarioCatalog?.(
+          nuevosItems
+        );
+      },
+      [
+        setInventarioCatalog,
+      ]
+    );
+
+  const fetchInventory =
+    useCallback(async () => {
       setCargando(true);
 
       try {
-        const TAMANO_BLOQUE =
-          1000;
-
         let desde = 0;
-
-        let todosLosItems =
-          [];
-
+        let todos = [];
         let hayMas = true;
 
         while (hayMas) {
           const {
             data,
             error,
-          } =
-            await supabase
-              .from(
-                "inventario"
-              )
-              .select("*")
-              .order(
-                "categoria",
-                {
-                  ascending:
-                    true,
-                }
-              )
-              .order(
-                "tema",
-                {
-                  ascending:
-                    true,
-                }
-              )
-              .range(
-                desde,
-                desde +
-                  TAMANO_BLOQUE -
-                  1
-              );
+          } = await supabase
+            .from(
+              "inventario"
+            )
+            .select("*")
+            .order(
+              "categoria",
+              {
+                ascending:
+                  true,
+              }
+            )
+            .order(
+              "tema",
+              {
+                ascending:
+                  true,
+              }
+            )
+            .range(
+              desde,
+              desde +
+                BLOCK_SIZE -
+                1
+            );
 
           if (error) {
             throw error;
@@ -125,81 +272,156 @@ export default function InventoryPage({
           const bloque =
             data || [];
 
-          todosLosItems = [
-            ...todosLosItems,
+          todos = [
+            ...todos,
             ...bloque,
           ];
 
           hayMas =
             bloque.length ===
-            TAMANO_BLOQUE;
+            BLOCK_SIZE;
 
           desde +=
-            TAMANO_BLOQUE;
+            BLOCK_SIZE;
         }
 
-        setInventario(
-          todosLosItems
+        updateLocalInventory(
+          todos
         );
-
-        if (
-          setInventarioCatalog
-        ) {
-          setInventarioCatalog(
-            todosLosItems
-          );
-        }
       } catch (error) {
         console.error(
-          "Error cargando el inventario:",
           error
         );
 
-        Swal.fire({
-          title: "Error",
-
-          text:
-            "No se pudo cargar el inventario completo.",
-
-          icon: "error",
-
-          confirmButtonColor:
-            "#C0C976",
-        });
+        await Swal.fire(
+          "Error",
+          "No se pudo cargar el inventario.",
+          "error"
+        );
       } finally {
         setCargando(
           false
         );
       }
-    };
+    }, [
+      updateLocalInventory,
+    ]);
 
-  /*
-   * =========================
-   * SINCRONIZAR ESTADO
-   * =========================
-   */
+  useEffect(() => {
+    fetchInventory();
+  }, [
+    fetchInventory,
+  ]);
 
-  const sincronizarInventario = (
-    nuevos
-  ) => {
-    setInventario(
-      nuevos
-    );
+  useEffect(() => {
+    setPagina(1);
+  }, [
+    inventoryPerPage,
+  ]);
 
-    if (
-      setInventarioCatalog
-    ) {
-      setInventarioCatalog(
-        nuevos
+  const categorias =
+    useMemo(() => {
+      const listado = [
+        ...new Set(
+          inventario
+            .map(
+              (item) =>
+                item.categoria
+            )
+            .filter(Boolean)
+        ),
+      ].sort((a, b) =>
+        a.localeCompare(
+          b,
+          "es",
+          {
+            sensitivity:
+              "base",
+          }
+        )
       );
-    }
-  };
 
-  /*
-   * =========================
-   * ACTUALIZAR STOCK
-   * =========================
-   */
+      return [
+        "Todo",
+        ...listado,
+      ];
+    }, [
+      inventario,
+    ]);
+
+  const categoryCounts =
+    useMemo(() => {
+      return inventario.reduce(
+        (
+          counts,
+          item
+        ) => {
+          const categoria =
+            item.categoria ||
+            "Sin categoría";
+
+          counts[
+            categoria
+          ] =
+            (counts[
+              categoria
+            ] || 0) +
+            1;
+
+          return counts;
+        },
+        {}
+      );
+    }, [
+      inventario,
+    ]);
+
+  const resumen =
+    useMemo(() => {
+      const totalStock =
+        inventario.reduce(
+          (
+            total,
+            item
+          ) =>
+            total +
+            (Number(
+              item.stock
+            ) || 0),
+          0
+        );
+
+      const totalCategorias =
+        new Set(
+          inventario
+            .map(
+              (item) =>
+                item.categoria
+            )
+            .filter(Boolean)
+        ).size;
+
+      const stockBajo =
+        inventario.filter(
+          (item) =>
+            (Number(
+              item.stock
+            ) || 0) <= 4
+        ).length;
+
+      return {
+        totalItems:
+          inventario.length,
+
+        totalCategorias,
+
+        totalStock,
+
+        stockBajo,
+      };
+    }, [
+      inventario,
+    ]);
 
   const actualizarStock =
     async (
@@ -209,18 +431,22 @@ export default function InventoryPage({
       const limpio =
         Math.max(
           0,
-          parseInt(
-            nuevoStock
+          Number.parseInt(
+            nuevoStock,
+            10
           ) || 0
         );
 
-      const { error } =
-        await supabase
+      try {
+        const {
+          error,
+        } = await supabase
           .from(
             "inventario"
           )
           .update({
-            stock: limpio,
+            stock:
+              limpio,
 
             updated_at:
               new Date().toISOString(),
@@ -230,180 +456,284 @@ export default function InventoryPage({
             id
           );
 
-      if (error) {
+        if (error) {
+          throw error;
+        }
+
+        updateLocalInventory(
+          inventario.map(
+            (item) =>
+              item.id === id
+                ? {
+                    ...item,
+                    stock:
+                      limpio,
+                  }
+                : item
+          )
+        );
+      } catch (error) {
         console.error(
-          "Error actualizando stock:",
           error
         );
 
+        await Swal.fire(
+          "Error",
+          "No se pudo actualizar el stock.",
+          "error"
+        );
+      }
+    };
+
+  const verProducto =
+    async (item) => {
+      const stock =
+        Number(
+          item.stock
+        ) || 0;
+
+      const status =
+        getStockStatus(
+          stock
+        );
+
+      await Swal.fire({
+        title:
+          escapeHtml(
+            item.tema ||
+              "Producto"
+          ),
+
+        html: `
+          <div style="text-align:left;padding:8px 4px 0;">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+              <span style="padding:7px 12px;border-radius:12px;background:#f1f5f9;color:#64748b;font-size:11px;font-weight:800;">
+                ${escapeHtml(
+                  item.categoria ||
+                    "Sin categoría"
+                )}
+              </span>
+
+              <span style="padding:7px 12px;border-radius:12px;background:${status.background};color:${status.color};font-size:11px;font-weight:800;">
+                ${status.label}
+              </span>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div style="background:#f8fafc;padding:18px;border-radius:18px;">
+                <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;font-weight:800;">
+                  Stock actual
+                </div>
+
+                <div style="font-size:27px;color:${status.color};font-weight:900;margin-top:5px;">
+                  ${stock}
+                  <span style="font-size:13px;">
+                    Pzs
+                  </span>
+                </div>
+              </div>
+
+              <div style="background:#f8fafc;padding:18px;border-radius:18px;">
+                <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;font-weight:800;">
+                  Precio
+                </div>
+
+                <div style="font-size:22px;color:#0f172a;font-weight:900;margin-top:8px;">
+                  ${currency(
+                    Number(
+                      item.precio
+                    ) || 0
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        `,
+
+        confirmButtonText:
+          "Cerrar",
+
+        confirmButtonColor:
+          "#0F172A",
+
+        width: 520,
+      });
+    };
+
+  const editarProducto =
+    async (item) => {
+      const valores =
+        await openInventoryEditForm(
+          item,
+          categorias.filter(
+            (categoria) =>
+              categoria !==
+              "Todo"
+          )
+        );
+
+      if (!valores) {
         return;
       }
 
-      const nuevos =
-        inventario.map(
-          (item) =>
-            item.id === id
-              ? {
-                  ...item,
-                  stock:
-                    limpio,
-                }
-              : item
-        );
+      const cambios = {
+        categoria:
+          valores.categoria,
 
-      sincronizarInventario(
-        nuevos
-      );
-    };
+        tema:
+          valores.tema,
 
-  /*
-   * =========================
-   * EDITAR STOCK MANUAL
-   * =========================
-   */
-
-  const editarStockManual =
-    async (item) => {
-      const { value } =
-        await Swal.fire({
-          title:
-            "Editar Stock Manual",
-
-          input: "number",
-
-          inputValue:
-            item.stock || 0,
-
-          inputAttributes: {
-            min: 0,
-          },
-
-          showCancelButton:
-            true,
-
-          confirmButtonColor:
-            "#C0C976",
-        });
-
-      if (
-        value !== undefined
-      ) {
-        await actualizarStock(
-          item.id,
-
+        stock:
           Math.max(
             0,
-            parseInt(value)
+            Number.parseInt(
+              valores.stock,
+              10
+            ) || 0
+          ),
+
+        precio:
+          Math.max(
+            0,
+            Number.parseFloat(
+              valores.precio
+            ) || 0
+          ),
+
+        updated_at:
+          new Date().toISOString(),
+      };
+
+      try {
+        const {
+          data,
+          error,
+        } = await supabase
+          .from(
+            "inventario"
           )
+          .update(
+            cambios
+          )
+          .eq(
+            "id",
+            item.id
+          )
+          .select();
+
+        if (error) {
+          throw error;
+        }
+
+        const actualizado =
+          data?.[0] || {
+            ...item,
+            ...cambios,
+          };
+
+        updateLocalInventory(
+          inventario.map(
+            (producto) =>
+              producto.id ===
+              item.id
+                ? actualizado
+                : producto
+          )
+        );
+
+        await Swal.fire({
+          title:
+            "Producto actualizado",
+
+          icon:
+            "success",
+
+          timer:
+            1000,
+
+          showConfirmButton:
+            false,
+        });
+      } catch (error) {
+        await Swal.fire(
+          "Error",
+          error.message ||
+            "No se pudo actualizar.",
+          "error"
         );
       }
     };
-
-  /*
-   * =========================
-   * AGREGAR PRODUCTO
-   * =========================
-   */
 
   const agregarNuevo =
     async () => {
-      const categorias =
-        [
-          ...new Set(
-            inventario
-              .map(
-                (item) =>
-                  item.categoria
-              )
-              .filter(
-                Boolean
-              )
-          ),
-        ].sort(
-          (a, b) =>
-            a.localeCompare(
-              b,
-              "es",
-              {
-                sensitivity:
-                  "base",
-              }
-            )
-        );
-
-      const formValues =
+      const nuevo =
         await openInventoryForm(
-          categorias
+          categorias.filter(
+            (categoria) =>
+              categoria !==
+              "Todo"
+          )
         );
 
-      if (
-        !formValues ||
-        !formValues.categoria ||
-        !formValues.tema
-      ) {
+      if (!nuevo) {
         return;
       }
 
-      const {
-        data,
-        error,
-      } = await supabase
-        .from(
-          "inventario"
-        )
-        .insert([
-          formValues,
-        ])
-        .select();
+      try {
+        const {
+          data,
+          error,
+        } = await supabase
+          .from(
+            "inventario"
+          )
+          .insert([
+            nuevo,
+          ])
+          .select();
 
-      if (error) {
-        Swal.fire({
-          title:
-            "No se pudo agregar",
+        if (error) {
+          throw error;
+        }
 
-          text:
-            error.message,
-
-          icon: "error",
-
-          confirmButtonColor:
-            "#F79598",
-        });
-
-        return;
-      }
-
-      if (
-        data?.length
-      ) {
-        const nuevos = [
-          ...inventario,
-          data[0],
-        ];
-
-        sincronizarInventario(
-          nuevos
+        if (
+          data?.length
+        ) {
+          updateLocalInventory([
+            ...inventario,
+            data[0],
+          ]);
+        }
+      } catch (error) {
+        await Swal.fire(
+          "Error",
+          error.message ||
+            "No se pudo agregar.",
+          "error"
         );
       }
     };
 
-  /*
-   * =========================
-   * ELIMINAR PRODUCTO
-   * =========================
-   */
-
   const borrarItem =
     async (id) => {
-      const res =
+      const producto =
+        inventario.find(
+          (item) =>
+            item.id === id
+        );
+
+      const result =
         await Swal.fire({
           title:
             "¿Eliminar producto?",
 
           text:
-            "El producto se eliminará permanentemente del inventario.",
+            producto?.tema
+              ? `"${producto.tema}" se eliminará permanentemente.`
+              : "El producto se eliminará permanentemente.",
 
-          icon: "warning",
+          icon:
+            "warning",
 
           showCancelButton:
             true,
@@ -416,20 +746,16 @@ export default function InventoryPage({
 
           confirmButtonColor:
             "#F79598",
-
-          cancelButtonColor:
-            "#64748b",
         });
 
       if (
-        !res.isConfirmed
+        !result.isConfirmed
       ) {
         return;
       }
 
       try {
         const {
-          data,
           error,
         } = await supabase
           .from(
@@ -439,152 +765,53 @@ export default function InventoryPage({
           .eq(
             "id",
             id
-          )
-          .select();
+          );
 
         if (error) {
           throw error;
         }
 
-        if (
-          !data ||
-          data.length === 0
-        ) {
-          throw new Error(
-            "Supabase no permitió eliminar el registro. Revisa las políticas RLS."
-          );
-        }
-
-        const nuevos =
+        updateLocalInventory(
           inventario.filter(
             (item) =>
               item.id !== id
-          );
-
-        sincronizarInventario(
-          nuevos
+          )
         );
-
-        Swal.fire({
-          title:
-            "Producto eliminado",
-
-          text:
-            "El registro fue eliminado correctamente de Supabase.",
-
-          icon: "success",
-
-          confirmButtonColor:
-            "#C0C976",
-        });
       } catch (error) {
-        console.error(
-          "Error eliminando producto:",
-          error
+        await Swal.fire(
+          "Error",
+          error.message ||
+            "No se pudo eliminar.",
+          "error"
         );
-
-        Swal.fire({
-          title:
-            "No se pudo eliminar",
-
-          text:
-            error.message ||
-            "Ocurrió un error al eliminar el producto.",
-
-          icon: "error",
-
-          confirmButtonColor:
-            "#F79598",
-        });
       }
     };
 
-  /*
-   * =========================
-   * CATEGORÍAS
-   * =========================
-   */
-
-  const categorias =
-    useMemo(() => {
-      return [
-        "Todo",
-
-        ...new Set(
-          inventario
-            .map(
-              (item) =>
-                item.categoria
-            )
-            .filter(
-              Boolean
-            )
-        ),
-      ].sort(
-        (a, b) => {
-          if (
-            a === "Todo"
-          ) {
-            return -1;
-          }
-
-          if (
-            b === "Todo"
-          ) {
-            return 1;
-          }
-
-          return a.localeCompare(
-            b,
-            "es",
-            {
-              sensitivity:
-                "base",
-            }
-          );
-        }
-      );
-    }, [inventario]);
-
-  /*
-   * =========================
-   * FILTROS Y ORDEN
-   * =========================
-   */
-
   const todosLosFiltrados =
     useMemo(() => {
-      const textoBusqueda =
+      const search =
         busqueda
           .trim()
           .toLowerCase();
 
-      return (
-        catFiltro ===
-        "Todo"
-          ? inventario
-          : inventario.filter(
-              (item) =>
-                item.categoria ===
-                catFiltro
-            )
-      )
+      return inventario
         .filter(
           (item) => {
-            if (
-              !textoBusqueda
-            ) {
-              return true;
-            }
+            const categoriaOK =
+              catFiltro ===
+                "Todo" ||
+              item.categoria ===
+                catFiltro;
 
-            return (
+            const searchOK =
+              !search ||
               (
                 item.tema ||
                 ""
               )
                 .toLowerCase()
                 .includes(
-                  textoBusqueda
+                  search
                 ) ||
               (
                 item.categoria ||
@@ -592,8 +819,12 @@ export default function InventoryPage({
               )
                 .toLowerCase()
                 .includes(
-                  textoBusqueda
-                )
+                  search
+                );
+
+            return (
+              categoriaOK &&
+              searchOK
             );
           }
         )
@@ -605,10 +836,12 @@ export default function InventoryPage({
               "cantidad"
             ) {
               return (
-                (b.stock ||
-                  0) -
-                (a.stock ||
-                  0)
+                (Number(
+                  b.stock
+                ) || 0) -
+                (Number(
+                  a.stock
+                ) || 0)
               );
             }
 
@@ -631,103 +864,122 @@ export default function InventoryPage({
       orden,
     ]);
 
-  /*
-   * =========================
-   * RESUMEN
-   * =========================
-   */
-
-  const resumenInventario =
-    useMemo(() => {
-      const categoriasVisibles =
-        new Set(
-          todosLosFiltrados
-            .map(
-              (item) =>
-                item.categoria
-            )
-            .filter(
-              Boolean
-            )
-        );
-
-      const totalStock =
-        todosLosFiltrados.reduce(
-          (
-            acumulado,
-            item
-          ) =>
-            acumulado +
-            (
-              Number(
-                item.stock
-              ) || 0
-            ),
-          0
-        );
-
-      return {
-        totalItems:
-          todosLosFiltrados.length,
-
-        totalCategorias:
-          categoriasVisibles.size,
-
-        totalStock,
-      };
-    }, [
-      todosLosFiltrados,
-    ]);
-
-  /*
-   * =========================
-   * PAGINACIÓN
-   * =========================
-   */
-
   const totalPaginas =
-    Math.ceil(
-      todosLosFiltrados.length /
-        ITEMS_POR_PAGINA
+    Math.max(
+      1,
+      Math.ceil(
+        todosLosFiltrados.length /
+          inventoryPerPage
+      )
+    );
+
+  const paginaSegura =
+    Math.min(
+      pagina,
+      totalPaginas
     );
 
   const filtrados =
     todosLosFiltrados.slice(
-      (pagina - 1) *
-        ITEMS_POR_PAGINA,
+      (paginaSegura -
+        1) *
+        inventoryPerPage,
 
-      pagina *
-        ITEMS_POR_PAGINA
+      paginaSegura *
+        inventoryPerPage
     );
 
-  /*
-   * =========================
-   * RENDER
-   * =========================
-   */
+  useEffect(() => {
+    if (
+      pagina >
+      totalPaginas
+    ) {
+      setPagina(
+        totalPaginas
+      );
+    }
+  }, [
+    pagina,
+    totalPaginas,
+  ]);
+
+  const handleGoToPage =
+    (event) => {
+      event.preventDefault();
+
+      const numero =
+        Number.parseInt(
+          paginaBuscada,
+          10
+        );
+
+      if (
+        Number.isNaN(
+          numero
+        )
+      ) {
+        return;
+      }
+
+      setPagina(
+        Math.min(
+          totalPaginas,
+          Math.max(
+            1,
+            numero
+          )
+        )
+      );
+
+      setPaginaBuscada(
+        ""
+      );
+    };
+
+  const paginasVisibles =
+    getVisiblePages(
+      paginaSegura,
+      totalPaginas
+    );
 
   return (
-    <div className="p-4 lg:p-10 max-w-7xl mx-auto pb-32 text-slate-800 font-black">
+    <div
+      className="
+        p-4
+        lg:p-8
+        xl:p-10
+        max-w-[1550px]
+        mx-auto
+        pb-28
+        text-slate-800
+        font-black
+      "
+    >
       <ScrollToTop
-        trigger={
-          catFiltro +
-          pagina
-        }
+        trigger={`${catFiltro}-${paginaSegura}`}
       />
 
       <InventoryFilters
-        catFiltro={
-          catFiltro
-        }
         categorias={
           categorias
         }
-        orden={orden}
+        categoryCounts={
+          categoryCounts
+        }
+        catFiltro={
+          catFiltro
+        }
+        orden={
+          orden
+        }
         busqueda={
           busqueda
         }
         resumen={
-          resumenInventario
+          resumen
+        }
+        itemsPerPage={
+          inventoryPerPage
         }
         onAdd={
           agregarNuevo
@@ -759,16 +1011,43 @@ export default function InventoryPage({
 
           setPagina(1);
         }}
+        onItemsPerPageChange={(
+          value
+        ) => {
+          setInventoryPerPage(
+            value
+          );
+
+          setPagina(1);
+        }}
       />
 
       {cargando ? (
-        <div className="p-20 text-center italic opacity-20 text-2xl uppercase font-black">
+        <div
+          className="
+            py-24
+            text-center
+            text-xl
+            italic
+            uppercase
+            text-slate-200
+          "
+        >
           Cargando
-          Inventario...
+          inventario...
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div
+            className="
+              grid
+              grid-cols-1
+              sm:grid-cols-2
+              xl:grid-cols-3
+              2xl:grid-cols-4
+              gap-5
+            "
+          >
             {filtrados.map(
               (item) => (
                 <InventoryCard
@@ -778,9 +1057,15 @@ export default function InventoryPage({
                   item={
                     item
                   }
-                  showCategory={
-                    catFiltro ===
-                    "Todo"
+                  onView={() =>
+                    verProducto(
+                      item
+                    )
+                  }
+                  onEdit={() =>
+                    editarProducto(
+                      item
+                    )
                   }
                   onDelete={() =>
                     borrarItem(
@@ -790,10 +1075,10 @@ export default function InventoryPage({
                   onIncrease={() =>
                     actualizarStock(
                       item.id,
-                      (
-                        item.stock ||
-                        0
-                      ) + 1
+                      (Number(
+                        item.stock
+                      ) || 0) +
+                        1
                     )
                   }
                   onDecrease={() =>
@@ -801,65 +1086,114 @@ export default function InventoryPage({
                       item.id,
                       Math.max(
                         0,
-                        (
-                          item.stock ||
-                          0
-                        ) - 1
+                        (Number(
+                          item.stock
+                        ) || 0) -
+                          1
                       )
-                    )
-                  }
-                  onEdit={() =>
-                    editarStockManual(
-                      item
                     )
                   }
                 />
               )
             )}
-
-            {!filtrados.length && (
-              <div className="col-span-full p-20 text-center border-4 border-dashed border-slate-100 rounded-[3rem] opacity-20 italic text-2xl uppercase font-black">
-                Sin productos
-              </div>
-            )}
           </div>
 
           {totalPaginas >
             1 && (
-            <div className="flex justify-center items-center gap-3 mt-12 flex-wrap">
-              <button
-                disabled={
-                  pagina === 1
-                }
-                onClick={() =>
-                  setPagina(
-                    (page) =>
-                      page - 1
-                  )
-                }
-                className="p-4 bg-white rounded-2xl shadow-sm disabled:opacity-20 text-slate-600 font-black"
+            <div
+              className="
+                mt-10
+                bg-white
+                rounded-[2rem]
+                border
+                border-slate-100
+                shadow-lg
+                p-4
+                flex
+                flex-col
+                xl:flex-row
+                items-center
+                justify-between
+                gap-5
+              "
+            >
+              <p
+                className="
+                  text-[8px]
+                  uppercase
+                  tracking-widest
+                  text-slate-400
+                "
               >
-                <ArrowLeft
-                  size={18}
-                />
-              </button>
-
-              <div className="flex gap-2 flex-wrap justify-center">
-                {[
-                  ...Array(
+                Página{" "}
+                <span className="text-slate-800">
+                  {
+                    paginaSegura
+                  }
+                </span>{" "}
+                de{" "}
+                <span className="text-slate-800">
+                  {
                     totalPaginas
-                  ),
-                ].map(
-                  (
-                    _,
-                    index
-                  ) => {
-                    const page =
-                      index +
-                      1;
+                  }
+                </span>
+              </p>
 
-                    return (
+              <div
+                className="
+                  flex
+                  items-center
+                  gap-2
+                  flex-wrap
+                  justify-center
+                "
+              >
+                <button
+                  type="button"
+                  disabled={
+                    paginaSegura ===
+                    1
+                  }
+                  onClick={() =>
+                    setPagina(
+                      paginaSegura -
+                        1
+                    )
+                  }
+                  className="
+                    w-10
+                    h-10
+                    rounded-xl
+                    bg-slate-50
+                    flex
+                    items-center
+                    justify-center
+                    disabled:opacity-20
+                  "
+                >
+                  <ArrowLeft
+                    size={15}
+                  />
+                </button>
+
+                {paginasVisibles.map(
+                  (
+                    page,
+                    index
+                  ) =>
+                    page ===
+                    "..." ? (
+                      <span
+                        key={
+                          index
+                        }
+                        className="text-slate-300"
+                      >
+                        •••
+                      </span>
+                    ) : (
                       <button
+                        type="button"
                         key={
                           page
                         }
@@ -868,41 +1202,118 @@ export default function InventoryPage({
                             page
                           )
                         }
-                        className={`w-12 h-12 rounded-2xl text-[10px] font-black transition-all ${
-                          pagina ===
-                          page
-                            ? "bg-slate-900 text-[#C0C976] shadow-xl scale-110"
-                            : "bg-white text-slate-400 hover:bg-slate-50"
-                        }`}
+                        className={`
+                          min-w-10
+                          h-10
+                          px-2
+                          rounded-xl
+                          text-[9px]
+
+                          ${
+                            paginaSegura ===
+                            page
+                              ? "bg-slate-900 text-[#C0C976]"
+                              : "bg-slate-50 text-slate-500"
+                          }
+                        `}
                       >
-                        {
-                          page
-                        }
+                        {page}
                       </button>
-                    );
-                  }
+                    )
                 )}
+
+                <button
+                  type="button"
+                  disabled={
+                    paginaSegura ===
+                    totalPaginas
+                  }
+                  onClick={() =>
+                    setPagina(
+                      paginaSegura +
+                        1
+                    )
+                  }
+                  className="
+                    w-10
+                    h-10
+                    rounded-xl
+                    bg-slate-50
+                    flex
+                    items-center
+                    justify-center
+                    disabled:opacity-20
+                  "
+                >
+                  <ArrowRight
+                    size={15}
+                  />
+                </button>
               </div>
 
-              <button
-                disabled={
-                  pagina ===
-                  totalPaginas
+              <form
+                onSubmit={
+                  handleGoToPage
                 }
-                onClick={() =>
-                  setPagina(
-                    (page) =>
-                      page + 1
-                  )
-                }
-                className="p-4 bg-white rounded-2xl shadow-sm disabled:opacity-20 text-slate-600 font-black"
+                className="
+                  flex
+                  items-center
+                  gap-2
+                "
               >
-                <div className="rotate-180">
-                  <ArrowLeft
-                    size={18}
-                  />
-                </div>
-              </button>
+                <span
+                  className="
+                    text-[8px]
+                    uppercase
+                    text-slate-300
+                  "
+                >
+                  Ir a
+                </span>
+
+                <input
+                  type="number"
+                  min="1"
+                  max={
+                    totalPaginas
+                  }
+                  value={
+                    paginaBuscada
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    setPaginaBuscada(
+                      event.target
+                        .value
+                    )
+                  }
+                  className="
+                    w-14
+                    h-10
+                    bg-slate-50
+                    border
+                    border-slate-100
+                    rounded-xl
+                    text-center
+                  "
+                />
+
+                <button
+                  type="submit"
+                  className="
+                    h-10
+                    px-4
+                    bg-[#C0C976]
+                    text-slate-900
+                    rounded-xl
+                    text-[8px]
+                    uppercase
+                  "
+                >
+                  Ir
+                </button>
+              </form>
             </div>
           )}
         </>

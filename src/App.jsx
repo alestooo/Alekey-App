@@ -15,11 +15,17 @@ import NewSalePage from "./pages/NewSalePage";
 import SalesPage from "./pages/SalesPage";
 import StatisticsPage from "./pages/StatisticsPage";
 import InventoryPage from "./pages/InventoryPage";
+import SettingsPage from "./pages/SettingsPage";
+import HelpPage from "./pages/HelpPage";
 
 import useSales from "./hooks/useSales";
 import useInventory from "./hooks/useInventory";
 
-export default function App() {
+import {
+  SettingsProvider,
+} from "./contexts/AppSettingsContext";
+
+function AppContent() {
   const {
     ventas,
     alGuardarEnNube,
@@ -35,7 +41,7 @@ export default function App() {
 
   /*
    * ========================================
-   * DATALIST DE CATEGORÍAS
+   * CATEGORÍAS
    * ========================================
    */
 
@@ -74,7 +80,7 @@ export default function App() {
 
   /*
    * ========================================
-   * DATALIST DE TEMAS
+   * TEMAS
    * ========================================
    */
 
@@ -117,6 +123,12 @@ export default function App() {
               }
               temasDatalist={
                 temasDatalist
+              }
+              ventas={
+                ventas
+              }
+              inventarioCatalog={
+                inventarioCatalog
               }
             />
           }
@@ -193,8 +205,30 @@ export default function App() {
               />
             }
           />
+
+          <Route
+            path="/ajustes"
+            element={
+              <SettingsPage />
+            }
+          />
+
+          <Route
+            path="/ayuda"
+            element={
+              <HelpPage />
+            }
+          />
         </Route>
       </Routes>
     </Router>
+  );
+}
+
+export default function App() {
+  return (
+    <SettingsProvider>
+      <AppContent />
+    </SettingsProvider>
   );
 }

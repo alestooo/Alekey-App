@@ -1,4 +1,5 @@
 import {
+  AlertTriangle,
   Check,
   Edit2,
   FolderMinus,
@@ -6,6 +7,8 @@ import {
   Plus,
   Printer,
   Trash2,
+  WalletCards,
+  X,
 } from "lucide-react";
 
 import QuantityControls from "../common/QuantityControls";
@@ -15,9 +18,14 @@ import {
 } from "../../constants/locations";
 
 import {
+  PAYMENT_OPTIONS,
+  PAYMENT_PLACEHOLDER,
+  isDebtPayment,
+} from "../../constants/payments";
+
+import {
   currency,
   formatPhone,
-  getThemeColorClass,
 } from "../../utils/formatters";
 
 import {
@@ -26,21 +34,24 @@ import {
 
 export default function SaleCard({
   venta,
-
   inFolder = false,
-  folderView,
+  folderView = null,
 
   editing = false,
-  editCache,
+  editCache = null,
   setEditCache,
 
-  provinciaEdit,
+  provinciaEdit = "",
   setProvinciaEdit,
 
-  onStartEdit,
-  onSaveEdit,
-  onDelete,
+  cantonEdit = "",
+  setCantonEdit,
 
+  onStartEdit,
+  onCancelEdit,
+  onSaveEdit,
+
+  onDelete,
   onAddToFolder,
   onRemoveFromFolder,
 
@@ -49,96 +60,262 @@ export default function SaleCard({
   onDeleteLine,
 }) {
   const data =
-    editing && editCache
+    editing
       ? editCache
       : venta;
 
+  if (!data) {
+    return null;
+  }
+
   const tienePendientes =
-    (data.items || []).some(
+    (
+      data.items ||
+      []
+    ).some(
       (item) =>
-        item.pendiente > 0
+        Number(
+          item.pendiente
+        ) > 0
     );
 
+  const esDebe =
+    isDebtPayment(
+      data.metodo_pago
+    );
+
+  const borderColor =
+    esDebe
+      ? "#EF4444"
+      : tienePendientes
+        ? "#F79598"
+        : "#8ED4BE";
+
   const editValido =
-    (data.nombre || "")
-      .trim().length > 0 &&
-    (data.telefono || "")
-      .replace(/\D/g, "")
-      .length === 8 &&
-    (data.items || []).length >
-      0;
+    String(
+      data.nombre || ""
+    ).trim().length >
+      0 &&
+    String(
+      data.telefono ||
+        ""
+    ).replace(
+      /\D/g,
+      ""
+    ).length === 8 &&
+    (
+      data.items ||
+      []
+    ).length > 0;
+
+  const setField = (
+    field,
+    value
+  ) => {
+    setEditCache?.(
+      (previous) => ({
+        ...previous,
+        [field]:
+          value,
+      })
+    );
+  };
+
+  const metodoPago =
+    data.metodo_pago ||
+    PAYMENT_PLACEHOLDER;
 
   return (
-    <div
-      className="bg-white rounded-4xl shadow-xl border-l-12 flex flex-col overflow-hidden transition-colors duration-300 font-black"
+    <article
       style={{
         borderLeftColor:
-          tienePendientes
-            ? "#F79598"
-            : "#8ED4BE",
+          borderColor,
       }}
+      className={`
+        sale-card
+        ${
+          esDebe
+            ? "sale-card--debt"
+            : ""
+        }
+
+        rounded-[2.4rem]
+        border-l-[10px]
+        shadow-xl
+        overflow-hidden
+      `}
     >
-      {/* CABECERA */}
-      <div className="p-6 lg:p-8 border-b border-slate-50 bg-white z-10">
-        <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
-          <div className="flex-1 w-full text-slate-800">
+      {/* =================================
+          DEBE
+      ================================= */}
+
+      {esDebe && (
+        <button
+          type="button"
+          onClick={
+            editing
+              ? undefined
+              : onStartEdit
+          }
+          className="
+            sale-debt-banner
+            w-full
+            px-5
+            py-3
+            flex
+            flex-col
+            sm:flex-row
+            sm:items-center
+            justify-between
+            gap-2
+            text-left
+          "
+        >
+          <span
+            className="
+              flex
+              items-center
+              gap-2
+              text-sm
+              font-black
+              uppercase
+              tracking-wide
+            "
+          >
+            <AlertTriangle
+              size={18}
+            />
+
+            DEBE · PAGO PENDIENTE
+          </span>
+
+          {!editing && (
+            <span
+              className="
+                text-[8px]
+                uppercase
+                tracking-widest
+                opacity-80
+              "
+            >
+              Toca para editar
+              el pago
+            </span>
+          )}
+        </button>
+      )}
+
+      {/* =================================
+          HEADER
+      ================================= */}
+
+      <div
+        className="
+          sale-card-header
+          p-5
+          lg:p-7
+          border-b
+          border-slate-100
+        "
+      >
+        <div
+          className="
+            flex
+            flex-col
+            lg:flex-row
+            lg:items-start
+            justify-between
+            gap-5
+          "
+        >
+          <div
+            className="
+              flex-1
+              min-w-0
+            "
+          >
             {editing ? (
               <div className="space-y-4">
                 <input
-                  className="text-xl lg:text-2xl font-black italic border-b-2 outline-none w-full bg-slate-50 p-2 border-[#8ED4BE]"
                   value={
-                    data.nombre
+                    data.nombre ||
+                    ""
                   }
                   onChange={(
                     event
                   ) =>
-                    setEditCache({
-                      ...editCache,
-                      nombre:
-                        event
-                          .target
-                          .value,
-                    })
+                    setField(
+                      "nombre",
+                      event.target
+                        .value
+                    )
                   }
+                  className="
+                    sale-edit-input
+                    w-full
+                    p-3
+                    rounded-xl
+                    border-2
+                    border-[#8ED4BE]
+                    text-xl
+                    lg:text-2xl
+                    italic
+                    outline-none
+                  "
                 />
 
-                <div className="flex flex-wrap gap-3">
+                <div
+                  className="
+                    grid
+                    grid-cols-1
+                    sm:grid-cols-2
+                    xl:grid-cols-5
+                    gap-3
+                  "
+                >
                   <input
-                    className="text-sm font-bold border-b outline-none w-32 bg-transparent"
                     value={
-                      data.telefono
+                      data.telefono ||
+                      ""
                     }
                     onChange={(
                       event
                     ) =>
-                      setEditCache({
-                        ...editCache,
-
-                        telefono:
-                          formatPhone(
-                            event
-                              .target
-                              .value
-                          ),
-                      })
+                      setField(
+                        "telefono",
+                        formatPhone(
+                          event
+                            .target
+                            .value
+                        )
+                      )
                     }
+                    placeholder="Teléfono"
+                    className="sale-edit-input"
                   />
 
                   <select
-                    className="text-sm font-bold border-b outline-none bg-transparent"
                     value={
                       provinciaEdit
                     }
                     onChange={(
                       event
-                    ) =>
-                      setProvinciaEdit(
-                        event
-                          .target
+                    ) => {
+                      setProvinciaEdit?.(
+                        event.target
                           .value
-                      )
-                    }
+                      );
+
+                      setCantonEdit?.(
+                        ""
+                      );
+                    }}
+                    className="sale-edit-input"
                   >
+                    <option value="">
+                      Provincia...
+                    </option>
+
                     {Object.keys(
                       UBICACIONES_CR
                     ).map(
@@ -162,49 +339,50 @@ export default function SaleCard({
                   </select>
 
                   <select
-                    className="text-sm font-bold border-b outline-none bg-transparent"
                     value={
-                      data.direccion
+                      cantonEdit
+                    }
+                    disabled={
+                      !provinciaEdit
                     }
                     onChange={(
                       event
                     ) =>
-                      setEditCache({
-                        ...editCache,
-
-                        direccion:
-                          event
-                            .target
-                            .value,
-                      })
+                      setCantonEdit?.(
+                        event.target
+                          .value
+                      )
                     }
+                    className="sale-edit-input"
                   >
-                    {(
+                    <option value="">
+                      Cantón...
+                    </option>
+
+                    {provinciaEdit &&
                       UBICACIONES_CR[
                         provinciaEdit
-                      ] || []
-                    ).map(
-                      (
-                        location
-                      ) => (
-                        <option
-                          key={
-                            location
-                          }
-                          value={
-                            location
-                          }
-                        >
-                          {
-                            location
-                          }
-                        </option>
-                      )
-                    )}
+                      ]?.map(
+                        (
+                          canton
+                        ) => (
+                          <option
+                            key={
+                              canton
+                            }
+                            value={
+                              canton
+                            }
+                          >
+                            {
+                              canton
+                            }
+                          </option>
+                        )
+                      )}
                   </select>
 
                   <select
-                    className="text-sm font-bold border-b outline-none bg-transparent text-[#8ED4BE]"
                     value={
                       data.encargado ||
                       "Vendedor..."
@@ -212,15 +390,13 @@ export default function SaleCard({
                     onChange={(
                       event
                     ) =>
-                      setEditCache({
-                        ...editCache,
-
-                        encargado:
-                          event
-                            .target
-                            .value,
-                      })
+                      setField(
+                        "encargado",
+                        event.target
+                          .value
+                      )
                     }
+                    className="sale-edit-input"
                   >
                     <option value="Vendedor...">
                       Vendedor...
@@ -240,106 +416,268 @@ export default function SaleCard({
                   </select>
 
                   <select
-                    className="text-sm font-bold border-b outline-none bg-transparent text-purple-600"
                     value={
-                      data.metodo_pago ||
-                      "Pago..."
+                      metodoPago
                     }
                     onChange={(
                       event
                     ) =>
-                      setEditCache({
-                        ...editCache,
-
-                        metodo_pago:
-                          event
-                            .target
-                            .value,
-                      })
+                      setField(
+                        "metodo_pago",
+                        event.target
+                          .value
+                      )
                     }
+                    className={`
+                      sale-edit-input
+
+                      ${
+                        isDebtPayment(
+                          metodoPago
+                        )
+                          ? "sale-payment-debt-select"
+                          : ""
+                      }
+                    `}
                   >
-                    <option value="Pago...">
-                      Pago...
-                    </option>
-
-                    <option value="Efectivo">
-                      Efectivo
-                    </option>
-
-                    <option value="Tarjeta">
-                      Tarjeta
-                    </option>
-
-                    <option value="Sinpe">
-                      Sinpe
-                    </option>
-
-                    <option value="Centro Educativo">
-                      Centro Educativo
-                    </option>
+                    {PAYMENT_OPTIONS.map(
+                      (
+                        option
+                      ) => (
+                        <option
+                          key={
+                            option
+                          }
+                          value={
+                            option
+                          }
+                        >
+                          {option}
+                        </option>
+                      )
+                    )}
                   </select>
                 </div>
               </div>
             ) : (
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-xl lg:text-2xl font-black italic">
-                    {data.nombre}
-                  </h3>
+              <>
+                <div
+                  className="
+                    flex
+                    flex-col
+                    xl:flex-row
+                    xl:items-start
+                    justify-between
+                    gap-4
+                  "
+                >
+                  <div>
+                    <h3
+                      className="
+                        sale-main
+                        text-xl
+                        lg:text-2xl
+                        italic
+                        text-slate-800
+                      "
+                    >
+                      {
+                        data.nombre
+                      }
+                    </h3>
 
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-black">
-                    <span className="bg-slate-100 px-2 py-0.5 rounded-md mr-2 text-slate-500 font-black">
-                      #{data.id}
-                    </span>
-
-                    {data.fecha} •{" "}
-                    {data.telefono} •{" "}
-                    {data.direccion}
-                  </p>
-                </div>
-
-                <div className="flex gap-2">
-                  {data.encargado &&
-                    data.encargado !==
-                      "Vendedor..." && (
-                      <span className="text-[9px] font-black bg-[#8ED4BE]/10 text-[#8ED4BE] px-3 py-1 rounded-full uppercase tracking-tighter">
-                        💼{" "}
+                    <div
+                      className="
+                        mt-2
+                        flex
+                        flex-wrap
+                        items-center
+                        gap-x-2
+                        gap-y-1
+                        text-[8px]
+                        lg:text-[9px]
+                        uppercase
+                        tracking-widest
+                        text-slate-400
+                        sale-muted
+                      "
+                    >
+                      <span
+                        className="
+                          px-2
+                          py-1
+                          rounded-lg
+                          bg-slate-100
+                          text-slate-500
+                        "
+                      >
+                        #
                         {
-                          data.encargado
+                          data.id
                         }
                       </span>
-                    )}
 
-                  {data.metodo_pago &&
-                    data.metodo_pago !==
-                      "Pago..." && (
-                      <span className="text-[9px] font-black bg-purple-50 text-purple-600 px-3 py-1 rounded-full uppercase tracking-tighter border border-purple-100">
-                        💳{" "}
-                        {
-                          data.metodo_pago
+                      {data.fecha && (
+                        <span>
+                          {
+                            data.fecha
+                          }
+                        </span>
+                      )}
+
+                      {data.telefono && (
+                        <>
+                          <span>•</span>
+                          <span>
+                            {
+                              data.telefono
+                            }
+                          </span>
+                        </>
+                      )}
+
+                      {data.direccion && (
+                        <>
+                          <span>•</span>
+                          <span>
+                            {
+                              data.direccion
+                            }
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div
+                    className="
+                      flex
+                      flex-wrap
+                      items-center
+                      gap-2
+                    "
+                  >
+                    {data.encargado &&
+                      data.encargado !==
+                        "Vendedor..." && (
+                        <span
+                          className="
+                            px-3
+                            py-1.5
+                            rounded-full
+                            bg-emerald-50
+                            text-emerald-500
+                            text-[8px]
+                            uppercase
+                            tracking-wide
+                          "
+                        >
+                          💼{" "}
+                          {
+                            data.encargado
+                          }
+                        </span>
+                      )}
+
+                    {metodoPago !==
+                      PAYMENT_PLACEHOLDER && (
+                      <button
+                        type="button"
+                        onClick={
+                          onStartEdit
                         }
-                      </span>
+                        title="Editar método de pago"
+                        className={`
+                          px-3
+                          py-1.5
+                          rounded-full
+                          text-[8px]
+                          uppercase
+                          tracking-wide
+                          transition-all
+
+                          ${
+                            esDebe
+                              ? "sale-debt-badge"
+                              : "bg-purple-50 text-purple-600 hover:bg-purple-100"
+                          }
+                        `}
+                      >
+                        {esDebe
+                          ? "⚠ DEBE"
+                          : `💳 ${metodoPago}`}
+                      </button>
                     )}
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
 
-          {/* BOTONES */}
-          <div className="grid grid-cols-2 gap-2 w-full lg:flex lg:w-auto lg:gap-2">
+          {/* ACTIONS */}
+
+          <div
+            className="
+              flex
+              items-center
+              gap-2
+              shrink-0
+            "
+          >
             {editing ? (
-              <button
-                type="button"
-                disabled={
-                  !editValido
-                }
-                onClick={
-                  onSaveEdit
-                }
-                className="col-span-2 p-4 bg-emerald-500 text-white rounded-2xl shadow-lg active:scale-95 flex justify-center disabled:opacity-30"
-              >
-                <Check size={24} />
-              </button>
+              <>
+                <button
+                  type="button"
+                  disabled={
+                    !editValido
+                  }
+                  onClick={
+                    onSaveEdit
+                  }
+                  title="Guardar cambios"
+                  className="
+                    w-11
+                    h-11
+                    rounded-xl
+                    bg-emerald-50
+                    text-emerald-500
+                    flex
+                    items-center
+                    justify-center
+                    hover:bg-emerald-500
+                    hover:text-white
+                    disabled:opacity-30
+                  "
+                >
+                  <Check
+                    size={17}
+                  />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={
+                    onCancelEdit
+                  }
+                  title="Cancelar edición"
+                  className="
+                    w-11
+                    h-11
+                    rounded-xl
+                    bg-slate-100
+                    text-slate-500
+                    flex
+                    items-center
+                    justify-center
+                    hover:bg-red-500
+                    hover:text-white
+                  "
+                >
+                  <X
+                    size={17}
+                  />
+                </button>
+              </>
             ) : (
               <>
                 <button
@@ -347,35 +685,52 @@ export default function SaleCard({
                   onClick={
                     onStartEdit
                   }
-                  className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:bg-slate-900 hover:text-white transition-all flex justify-center items-center"
+                  title="Editar"
+                  className="
+                    sale-action-button
+                    text-slate-400
+                  "
                 >
                   <Edit2
-                    size={18}
+                    size={17}
                   />
                 </button>
 
                 {inFolder ? (
                   <button
                     type="button"
-                    onClick={
-                      onRemoveFromFolder
+                    onClick={() =>
+                      onRemoveFromFolder?.(
+                        venta.id,
+                        folderView
+                      )
                     }
-                    className="p-3 bg-orange-50 text-orange-500 rounded-xl hover:bg-orange-500 hover:text-white transition-all flex justify-center items-center"
+                    title="Quitar de carpeta"
+                    className="
+                      sale-action-button
+                      text-purple-500
+                    "
                   >
                     <FolderMinus
-                      size={18}
+                      size={17}
                     />
                   </button>
                 ) : (
                   <button
                     type="button"
-                    onClick={
-                      onAddToFolder
+                    onClick={() =>
+                      onAddToFolder?.(
+                        venta.id
+                      )
                     }
-                    className="p-3 bg-purple-50 text-purple-500 rounded-xl hover:bg-purple-500 hover:text-white transition-all flex justify-center items-center"
+                    title="Agregar a centro"
+                    className="
+                      sale-action-button
+                      text-purple-500
+                    "
                   >
                     <FolderPlus
-                      size={18}
+                      size={17}
                     />
                   </button>
                 )}
@@ -384,23 +739,35 @@ export default function SaleCard({
                   type="button"
                   onClick={() =>
                     exportToPDF(
-                      venta
+                      data
                     )
                   }
-                  className="p-3 bg-blue-50 text-blue-500 rounded-xl hover:bg-blue-600 hover:text-white transition-all flex justify-center items-center"
+                  title="Imprimir PDF"
+                  className="
+                    sale-action-button
+                    text-blue-500
+                  "
                 >
                   <Printer
-                    size={18}
+                    size={17}
                   />
                 </button>
 
                 <button
                   type="button"
-                  onClick={onDelete}
-                  className="p-3 bg-red-50 text-red-300 rounded-xl hover:bg-red-500 hover:text-white transition-all flex justify-center items-center"
+                  onClick={() =>
+                    onDelete?.(
+                      venta.id
+                    )
+                  }
+                  title="Eliminar"
+                  className="
+                    sale-action-button
+                    text-red-400
+                  "
                 >
                   <Trash2
-                    size={18}
+                    size={17}
                   />
                 </button>
               </>
@@ -409,93 +776,140 @@ export default function SaleCard({
         </div>
       </div>
 
-      {/* PRODUCTOS */}
-      <div className="overflow-x-auto max-h-75 overflow-y-auto bg-slate-50/40 p-4 scrollbar-thin font-black">
-        <table className="w-full min-w-150">
-          <thead className="text-[10px] font-black text-slate-300 uppercase">
-            <tr>
-              <th className="text-left pb-2">
-                Cant.
-              </th>
+      {/* =================================
+          ITEMS
+      ================================= */}
 
-              <th className="text-left pb-2">
-                Descripción
-              </th>
+      <div
+        className="
+          sale-card-body
+          overflow-x-auto
+          max-h-[300px]
+          overflow-y-auto
+        "
+      >
+        <div
+          className="
+            min-w-[700px]
+            px-5
+            lg:px-7
+          "
+        >
+          <div
+            className="
+              sale-card-table-head
+              grid
+              grid-cols-[70px_1fr_100px_120px]
+              gap-3
+              py-4
+              text-[8px]
+              uppercase
+              tracking-widest
+              text-slate-300
+            "
+          >
+            <span>
+              Cant.
+            </span>
 
-              <th className="text-center pb-2">
-                Pend.
-              </th>
+            <span>
+              Descripción
+            </span>
 
-              <th className="text-right pb-2">
-                Subtotal
-              </th>
+            <span className="text-center">
+              Pend.
+            </span>
 
-              {editing && (
-                <th className="w-10" />
-              )}
-            </tr>
-          </thead>
+            <span className="text-right">
+              Subtotal
+            </span>
+          </div>
 
-          <tbody>
-            {(data.items || []).map(
-              (item) => (
-                <tr
-                  key={item.id}
-                  className="border-b border-slate-100 last:border-0"
+          {(
+            data.items ||
+            []
+          ).map(
+            (item) => {
+              const subtotal =
+                (Number(
+                  item.cant
+                ) || 0) *
+                (Number(
+                  item.precio
+                ) || 0);
+
+              return (
+                <div
+                  key={
+                    item.id
+                  }
+                  className="
+                    sale-card-row
+                    grid
+                    grid-cols-[70px_1fr_100px_120px]
+                    gap-3
+                    items-center
+                    py-4
+                    border-b
+                    border-slate-100
+                  "
                 >
-                  <td className="py-3">
-                    {editing ? (
-                      <QuantityControls
-                        value={
+                  {editing ? (
+                    <QuantityControls
+                      value={
+                        Number(
                           item.cant
-                        }
-                        onChange={(
+                        ) || 1
+                      }
+                      min={1}
+                      max={99}
+                      onChange={(
+                        value
+                      ) =>
+                        onEditItem?.(
+                          item.id,
+                          "cant",
                           value
-                        ) =>
-                          onEditItem(
-                            item.id,
-                            "cant",
-                            value
-                          )
-                        }
-                        min={1}
-                        max={99}
-                      />
-                    ) : (
-                      <span className="font-black text-slate-600">
-                        {
-                          item.cant
-                        }
-                      </span>
-                    )}
-                  </td>
+                        )
+                      }
+                    />
+                  ) : (
+                    <span
+                      className="
+                        sale-main
+                        text-sm
+                        text-slate-700
+                      "
+                    >
+                      {
+                        item.cant
+                      }
+                    </span>
+                  )}
 
-                  <td className="py-3 text-[11px] font-black uppercase text-slate-700">
+                  <div
+                    className="
+                      min-w-0
+                    "
+                  >
                     {editing ? (
-                      <div className="flex flex-col gap-1">
+                      <div
+                        className="
+                          flex
+                          items-center
+                          gap-2
+                        "
+                      >
                         <input
                           list="productos-list"
-                          className={`
-                            border
-                            rounded
-                            p-1
-                            w-full
-                            font-black
-
-                            ${
-                              item.cat ===
-                              "OTROS..."
-                                ? "text-purple-600 border-purple-200"
-                                : ""
-                            }
-                          `}
                           value={
-                            item.cat
+                            item.cat ||
+                            ""
                           }
                           onChange={(
                             event
                           ) =>
-                            onEditItem(
+                            onEditItem?.(
                               item.id,
                               "cat",
                               event
@@ -503,44 +917,23 @@ export default function SaleCard({
                                 .value
                             )
                           }
+                          placeholder="Categoría"
+                          className="
+                            sale-edit-input
+                            w-40
+                          "
                         />
-
-                        {item.cat ===
-                          "OTROS..." && (
-                          <input
-                            type="number"
-                            placeholder="Precio manual"
-                            className="border rounded p-1 w-full text-purple-600 font-bold bg-purple-50"
-                            value={
-                              item.precio
-                            }
-                            onChange={(
-                              event
-                            ) =>
-                              onEditItem(
-                                item.id,
-                                "precio",
-                                parseFloat(
-                                  event
-                                    .target
-                                    .value
-                                ) ||
-                                  0
-                              )
-                            }
-                          />
-                        )}
 
                         <input
                           list="temas-list"
-                          className="border rounded p-1 w-full font-black"
                           value={
-                            item.tema
+                            item.tema ||
+                            ""
                           }
                           onChange={(
                             event
                           ) =>
-                            onEditItem(
+                            onEditItem?.(
                               item.id,
                               "tema",
                               event
@@ -548,178 +941,269 @@ export default function SaleCard({
                                 .value
                             )
                           }
+                          placeholder="Tema"
+                          className="
+                            sale-edit-input
+                            flex-1
+                          "
                         />
+
+                        {item.cat ===
+                          "OTROS..." && (
+                          <input
+                            type="number"
+                            min="0"
+                            value={
+                              item.precio ||
+                              0
+                            }
+                            onChange={(
+                              event
+                            ) =>
+                              onEditItem?.(
+                                item.id,
+                                "precio",
+                                Number.parseFloat(
+                                  event
+                                    .target
+                                    .value
+                                ) ||
+                                  0
+                              )
+                            }
+                            className="
+                              sale-edit-input
+                              w-24
+                            "
+                          />
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onDeleteLine?.(
+                              item.id
+                            )
+                          }
+                          className="
+                            w-9
+                            h-9
+                            rounded-xl
+                            bg-red-50
+                            text-red-400
+                            flex
+                            items-center
+                            justify-center
+                          "
+                        >
+                          <Trash2
+                            size={14}
+                          />
+                        </button>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2">
+                      <div
+                        className="
+                          flex
+                          items-center
+                          gap-3
+                          min-w-0
+                        "
+                      >
                         <span
-                          className={`
+                          className="
                             px-2
-                            py-0.5
-                            rounded-full
-                            text-[8px]
-                            font-black
-
-                            ${
-                              item.cat ===
-                              "OTROS..."
-                                ? "bg-purple-50 text-purple-600 border border-purple-100"
-                                : getThemeColorClass(
-                                    item.cat
-                                  )
-                            }
-                          `}
+                            py-1
+                            rounded-lg
+                            bg-slate-100
+                            text-slate-700
+                            text-[7px]
+                            uppercase
+                            whitespace-nowrap
+                          "
                         >
                           {
                             item.cat
                           }
                         </span>
 
-                        {
-                          item.tema
-                        }
+                        <span
+                          className="
+                            sale-main
+                            truncate
+                            text-[10px]
+                            uppercase
+                            text-slate-700
+                          "
+                        >
+                          {
+                            item.tema
+                          }
+                        </span>
                       </div>
                     )}
-                  </td>
+                  </div>
 
-                  <td className="py-3">
+                  <div className="text-center">
                     {editing ? (
                       <QuantityControls
                         value={
-                          item.pendiente
+                          Number(
+                            item.pendiente
+                          ) || 0
+                        }
+                        min={0}
+                        max={
+                          Number(
+                            item.cant
+                          ) || 0
                         }
                         onChange={(
                           value
                         ) =>
-                          onEditItem(
+                          onEditItem?.(
                             item.id,
                             "pendiente",
                             value
                           )
                         }
-                        min={0}
-                        max={
-                          item.cant
-                        }
-                        colorClass="bg-red-50"
-                        textClass="text-red-500"
                       />
-                    ) : (
-                      <div className="flex justify-center">
-                        <span
-                          className={`
-                            px-4
-                            py-1.5
-                            rounded-xl
-                            font-black
-                            text-[10px]
-
-                            ${
-                              item.pendiente >
-                              0
-                                ? "bg-red-50 text-red-400"
-                                : "bg-emerald-50 text-emerald-500"
-                            }
-                          `}
-                        >
-                          {item.pendiente >
-                          0
-                            ? `${item.pendiente} PEND`
-                            : "OK"}
-                        </span>
-                      </div>
-                    )}
-                  </td>
-
-                  <td className="py-3 text-right font-black text-slate-400 text-xs">
-                    {currency(
-                      item.cant *
-                        item.precio
-                    )}
-                  </td>
-
-                  {editing && (
-                    <td className="py-3 text-center">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          onDeleteLine(
-                            item.id
-                          )
-                        }
-                        className="text-red-300 hover:text-red-500 transition-colors"
+                    ) : Number(
+                        item.pendiente
+                      ) > 0 ? (
+                      <span
+                        className="
+                          inline-flex
+                          px-3
+                          py-1.5
+                          rounded-xl
+                          bg-red-50
+                          text-[#F79598]
+                          text-[8px]
+                          uppercase
+                        "
                       >
-                        <Trash2
-                          size={16}
-                        />
-                      </button>
-                    </td>
-                  )}
-                </tr>
-              )
-            )}
-          </tbody>
-        </table>
+                        {
+                          item.pendiente
+                        }{" "}
+                        pendiente
+                      </span>
+                    ) : (
+                      <span
+                        className="
+                          inline-flex
+                          px-3
+                          py-1.5
+                          rounded-xl
+                          bg-emerald-50
+                          text-emerald-500
+                          text-[8px]
+                          uppercase
+                        "
+                      >
+                        OK
+                      </span>
+                    )}
+                  </div>
 
-        {editing && (
-          <button
-            type="button"
-            onClick={onAddLine}
-            className="mt-4 w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-black uppercase text-[10px] hover:bg-slate-100 transition-all flex items-center justify-center gap-2"
-          >
-            <Plus size={14} />
+                  <span
+                    className="
+                      sale-main
+                      text-right
+                      text-[10px]
+                      text-slate-500
+                    "
+                  >
+                    {currency(
+                      subtotal
+                    )}
+                  </span>
+                </div>
+              );
+            }
+          )}
 
-            Agregar Línea
-          </button>
-        )}
-
-        {/* NOTAS */}
-        <div className="mt-4 p-4 bg-white/50 rounded-2xl border border-slate-100">
-          <p className="text-[9px] uppercase font-black text-slate-300 mb-2 tracking-widest">
-            Notas / Comentarios
-          </p>
-
-          {editing ? (
-            <textarea
-              className="w-full p-3 bg-slate-50 rounded-xl text-[11px] font-black text-slate-700 outline-none border focus:border-[#8ED4BE] min-h-20"
-              value={
-                data.comentario ||
-                ""
+          {editing && (
+            <button
+              type="button"
+              onClick={
+                onAddLine
               }
-              onChange={(
-                event
-              ) =>
-                setEditCache({
-                  ...editCache,
+              className="
+                my-4
+                px-4
+                py-3
+                rounded-xl
+                border
+                border-dashed
+                border-slate-300
+                text-slate-400
+                text-[9px]
+                uppercase
+                flex
+                items-center
+                gap-2
+                hover:border-[#8ED4BE]
+                hover:text-[#58B99A]
+              "
+            >
+              <Plus
+                size={14}
+              />
 
-                  comentario:
-                    event.target
-                      .value,
-                })
-              }
-              placeholder="Sin comentarios..."
-            />
-          ) : (
-            <p className="text-[11px] font-black text-slate-500 italic">
-              {data.comentario ||
-                "Sin notas adicionales."}
-            </p>
+              Agregar línea
+            </button>
           )}
         </div>
       </div>
 
-      {/* TOTAL */}
-      <div className="p-6 bg-slate-900 flex justify-between items-center">
-        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">
-          Total Final
+      {/* =================================
+          FOOTER
+      ================================= */}
+
+      <div
+        className="
+          sale-card-footer
+          px-6
+          lg:px-8
+          py-6
+          flex
+          items-center
+          justify-between
+          gap-4
+        "
+      >
+        <span
+          className="
+            text-[8px]
+            uppercase
+            tracking-[0.2em]
+            text-slate-400
+          "
+        >
+          Total final
         </span>
 
-        <span className="text-xl font-black italic text-[#8ED4BE]">
+        <strong
+          className={`
+            text-xl
+            lg:text-2xl
+            italic
+
+            ${
+              esDebe
+                ? "text-red-400"
+                : "text-[#8ED4BE]"
+            }
+          `}
+        >
           {currency(
-            data.total
+            Number(
+              data.total
+            ) || 0
           )}
-        </span>
+        </strong>
       </div>
-    </div>
+    </article>
   );
 }

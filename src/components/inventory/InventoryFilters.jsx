@@ -1,143 +1,227 @@
 import {
+  AlertTriangle,
+  Box,
+  Layers3,
   Plus,
+  Search,
+  Tags,
 } from "lucide-react";
 
 export default function InventoryFilters({
-  catFiltro,
   categorias = [],
+  categoryCounts = {},
 
+  catFiltro,
   orden,
   busqueda,
 
-  resumen = {
-    totalItems: 0,
-    totalCategorias: 0,
-    totalStock: 0,
-  },
+  resumen,
+
+  itemsPerPage,
 
   onAdd,
   onCategoryChange,
   onSearchChange,
   onOrderChange,
+  onItemsPerPageChange,
 }) {
   return (
-    <>
+    <div className="mb-8">
       {/* HEADER */}
-      <header className="mb-10 flex flex-col sm:flex-row justify-between items-center gap-6">
+
+      <div
+        className="
+          flex
+          flex-col
+          lg:flex-row
+          lg:items-center
+          justify-between
+          gap-5
+          mb-7
+        "
+      >
         <div>
-          <h2 className="text-4xl italic uppercase tracking-tighter font-black">
-            Inventario Alekey
+          <h1
+            className="
+              text-3xl
+              lg:text-4xl
+              italic
+              uppercase
+              tracking-tighter
+              text-slate-900
+            "
+          >
+            Inventario
+            Alekey
             <span className="text-[#C0C976]">
               .
             </span>
-          </h2>
+          </h1>
 
-          <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">
-            Control de Stock
-            en Tiempo Real
+          <p
+            className="
+              mt-1
+              text-[9px]
+              uppercase
+              tracking-[0.18em]
+              text-slate-400
+            "
+          >
+            Control de stock en
+            tiempo real
           </p>
-
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {catFiltro ===
-            "Todo" ? (
-              <>
-                <span className="px-3 py-1 bg-[#C0C976]/15 text-[#909944] rounded-full text-[9px] uppercase tracking-widest">
-                  {
-                    resumen.totalCategorias
-                  }{" "}
-                  {resumen.totalCategorias ===
-                  1
-                    ? "categoría"
-                    : "categorías"}
-                </span>
-
-                <span className="px-3 py-1 bg-slate-900 text-white rounded-full text-[9px] uppercase tracking-widest">
-                  {
-                    resumen.totalItems
-                  }{" "}
-                  {resumen.totalItems ===
-                  1
-                    ? "ítem"
-                    : "ítems"}
-                </span>
-
-                <span className="px-3 py-1 bg-[#8ED4BE]/15 text-[#529b84] rounded-full text-[9px] uppercase tracking-widest">
-                  {
-                    resumen.totalStock
-                  }{" "}
-                  {resumen.totalStock ===
-                  1
-                    ? "unidad"
-                    : "unidades"}
-                </span>
-              </>
-            ) : (
-              <>
-                <span className="px-3 py-1 bg-[#C0C976]/15 text-[#909944] rounded-full text-[9px] uppercase tracking-widest">
-                  Categoría:{" "}
-                  {catFiltro}
-                </span>
-
-                <span className="px-3 py-1 bg-slate-900 text-white rounded-full text-[9px] uppercase tracking-widest">
-                  {
-                    resumen.totalItems
-                  }{" "}
-                  {resumen.totalItems ===
-                  1
-                    ? "ítem"
-                    : "ítems"}
-                </span>
-
-                <span className="px-3 py-1 bg-[#8ED4BE]/15 text-[#529b84] rounded-full text-[9px] uppercase tracking-widest">
-                  {
-                    resumen.totalStock
-                  }{" "}
-                  {resumen.totalStock ===
-                  1
-                    ? "unidad"
-                    : "unidades"}
-                </span>
-              </>
-            )}
-
-            {busqueda.trim() && (
-              <span className="px-3 py-1 bg-blue-50 text-blue-500 rounded-full text-[9px] uppercase tracking-widest">
-                Búsqueda: “
-                {busqueda.trim()}
-                ”
-              </span>
-            )}
-          </div>
         </div>
 
         <button
           type="button"
           onClick={onAdd}
-          className="px-8 py-4 bg-[#C0C976] text-slate-800 rounded-2xl uppercase text-xs flex items-center gap-2 shadow-lg hover:scale-105 transition-all"
+          className="
+            px-6
+            py-4
+            bg-[#C0C976]
+            text-slate-900
+            rounded-2xl
+            shadow-lg
+            flex
+            items-center
+            justify-center
+            gap-2
+            text-[10px]
+            uppercase
+            tracking-wide
+            hover:scale-105
+            hover:shadow-xl
+            transition-all
+          "
         >
-          <Plus size={18} />
+          <Plus
+            size={18}
+          />
 
           Agregar Item
         </button>
-      </header>
+      </div>
 
-      {/* BUSCADOR Y ORDEN */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <input
-          type="text"
-          placeholder="Buscar diseño o categoría..."
-          value={busqueda}
-          onChange={(
-            event
-          ) =>
-            onSearchChange(
-              event.target.value
-            )
+      {/* MÉTRICAS */}
+
+      <div
+        className="
+          grid
+          grid-cols-2
+          xl:grid-cols-4
+          gap-3
+          lg:gap-4
+          mb-7
+        "
+      >
+        <InventoryStat
+          icon={Box}
+          label="Total de Items"
+          value={
+            resumen.totalItems
           }
-          className="flex-1 px-4 py-3 rounded-xl bg-white shadow-sm text-xs uppercase tracking-widest outline-none font-black"
+          color="dark"
         />
 
-        <div className="flex gap-2">
+        <InventoryStat
+          icon={Tags}
+          label="Categorías"
+          value={
+            resumen.totalCategorias
+          }
+          color="mint"
+        />
+
+        <InventoryStat
+          icon={
+            Layers3
+          }
+          label="Unidades Totales"
+          value={
+            resumen.totalStock
+          }
+          color="green"
+        />
+
+        <InventoryStat
+          icon={
+            AlertTriangle
+          }
+          label="Stock Bajo"
+          value={
+            resumen.stockBajo
+          }
+          color="red"
+          subtitle="Requieren reposición"
+        />
+      </div>
+
+      {/* BUSCADOR + ORDEN */}
+
+      <div
+        className="
+          flex
+          flex-col
+          lg:flex-row
+          gap-3
+          mb-5
+        "
+      >
+        <div
+          className="
+            relative
+            flex-1
+          "
+        >
+          <Search
+            size={18}
+            className="
+              absolute
+              left-5
+              top-1/2
+              -translate-y-1/2
+              text-slate-300
+            "
+          />
+
+          <input
+            type="text"
+            value={
+              busqueda
+            }
+            placeholder="Buscar producto o categoría..."
+            onChange={(
+              event
+            ) =>
+              onSearchChange(
+                event.target
+                  .value
+              )
+            }
+            className="
+              w-full
+              h-14
+              pl-13
+              pr-5
+              bg-white
+              border
+              border-slate-100
+              rounded-2xl
+              shadow-sm
+              text-xs
+              text-slate-700
+              outline-none
+              focus:border-[#C0C976]
+            "
+          />
+        </div>
+
+        <div
+          className="
+            flex
+            gap-2
+          "
+        >
           <button
             type="button"
             onClick={() =>
@@ -146,18 +230,19 @@ export default function InventoryFilters({
               )
             }
             className={`
-              px-4
-              py-2
-              rounded-lg
+              px-5
+              h-14
+              rounded-2xl
               text-[9px]
               uppercase
-              font-black
+              tracking-wide
+              transition-all
 
               ${
                 orden ===
                 "alfabetico"
-                  ? "bg-slate-900 text-white"
-                  : "bg-white text-slate-400"
+                  ? "bg-slate-900 text-white shadow-lg"
+                  : "bg-white text-slate-400 border border-slate-100"
               }
             `}
           >
@@ -172,18 +257,19 @@ export default function InventoryFilters({
               )
             }
             className={`
-              px-4
-              py-2
-              rounded-lg
+              px-5
+              h-14
+              rounded-2xl
               text-[9px]
               uppercase
-              font-black
+              tracking-wide
+              transition-all
 
               ${
                 orden ===
                 "cantidad"
-                  ? "bg-slate-900 text-white"
-                  : "bg-white text-slate-400"
+                  ? "bg-slate-900 text-white shadow-lg"
+                  : "bg-white text-slate-400 border border-slate-100"
               }
             `}
           >
@@ -193,40 +279,269 @@ export default function InventoryFilters({
       </div>
 
       {/* CATEGORÍAS */}
-      <div className="flex gap-2 overflow-x-auto pb-4 mb-8">
-        {categorias.map(
-          (categoria) => (
-            <button
-              type="button"
-              key={categoria}
-              onClick={() =>
-                onCategoryChange(
-                  categoria
-                )
-              }
-              className={`
-                px-6
-                py-3
-                rounded-xl
-                text-[10px]
-                uppercase
-                whitespace-nowrap
-                transition-all
-                font-black
 
-                ${
-                  catFiltro ===
-                  categoria
-                    ? "bg-slate-900 text-white shadow-xl scale-105"
-                    : "bg-white text-slate-400 shadow-sm"
-                }
-              `}
-            >
-              {categoria}
-            </button>
-          )
+      <div
+        className="
+          overflow-x-auto
+          pb-3
+          [&::-webkit-scrollbar]:h-2
+          [&::-webkit-scrollbar-track]:bg-slate-100
+          [&::-webkit-scrollbar-track]:rounded-full
+          [&::-webkit-scrollbar-thumb]:bg-slate-300
+          [&::-webkit-scrollbar-thumb]:rounded-full
+        "
+      >
+        <div
+          className="
+            flex
+            gap-2
+            min-w-max
+          "
+        >
+          {categorias.map(
+            (categoria) => {
+              const active =
+                catFiltro ===
+                categoria;
+
+              const count =
+                categoria ===
+                "Todo"
+                  ? resumen.totalItems
+                  : categoryCounts[
+                      categoria
+                    ] || 0;
+
+              return (
+                <button
+                  type="button"
+                  key={
+                    categoria
+                  }
+                  onClick={() =>
+                    onCategoryChange(
+                      categoria
+                    )
+                  }
+                  className={`
+                    h-11
+                    px-5
+                    rounded-xl
+                    border
+                    text-[8px]
+                    uppercase
+                    tracking-wide
+                    whitespace-nowrap
+                    transition-all
+
+                    ${
+                      active
+                        ? "bg-slate-900 text-white border-slate-900 shadow-md"
+                        : "bg-white text-slate-400 border-slate-100 hover:border-slate-300 hover:text-slate-700"
+                    }
+                  `}
+                >
+                  {categoria}
+
+                  <span
+                    className={`
+                      ml-2
+
+                      ${
+                        active
+                          ? "text-[#C0C976]"
+                          : "text-slate-300"
+                      }
+                    `}
+                  >
+                    ({count})
+                  </span>
+                </button>
+              );
+            }
+          )}
+        </div>
+      </div>
+
+      {/* ITEMS / PÁGINA */}
+
+      <div
+        className="
+          mt-3
+          flex
+          justify-end
+          items-center
+          gap-3
+        "
+      >
+        <span
+          className="
+            text-[8px]
+            uppercase
+            tracking-widest
+            text-slate-300
+          "
+        >
+          Items por página
+        </span>
+
+        <select
+          value={
+            itemsPerPage
+          }
+          onChange={(
+            event
+          ) =>
+            onItemsPerPageChange(
+              Number(
+                event.target
+                  .value
+              )
+            )
+          }
+          className="
+            h-10
+            px-3
+            bg-white
+            border
+            border-slate-100
+            rounded-xl
+            text-[9px]
+            text-slate-600
+            outline-none
+          "
+        >
+          <option value={12}>
+            12
+          </option>
+
+          <option value={20}>
+            20
+          </option>
+
+          <option value={28}>
+            28
+          </option>
+        </select>
+      </div>
+    </div>
+  );
+}
+
+function InventoryStat({
+  icon: Icon,
+  label,
+  value,
+  subtitle,
+  color,
+}) {
+  const colors = {
+    dark: {
+      icon:
+        "bg-[#8ED4BE]/20 text-slate-900",
+
+      value:
+        "text-slate-900",
+    },
+
+    mint: {
+      icon:
+        "bg-emerald-50 text-emerald-500",
+
+      value:
+        "text-slate-900",
+    },
+
+    green: {
+      icon:
+        "bg-[#8ED4BE]/20 text-[#58B99A]",
+
+      value:
+        "text-[#58B99A]",
+    },
+
+    red: {
+      icon:
+        "bg-red-50 text-[#F79598]",
+
+      value:
+        "text-[#F79598]",
+    },
+  };
+
+  const selected =
+    colors[color];
+
+  return (
+    <article
+      className="
+        bg-white
+        p-4
+        lg:p-5
+        rounded-[1.6rem]
+        shadow-lg
+        border
+        border-slate-50
+        flex
+        items-center
+        gap-3
+      "
+    >
+      <div
+        className={`
+          w-11
+          h-11
+          rounded-2xl
+          flex
+          items-center
+          justify-center
+          shrink-0
+
+          ${selected.icon}
+        `}
+      >
+        <Icon
+          size={19}
+        />
+      </div>
+
+      <div className="min-w-0">
+        <p
+          className="
+            text-[8px]
+            uppercase
+            tracking-widest
+            text-slate-400
+          "
+        >
+          {label}
+        </p>
+
+        <p
+          className={`
+            text-xl
+            lg:text-2xl
+            italic
+            mt-0.5
+
+            ${selected.value}
+          `}
+        >
+          {value}
+        </p>
+
+        {subtitle && (
+          <p
+            className="
+              text-[7px]
+              text-slate-300
+              mt-0.5
+            "
+          >
+            {subtitle}
+          </p>
         )}
       </div>
-    </>
+    </article>
   );
 }

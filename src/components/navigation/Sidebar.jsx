@@ -1,76 +1,156 @@
 import {
   BarChart3,
   Box,
-  Clock,
+  CircleHelp,
+  Clock3,
   Home,
-  Package,
   Plus,
+  Settings,
 } from "lucide-react";
 
 import NavItem from "./NavItem";
+import UserMenu from "./UserMenu";
 
-export default function Sidebar() {
+import AlertsMenu from "../common/AlertsMenu";
+
+export default function Sidebar({
+  ventas = [],
+  inventarioCatalog = [],
+}) {
   return (
-    <aside className="hidden lg:flex w-32 bg-white border-r border-slate-100 flex-col items-center py-10 gap-8 z-50 font-black">
-      {/* LOGO / ICONO */}
-      <div className="w-16 h-16 bg-[#8ED4BE] rounded-[1.8rem] items-center justify-center shadow-lg shadow-[#8ED4BE]/30 mb-6 flex">
-        <Package
-          className="text-slate-800"
-          size={28}
+    <aside
+      className="
+        hidden
+        lg:flex
+        w-[116px]
+        shrink-0
+        h-[100dvh]
+        bg-white
+        border-r
+        border-slate-100
+        flex-col
+        items-center
+        py-8
+        z-50
+      "
+    >
+      {/* LOGO */}
+
+      <div
+        className="
+          w-[60px]
+          h-[60px]
+          rounded-[22px]
+          bg-[#8ED4BE]
+          text-slate-800
+          flex
+          items-center
+          justify-center
+          shadow-xl
+          shadow-[#8ED4BE]/20
+        "
+      >
+        <Box
+          size={25}
+          strokeWidth={2}
         />
       </div>
 
-      {/* NAVEGACIÓN */}
-      <nav className="flex flex-col gap-8 justify-center w-full">
+      {/* ALERTAS */}
+
+      <div className="mt-5 mb-5">
+        <AlertsMenu
+          ventas={ventas}
+          inventario={
+            inventarioCatalog
+          }
+        />
+      </div>
+
+      {/* PRINCIPAL */}
+
+      <nav
+        className="
+          flex
+          flex-col
+          items-center
+          gap-3
+          w-full
+        "
+      >
         <NavItem
           to="/"
-          icon={
-            <Home size={24} />
-          }
+          icon={Home}
           label="Home"
         />
 
         <NavItem
           to="/cotizar"
-          icon={
-            <Plus size={24} />
-          }
+          icon={Plus}
           label="Nueva"
         />
 
         <NavItem
           to="/ventas"
-          icon={
-            <Clock size={24} />
-          }
+          icon={Clock3}
           label="Ventas"
         />
 
         <NavItem
           to="/stats"
           icon={
-            <BarChart3
-              size={24}
-            />
+            BarChart3
           }
           label="Stats"
         />
 
         <NavItem
           to="/inventario"
-          icon={
-            <Box size={24} />
-          }
+          icon={Box}
           label="Stock"
         />
       </nav>
 
-      {/* USUARIO */}
-      <div className="mt-auto p-4 flex flex-col items-center gap-2">
-        <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center font-bold text-[#8ED4BE] text-xs">
-          IV
-        </div>
-      </div>
+      {/* SEPARADOR */}
+
+      <div
+        className="
+          w-12
+          h-px
+          bg-slate-100
+          my-5
+        "
+      />
+
+      {/* UTILIDADES */}
+
+      <nav
+        className="
+          flex
+          flex-col
+          items-center
+          gap-3
+          w-full
+        "
+      >
+        <NavItem
+          to="/ajustes"
+          icon={Settings}
+          label="Ajustes"
+        />
+
+        <NavItem
+          to="/ayuda"
+          icon={
+            CircleHelp
+          }
+          label="Ayuda"
+        />
+      </nav>
+
+      <div className="flex-1" />
+
+      <UserMenu />
     </aside>
   );
 }

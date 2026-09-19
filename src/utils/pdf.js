@@ -1,49 +1,66 @@
-import { jsPDF } from "jspdf";
+import {
+  jsPDF,
+} from "jspdf";
+
 import autoTable from "jspdf-autotable";
 
 import logoAlekey from "../assets/images/alekey-logo.jpeg";
 
-const getBase64 = (url) => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
+const getBase64 = (
+  url
+) => {
+  return new Promise(
+    (resolve) => {
+      const image =
+        new Image();
 
-    img.crossOrigin = "Anonymous";
+      image.crossOrigin =
+        "Anonymous";
 
-    img.onload = () => {
-      try {
-        const canvas =
-          document.createElement("canvas");
+      image.onload =
+        () => {
+          const canvas =
+            document.createElement(
+              "canvas"
+            );
 
-        canvas.width = img.width;
-        canvas.height = img.height;
+          canvas.width =
+            image.width;
 
-        const context =
-          canvas.getContext("2d");
+          canvas.height =
+            image.height;
 
-        context.drawImage(
-          img,
-          0,
-          0
-        );
+          const context =
+            canvas.getContext(
+              "2d"
+            );
 
-        resolve(
-          canvas.toDataURL(
-            "image/jpeg"
-          )
-        );
-      } catch (error) {
-        reject(error);
-      }
-    };
+          context?.drawImage(
+            image,
+            0,
+            0
+          );
 
-    img.onerror = reject;
+          resolve(
+            canvas.toDataURL(
+              "image/jpeg"
+            )
+          );
+        };
 
-    img.src = url;
-  });
+      image.onerror =
+        () => resolve(null);
+
+      image.src = url;
+    }
+  );
 };
 
-export const exportToPDF = async (venta) => {
-  const doc = new jsPDF();
+export async function exportToPDF(
+  venta
+) {
+  const doc =
+    new jsPDF();
 
   const logo =
     await getBase64(
@@ -64,14 +81,16 @@ export const exportToPDF = async (venta) => {
     "F"
   );
 
-  doc.addImage(
-    logo,
-    "JPEG",
-    155,
-    5,
-    40,
-    40
-  );
+  if (logo) {
+    doc.addImage(
+      logo,
+      "JPEG",
+      155,
+      5,
+      40,
+      40
+    );
+  }
 
   doc.setFont(
     "helvetica",
@@ -97,13 +116,17 @@ export const exportToPDF = async (venta) => {
   doc.setTextColor(100);
 
   doc.text(
-    `ORDEN: ${venta.id}`,
+    `ORDEN: ${
+      venta.id || ""
+    }`,
     15,
     35
   );
 
   doc.text(
-    `FECHA: ${venta.fecha}`,
+    `FECHA: ${
+      venta.fecha || ""
+    }`,
     15,
     42
   );
@@ -111,11 +134,6 @@ export const exportToPDF = async (venta) => {
   doc.setFontSize(11);
 
   doc.setTextColor(40);
-
-  doc.setFont(
-    "helvetica",
-    "bold"
-  );
 
   doc.text(
     "Isabel Viquez Fernandez",
@@ -151,57 +169,91 @@ export const exportToPDF = async (venta) => {
   );
 
   doc.text(
-    venta.nombre || "",
+    String(
+      venta.nombre || ""
+    ),
     110,
     71
   );
 
   doc.text(
-    `Tel: ${venta.telefono || ""}`,
+    `Tel: ${
+      venta.telefono || ""
+    }`,
     110,
     77
   );
 
   doc.text(
-    `Lugar: ${venta.direccion || ""}`,
+    `Lugar: ${
+      venta.direccion || ""
+    }`,
     110,
     83
   );
 
-  const tableRows =
-    (venta.items || []).map(
+  doc.text(
+    `Pago: ${
+      venta.metodo_pago ||
+      ""
+    }`,
+    110,
+    89
+  );
+
+  const rows =
+    (
+      venta.items ||
+      []
+    ).map(
       (item) => [
-        item.cant,
+        Number(
+          item.cant
+        ) || 0,
 
-        `${item.cat} - ${item.tema}`,
-
-        `C ${(item.precio || 0).toLocaleString()}`,
+        `${item.cat || ""} - ${
+          item.tema || ""
+        }`,
 
         `C ${(
-          item.cant *
-          item.precio
+          Number(
+            item.precio
+          ) || 0
         ).toLocaleString()}`,
 
-        item.pendiente > 0
-          ? item.pendiente
+        `C ${(
+          (Number(
+            item.cant
+          ) || 0) *
+          (Number(
+            item.precio
+          ) || 0)
+        ).toLocaleString()}`,
+
+        Number(
+          item.pendiente
+        ) > 0
+          ? Number(
+              item.pendiente
+            )
           : "Entregado",
       ]
     );
 
   autoTable(doc, {
-    startY: 95,
+    startY: 100,
 
     head: [
       [
         "Cant.",
-        "Descripcion",
+        "Descripción",
         "Unitario",
         "Subtotal",
         "Pend.",
       ],
     ],
 
-    body: tableRows,
+    body: rows,
 
     headStyles: {
       fillColor: [
@@ -213,8 +265,8 @@ export const exportToPDF = async (venta) => {
   });
 
   const finalY =
-    doc.lastAutoTable.finalY +
-    15;
+    doc.lastAutoTable
+      .finalY + 15;
 
   doc.setFontSize(14);
 
@@ -224,7 +276,11 @@ export const exportToPDF = async (venta) => {
   );
 
   doc.text(
-    `TOTAL FINAL: C ${(venta.total || 0).toLocaleString()}`,
+    `TOTAL FINAL: C ${(
+      Number(
+        venta.total
+      ) || 0
+    ).toLocaleString()}`,
     195,
     finalY,
     {
@@ -232,7 +288,32 @@ export const exportToPDF = async (venta) => {
     }
   );
 
+  if (
+    String(
+      venta.metodo_pago ||
+        ""
+    ).toUpperCase() ===
+    "DEBE"
+  ) {
+    doc.setTextColor(
+      220,
+      38,
+      38
+    );
+
+    doc.setFontSize(12);
+
+    doc.text(
+      "PAGO PENDIENTE - DEBE",
+      15,
+      finalY + 12
+    );
+  }
+
   doc.save(
-    `Cotizacion_${venta.nombre}.pdf`
+    `Cotizacion_${
+      venta.nombre ||
+      venta.id
+    }.pdf`
   );
-};
+}
