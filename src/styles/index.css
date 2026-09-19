@@ -1,7 +1,5 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
-
 @layer base {
   html {
     color-scheme: light;
@@ -133,6 +131,10 @@ html.dark
   border-color: #1e293b;
 }
 
+/* ========================================
+   COLORES PASTEL EN DARK MODE
+======================================== */
+
 html.dark [class*="bg-emerald-50"] {
   background-color: rgba(16, 185, 129, 0.12);
 }
@@ -166,7 +168,7 @@ html.dark [class*="bg-orange-50"] {
 }
 
 /* ========================================
-   FORMS
+   FORMS GLOBAL
 ======================================== */
 
 html.dark input,
@@ -192,6 +194,7 @@ html.dark select option {
 .sale-card {
   background: #ffffff;
   color: #0f172a;
+
   border-top: 1px solid #f1f5f9;
   border-right: 1px solid #f1f5f9;
   border-bottom: 1px solid #f1f5f9;
@@ -216,8 +219,11 @@ html.dark select option {
 .sale-action-button {
   width: 44px;
   height: 44px;
+
   border-radius: 14px;
+
   background: #f8fafc;
+
   display: flex;
   align-items: center;
   justify-content: center;
@@ -229,19 +235,30 @@ html.dark select option {
 
 .sale-edit-input {
   min-height: 42px;
+
   padding: 10px 12px;
+
   border-radius: 12px;
+
   background: #f8fafc;
+
   border: 1px solid #e2e8f0;
+
   color: #0f172a;
+
   font-size: 11px;
   font-weight: 800;
+
   outline: none;
 }
 
 .sale-edit-input:focus {
   border-color: #8ed4be;
 }
+
+/* ========================================
+   DEBE
+======================================== */
 
 .sale-debt-banner {
   background:
@@ -250,12 +267,15 @@ html.dark select option {
       #dc2626,
       #ef4444
     );
+
   color: #ffffff;
 }
 
 .sale-debt-badge {
   color: #ffffff;
+
   background: #dc2626;
+
   box-shadow:
     0 4px 16px
     rgba(220, 38, 38, 0.28);
@@ -263,16 +283,16 @@ html.dark select option {
 
 .sale-payment-debt-select {
   border-color: #ef4444;
+
   background: #fef2f2;
+
   color: #dc2626;
 }
 
 .sale-card--debt {
   box-shadow:
-    0 0 0 2px
-      rgba(239, 68, 68, 0.15),
-    0 18px 40px
-      rgba(15, 23, 42, 0.12);
+    0 0 0 2px rgba(239, 68, 68, 0.15),
+    0 18px 40px rgba(15, 23, 42, 0.12);
 }
 
 /* ========================================
@@ -281,6 +301,7 @@ html.dark select option {
 
 html.dark .sale-card {
   background: #0b1220;
+
   color: #e2e8f0;
 
   border-top-color: #1e293b;
@@ -294,6 +315,7 @@ html.dark .sale-card {
 
 html.dark .sale-card-header {
   background: #0f172a;
+
   border-color: #243244;
 }
 
@@ -307,6 +329,7 @@ html.dark .sale-card-table-head {
 
 html.dark .sale-card-row {
   border-color: #253246;
+
   background: #0b1220;
 }
 
@@ -316,6 +339,7 @@ html.dark .sale-card-row:hover {
 
 html.dark .sale-card-footer {
   background: #030817;
+
   border-top: 1px solid #1e293b;
 }
 
@@ -333,6 +357,7 @@ html.dark .sale-card .bg-slate-100 {
 
 html.dark .sale-action-button {
   background: #162133;
+
   border: 1px solid #243244;
 }
 
@@ -342,27 +367,30 @@ html.dark .sale-action-button:hover {
 
 html.dark .sale-edit-input {
   background: #111c2d;
+
   border-color: #2b3a50;
+
   color: #f8fafc;
 }
 
 html.dark .sale-edit-input:focus {
   background: #142136;
+
   border-color: #8ed4be;
 }
 
 html.dark .sale-payment-debt-select {
   background: #33141a;
+
   border-color: #ef4444;
+
   color: #fca5a5;
 }
 
 html.dark .sale-card--debt {
   box-shadow:
-    0 0 0 2px
-      rgba(239, 68, 68, 0.35),
-    0 20px 50px
-      rgba(0, 0, 0, 0.4);
+    0 0 0 2px rgba(239, 68, 68, 0.35),
+    0 20px 50px rgba(0, 0, 0, 0.4);
 }
 
 html.dark .sale-debt-banner {
@@ -380,6 +408,7 @@ html.dark .sale-debt-banner {
 
 html.dark .sale-folder {
   background: #0f172a;
+
   border-top: 1px solid #1e293b;
   border-right: 1px solid #1e293b;
   border-bottom: 1px solid #1e293b;
@@ -400,6 +429,7 @@ html.dark .sale-folder-debt {
 
 html.dark .swal2-popup {
   background: #0f172a !important;
+
   color: #e2e8f0 !important;
 }
 
@@ -415,29 +445,14 @@ html.dark .swal2-input,
 html.dark .swal2-select,
 html.dark .swal2-textarea {
   background: #111827 !important;
+
   border-color: #334155 !important;
+
   color: #f8fafc !important;
 }
 
 /* ========================================
-   SCROLLBAR
-======================================== */
-
-html.dark ::-webkit-scrollbar-track {
-  background: #0b1220;
-}
-
-html.dark ::-webkit-scrollbar-thumb {
-  background: #475569;
-  border-radius: 999px;
-}
-
-html.dark ::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
-}
-
-/* ========================================
-   ANIMATION
+   ANIMACIÓN
 ======================================== */
 
 .animate-in {
@@ -451,18 +466,18 @@ html.dark ::-webkit-scrollbar-thumb:hover {
 @keyframes fadeIn {
   from {
     opacity: 0;
+
     transform:
       translateY(8px);
   }
 
   to {
     opacity: 1;
+
     transform:
       translateY(0);
   }
 }
-
-/* Aquí */
 
 /* =========================================================
    ALEKEY - SCROLLBAR
@@ -474,6 +489,7 @@ html.dark ::-webkit-scrollbar-thumb:hover {
 
 * {
   scrollbar-width: thin;
+
   scrollbar-color:
     #ddaeb5
     #f6f1e9;
@@ -490,11 +506,13 @@ html.dark ::-webkit-scrollbar-thumb:hover {
 
 ::-webkit-scrollbar-track {
   background: #f6f1e9;
+
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb {
   background: #ddaeb5;
+
   border-radius: 999px;
 
   border: 2px solid
@@ -506,7 +524,7 @@ html.dark ::-webkit-scrollbar-thumb:hover {
 }
 
 /*
- * Móvil: un poco más fina
+ * Móvil
  */
 
 @media (max-width: 767px) {
@@ -521,7 +539,7 @@ html.dark ::-webkit-scrollbar-thumb:hover {
 }
 
 /*
- * Dark mode
+ * Scrollbar dark
  */
 
 html.dark * {
@@ -530,22 +548,19 @@ html.dark * {
     #111827;
 }
 
-html.dark
-::-webkit-scrollbar-track {
+html.dark ::-webkit-scrollbar-track {
   background: #111827;
 }
 
-html.dark
-::-webkit-scrollbar-thumb {
+html.dark ::-webkit-scrollbar-thumb {
   background: #9d747c;
+
   border-color: #111827;
 }
 
-html.dark
-::-webkit-scrollbar-thumb:hover {
+html.dark ::-webkit-scrollbar-thumb:hover {
   background: #c0c976;
 }
-
 
 /* =========================================================
    NUEVA VENTA - SECCIONES
@@ -559,12 +574,7 @@ html.dark
   border-radius: 24px;
 
   background:
-    rgba(
-      248,
-      250,
-      252,
-      0.55
-    );
+    rgba(248, 250, 252, 0.55);
 }
 
 .sale-form-section-soft {
@@ -575,21 +585,18 @@ html.dark
   border-color: #dbe4ee;
 }
 
-
 /* =========================================================
-   INPUTS
+   INPUTS NUEVA VENTA
 ========================================================= */
 
 .sale-form-control {
   min-height: 52px;
 
-  padding:
-    0 16px;
+  padding: 0 16px;
 
   border-radius: 16px;
 
-  border: 1.5px solid
-    #e2e8f0;
+  border: 1.5px solid #e2e8f0;
 
   background: #ffffff;
 
@@ -620,12 +627,7 @@ html.dark
 
   box-shadow:
     0 0 0 4px
-    rgba(
-      142,
-      212,
-      190,
-      0.14
-    );
+    rgba(142, 212, 190, 0.14);
 }
 
 .sale-form-control::placeholder {
@@ -636,9 +638,8 @@ html.dark
   border-color: #fca5a5;
 }
 
-
 /* =========================================================
-   SELECTS
+   SELECTS NUEVA VENTA
 ========================================================= */
 
 .sale-select-shell {
@@ -648,8 +649,7 @@ html.dark
 
   border-radius: 16px;
 
-  border: 1.5px solid
-    #e2e8f0;
+  border: 1.5px solid #e2e8f0;
 
   background: #ffffff;
 
@@ -674,19 +674,13 @@ html.dark
 
   box-shadow:
     0 0 0 4px
-    rgba(
-      142,
-      212,
-      190,
-      0.14
-    );
+    rgba(142, 212, 190, 0.14);
 }
 
 .sale-form-select {
   appearance: none;
 
-  -webkit-appearance:
-    none;
+  -webkit-appearance: none;
 
   width: 100%;
 
@@ -739,7 +733,6 @@ html.dark
   color: #dc2626;
 }
 
-
 /* =========================================================
    PRODUCT CARD
 ========================================================= */
@@ -760,12 +753,7 @@ html.dark
 
   box-shadow:
     0 6px 18px
-    rgba(
-      15,
-      23,
-      42,
-      0.04
-    );
+    rgba(15, 23, 42, 0.04);
 }
 
 .sale-product-card-pending {
@@ -779,16 +767,14 @@ html.dark
     );
 }
 
-
 /* =========================================================
-   PRICE
+   PRECIO
 ========================================================= */
 
 .sale-product-price {
   min-height: 52px;
 
-  padding:
-    10px 14px;
+  padding: 10px 14px;
 
   border-radius: 16px;
 
@@ -823,9 +809,8 @@ html.dark
   font-weight: 900;
 }
 
-
 /* =========================================================
-   QUANTITY + PENDING
+   CANTIDAD + PENDIENTE
 ========================================================= */
 
 .sale-number-box {
@@ -863,7 +848,6 @@ html.dark
 
   text-transform: uppercase;
 }
-
 
 /* =========================================================
    MOBILE SALE FORM
@@ -908,33 +892,24 @@ html.dark
   }
 }
 
-
 /* =========================================================
    DARK MODE - NUEVA VENTA
 ========================================================= */
 
-html.dark
-.sale-form-section {
+html.dark .sale-form-section {
   background:
-    rgba(
-      15,
-      23,
-      42,
-      0.66
-    );
+    rgba(15, 23, 42, 0.66);
 
   border-color: #253246;
 }
 
-html.dark
-.sale-form-section-soft {
+html.dark .sale-form-section-soft {
   background: #0d1726;
 
   border-color: #334155;
 }
 
-html.dark
-.sale-form-control {
+html.dark .sale-form-control {
   background: #111c2d;
 
   border-color: #2b3a50;
@@ -942,43 +917,35 @@ html.dark
   color: #f1f5f9;
 }
 
-html.dark
-.sale-form-control:hover {
+html.dark .sale-form-control:hover {
   border-color: #475569;
 }
 
-html.dark
-.sale-form-control:focus {
+html.dark .sale-form-control:focus {
   border-color: #8ed4be;
 }
 
-html.dark
-.sale-select-shell {
+html.dark .sale-select-shell {
   background: #111c2d;
 
   border-color: #2b3a50;
 }
 
-html.dark
-.sale-select-shell:hover {
+html.dark .sale-select-shell:hover {
   border-color: #475569;
 }
 
-html.dark
-.sale-form-select {
+html.dark .sale-form-select {
   color: #e2e8f0;
 }
 
-html.dark
-.sale-form-select
-option {
+html.dark .sale-form-select option {
   background: #111827;
 
   color: #f8fafc;
 }
 
-html.dark
-.sale-product-card {
+html.dark .sale-product-card {
   background:
     linear-gradient(
       145deg,
@@ -989,8 +956,7 @@ html.dark
   border-color: #243244;
 }
 
-html.dark
-.sale-product-card-pending {
+html.dark .sale-product-card-pending {
   background:
     linear-gradient(
       145deg,
@@ -999,36 +965,26 @@ html.dark
     );
 
   border-color:
-    rgba(
-      239,
-      68,
-      68,
-      0.4
-    );
+    rgba(239, 68, 68, 0.4);
 }
 
-html.dark
-.sale-product-price,
-html.dark
-.sale-number-box {
+html.dark .sale-product-price,
+html.dark .sale-number-box {
   background: #111c2d;
 
   border-color: #2b3a50;
 }
 
-html.dark
-.sale-price-input {
+html.dark .sale-price-input {
   color: #f1f5f9;
 }
 
-html.dark
-.sale-select-shell-danger {
+html.dark .sale-select-shell-danger {
   background: #33141a;
 
   border-color: #ef4444;
 }
 
-html.dark
-.sale-form-select-debt {
+html.dark .sale-form-select-debt {
   color: #fca5a5;
 }
