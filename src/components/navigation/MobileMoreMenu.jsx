@@ -1,13 +1,3 @@
-// src/components/navigation/MobileMoreMenu.jsx
-
-import {
-  CircleHelp,
-  MoreHorizontal,
-  Settings,
-  User,
-  X,
-} from "lucide-react";
-
 import {
   useEffect,
   useRef,
@@ -15,9 +5,22 @@ import {
 } from "react";
 
 import {
+  CircleHelp,
+  MoreHorizontal,
+  Settings,
+  ShieldCheck,
+  User,
+  X,
+} from "lucide-react";
+
+import {
   Link,
   useLocation,
 } from "react-router-dom";
+
+import {
+  useAuth,
+} from "../../contexts/AuthContext";
 
 import AlertsMenu from "../common/AlertsMenu";
 
@@ -25,225 +28,347 @@ export default function MobileMoreMenu({
   ventas = [],
   inventarioCatalog = [],
 }) {
-  const [open, setOpen] =
-    useState(false);
-
-  const wrapperRef =
-    useRef(null);
+  const {
+    isAdmin,
+  } = useAuth();
 
   const location =
     useLocation();
 
+  const [
+    open,
+    setOpen,
+  ] = useState(false);
+
+  const menuRef =
+    useRef(null);
+
   /*
    * ========================================
-   * CERRAR AL CAMBIAR DE RUTA
+   * CLOSE WHEN ROUTE CHANGES
    * ========================================
    */
+
   useEffect(() => {
     setOpen(false);
-  }, [location.pathname]);
+  }, [
+    location.pathname,
+  ]);
 
   /*
    * ========================================
-   * CERRAR AL TOCAR AFUERA
+   * CLOSE OUTSIDE
    * ========================================
    */
+
   useEffect(() => {
-    const handleOutside = (
-      event
-    ) => {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(
-          event.target
-        )
-      ) {
-        setOpen(false);
-      }
-    };
+    if (!open) {
+      return undefined;
+    }
+
+    const handleOutside =
+      (event) => {
+        if (
+          menuRef.current &&
+          !menuRef.current.contains(
+            event.target
+          )
+        ) {
+          setOpen(false);
+        }
+      };
 
     document.addEventListener(
-      "mousedown",
-      handleOutside
-    );
-    document.addEventListener(
-      "touchstart",
+      "pointerdown",
       handleOutside
     );
 
     return () => {
       document.removeEventListener(
-        "mousedown",
-        handleOutside
-      );
-      document.removeEventListener(
-        "touchstart",
+        "pointerdown",
         handleOutside
       );
     };
-  }, []);
+  }, [
+    open,
+  ]);
+
+  /*
+   * ========================================
+   * ESC CLOSE
+   * ========================================
+   */
+
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+
+    const handleKey =
+      (event) => {
+        if (
+          event.key ===
+          "Escape"
+        ) {
+          setOpen(false);
+        }
+      };
+
+    window.addEventListener(
+      "keydown",
+      handleKey
+    );
+
+    return () => {
+      window.removeEventListener(
+        "keydown",
+        handleKey
+      );
+    };
+  }, [
+    open,
+  ]);
 
   return (
     <div
-      ref={wrapperRef}
+      ref={menuRef}
       className="
         lg:hidden
+
         fixed
         top-4
         right-4
-        z-[100]
+
+        z-[90]
       "
     >
-      {/* BOTÓN 3 PUNTOS */}
+      {/* =================================
+          BUTTON
+      ================================= */}
+
       <button
         type="button"
+        aria-label={
+          open
+            ? "Cerrar menú"
+            : "Abrir menú"
+        }
+        aria-expanded={
+          open
+        }
         onClick={() =>
           setOpen(
-            (prev) => !prev
+            (
+              previous
+            ) =>
+              !previous
           )
         }
-        aria-label="Más opciones"
-        aria-expanded={open}
-        className={`
+        className="
           w-11
           h-11
+
           rounded-2xl
+
           bg-white
+
           border
           border-slate-100
-          shadow-lg
+
+          shadow-[0_8px_24px_rgba(15,23,42,0.12)]
+
           flex
           items-center
           justify-center
+
           text-slate-500
-          hover:text-slate-900
-          hover:shadow-xl
+
           active:scale-95
+
           transition-all
-          ${
-            open
-              ? "text-slate-900"
-              : ""
-          }
-        `}
+        "
       >
         {open ? (
-          <X size={18} />
+          <X
+            size={19}
+          />
         ) : (
-          <MoreHorizontal size={21} />
+          <MoreHorizontal
+            size={20}
+          />
         )}
       </button>
 
-      {/* MENÚ */}
+      {/* =================================
+          MENU
+      ================================= */}
+
       {open && (
         <div
           className="
             absolute
+
             top-14
             right-0
+
             p-2
+
+            rounded-[1.4rem]
+
             bg-white
+
             border
             border-slate-100
-            rounded-[1.4rem]
-            shadow-2xl
+
+            shadow-[0_16px_40px_rgba(15,23,42,0.16)]
+
             flex
-            items-center
+            flex-col
+
             gap-2
+
             animate-in
           "
         >
           {/* USUARIO */}
-          <Link
+
+          <MobileMenuLink
             to="/usuario"
+            title="Usuario"
             onClick={() =>
               setOpen(false)
             }
-            title="Usuario"
-            aria-label="Usuario"
-            className={`
-              w-11
-              h-11
-              rounded-2xl
-              flex
-              items-center
-              justify-center
-              transition-all
-              ${
-                location.pathname ===
-                "/usuario"
-                  ? "bg-[#8ED4BE]/20 text-[#58B99A]"
-                  : "bg-slate-50 text-slate-400 hover:text-slate-900"
-              }
-            `}
           >
-            <User size={18} />
-          </Link>
+            <User
+              size={18}
+            />
+          </MobileMenuLink>
+
+          {/* SOLO ADMIN */}
+
+          {isAdmin && (
+            <MobileMenuLink
+              to="/admin/usuarios"
+              title="Administración"
+              admin
+              onClick={() =>
+                setOpen(
+                  false
+                )
+              }
+            >
+              <ShieldCheck
+                size={18}
+              />
+            </MobileMenuLink>
+          )}
 
           {/* AJUSTES */}
-          <Link
+
+          <MobileMenuLink
             to="/ajustes"
+            title="Ajustes"
             onClick={() =>
               setOpen(false)
             }
-            title="Ajustes"
-            aria-label="Ajustes"
-            className={`
-              w-11
-              h-11
-              rounded-2xl
-              flex
-              items-center
-              justify-center
-              transition-all
-              ${
-                location.pathname ===
-                "/ajustes"
-                  ? "bg-[#8ED4BE]/20 text-[#58B99A]"
-                  : "bg-slate-50 text-slate-400 hover:text-slate-900"
-              }
-            `}
           >
-            <Settings size={18} />
-          </Link>
+            <Settings
+              size={18}
+            />
+          </MobileMenuLink>
 
           {/* AYUDA */}
-          <Link
+
+          <MobileMenuLink
             to="/ayuda"
+            title="Ayuda"
             onClick={() =>
               setOpen(false)
             }
-            title="Ayuda"
-            aria-label="Ayuda"
-            className={`
-              w-11
-              h-11
-              rounded-2xl
+          >
+            <CircleHelp
+              size={18}
+            />
+          </MobileMenuLink>
+
+          {/* ALERTAS */}
+
+          <div
+            className="
               flex
               items-center
               justify-center
-              transition-all
-              ${
-                location.pathname ===
-                "/ayuda"
-                  ? "bg-[#8ED4BE]/20 text-[#58B99A]"
-                  : "bg-slate-50 text-slate-400 hover:text-slate-900"
-              }
-            `}
+            "
           >
-            <CircleHelp size={18} />
-          </Link>
-
-          {/* ALERTAS */}
-          <AlertsMenu
-            mobile
-            ventas={ventas}
-            inventario={
-              inventarioCatalog
-            }
-          />
+            <AlertsMenu
+              mobile
+              ventas={
+                ventas
+              }
+              inventarioCatalog={
+                inventarioCatalog
+              }
+            />
+          </div>
         </div>
       )}
     </div>
+  );
+}
+
+/*
+ * ========================================
+ * LINK
+ * ========================================
+ */
+
+function MobileMenuLink({
+  to,
+  title,
+  children,
+  onClick,
+  admin = false,
+}) {
+  return (
+    <Link
+      to={to}
+      title={title}
+      aria-label={title}
+      onClick={
+        onClick
+      }
+      className={`
+        w-11
+        h-11
+
+        rounded-xl
+
+        flex
+        items-center
+        justify-center
+
+        transition-all
+
+        ${
+          admin
+            ? `
+              bg-[#8ED4BE]/15
+              text-[#58B99A]
+
+              hover:bg-[#8ED4BE]
+              hover:text-slate-900
+            `
+            : `
+              bg-slate-50
+              text-slate-500
+
+              hover:bg-slate-900
+              hover:text-white
+            `
+        }
+      `}
+    >
+      {children}
+    </Link>
   );
 }

@@ -988,3 +988,57 @@ html.dark .sale-select-shell-danger {
 html.dark .sale-form-select-debt {
   color: #fca5a5;
 }
+
+.auth-input {
+  width: 100%;
+  min-height: 56px;
+
+  padding-left: 48px;
+  padding-right: 16px;
+
+  border-radius: 16px;
+
+  border: 1px solid #e2e8f0;
+
+  background: #f8fafc;
+
+  color: #334155;
+
+  font-size: 13px;
+  font-weight: 800;
+
+  outline: none;
+
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background-color 0.18s ease;
+}
+
+.auth-input:focus {
+  border-color: #8ed4be;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(142, 212, 190, 0.12);
+}
+
+.auth-input::placeholder {
+  color: #94a3b8;
+}
+
+html.dark .auth-input {
+  background: #111c2d;
+
+  border-color: #2b3a50;
+
+  color: #f1f5f9;
+}
+
+html.dark .auth-input:focus {
+  background: #111c2d;
+
+  border-color: #8ed4be;
+}

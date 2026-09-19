@@ -1,179 +1,169 @@
 import {
-  Link,
-  useLocation,
+  isValidElement,
+} from "react";
+
+import {
+  NavLink,
 } from "react-router-dom";
 
 export default function NavItem({
   to,
-  icon: Icon,
+  icon,
   label,
-  disabled = false,
-  mobile = false,
+  end = false,
 }) {
-  const location =
-    useLocation();
-
-  const active =
-    !disabled &&
-    location.pathname === to;
-
   /*
-   * ========================================
-   * DESHABILITADO
-   * ========================================
+   * Acepta:
+   *
+   * icon={Home}
+   *
+   * o:
+   *
+   * icon={<Home size={21} />}
    */
 
-  if (disabled) {
-    return (
-      <button
-        type="button"
-        disabled
-        title={`${label} - Próximamente`}
-        className={`
-          relative
-          flex
-          items-center
-          justify-center
-          transition-all
-          opacity-40
-          cursor-not-allowed
+  const renderIcon =
+    () => {
+      /*
+       * Ya viene como JSX:
+       * <Home />
+       */
 
-          ${
-            mobile
-              ? `
-                flex-col
-                gap-1
-                flex-1
-                py-2
-              `
-              : `
-                w-[72px]
-                h-[72px]
-                flex-col
-                gap-2
-                rounded-[22px]
-              `
-          }
-        `}
-      >
-        <Icon
-          size={
-            mobile
-              ? 20
-              : 21
-          }
-          strokeWidth={1.8}
-        />
+      if (
+        isValidElement(
+          icon
+        )
+      ) {
+        return icon;
+      }
 
-        <span
-          className="
-            text-[8px]
-            font-black
-            uppercase
-            tracking-[0.12em]
-          "
-        >
-          {label}
-        </span>
-      </button>
-    );
-  }
+      /*
+       * Viene como componente:
+       * Home
+       */
 
-  /*
-   * ========================================
-   * NORMAL
-   * ========================================
-   */
+      if (
+        typeof icon ===
+        "function" ||
+        typeof icon ===
+        "object"
+      ) {
+        const Icon =
+          icon;
+
+        return (
+          <Icon
+            size={21}
+          />
+        );
+      }
+
+      return null;
+    };
 
   return (
-    <Link
+    <NavLink
       to={to}
-      className={`
-        relative
-        flex
-        items-center
-        justify-center
-        transition-all
-        duration-200
+      end={end}
+      className={({
+        isActive,
+      }) => `
         group
 
-        ${
-          mobile
-            ? `
-              flex-col
-              gap-1
-              flex-1
-              py-2
-              rounded-2xl
-            `
-            : `
-              w-[72px]
-              h-[72px]
-              flex-col
-              gap-2
-              rounded-[22px]
-            `
-        }
+        relative
+
+        w-full
+
+        flex
+        flex-col
+        items-center
+        justify-center
+
+        gap-1.5
+
+        py-3
+
+        rounded-2xl
+
+        transition-all
+        duration-200
 
         ${
-          active
+          isActive
             ? `
               bg-[#8ED4BE]/15
               text-[#58B99A]
             `
             : `
               text-slate-300
-              hover:text-slate-700
               hover:bg-slate-50
+              hover:text-slate-600
             `
         }
       `}
     >
-      {/* INDICADOR DESKTOP */}
+      {({
+        isActive,
+      }) => (
+        <>
+          {/* ACTIVE MARK */}
 
-      {!mobile &&
-        active && (
+          {isActive && (
+            <span
+              className="
+                absolute
+
+                -left-2
+
+                w-1
+                h-7
+
+                rounded-r-full
+
+                bg-[#8ED4BE]
+              "
+            />
+          )}
+
+          {/* ICON */}
+
+          <div
+            className={`
+              flex
+              items-center
+              justify-center
+
+              transition-transform
+              duration-200
+
+              group-hover:scale-105
+
+              ${
+                isActive
+                  ? "text-[#58B99A]"
+                  : ""
+              }
+            `}
+          >
+            {renderIcon()}
+          </div>
+
+          {/* LABEL */}
+
           <span
             className="
-              absolute
-              -left-[22px]
-              top-1/2
-              -translate-y-1/2
-              w-1
-              h-7
-              bg-[#8ED4BE]
-              rounded-r-full
+              text-[7px]
+
+              uppercase
+              tracking-[0.18em]
+
+              whitespace-nowrap
             "
-          />
-        )}
-
-      <Icon
-        size={
-          mobile
-            ? 20
-            : 21
-        }
-        strokeWidth={
-          active
-            ? 2.3
-            : 1.8
-        }
-        className="
-          transition-transform
-          group-hover:scale-105
-        "
-      />
-
-      <span
-        className="
-          text-[8px]
-          font-black
-          uppercase
-          tracking-[0.12em]
-        "
-      >
-        {label}
-      </span>
-    </Link>
+          >
+            {label}
+          </span>
+        </>
+      )}
+    </NavLink>
   );
 }
