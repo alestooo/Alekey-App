@@ -2,11 +2,9 @@ import {
   supabase,
 } from "../lib/supabase";
 
-/*
- * ========================================
- * GET USERS
- * ========================================
- */
+/* =========================================================
+   GET USERS
+========================================================= */
 
 export async function getUsers() {
   const {
@@ -49,11 +47,9 @@ export async function getUsers() {
   return data || [];
 }
 
-/*
- * ========================================
- * UPDATE MY NAME
- * ========================================
- */
+/* =========================================================
+   UPDATE MY NAME
+========================================================= */
 
 export async function updateMyName(
   nombre
@@ -64,8 +60,7 @@ export async function updateMyName(
     ).trim();
 
   if (
-    cleanName.length <
-    2
+    cleanName.length < 2
   ) {
     throw new Error(
       "El nombre debe tener al menos 2 caracteres."
@@ -90,11 +85,9 @@ export async function updateMyName(
   return data;
 }
 
-/*
- * ========================================
- * ROLE
- * ========================================
- */
+/* =========================================================
+   UPDATE ROLE
+========================================================= */
 
 export async function updateUserRole(
   userId,
@@ -121,11 +114,9 @@ export async function updateUserRole(
   return data;
 }
 
-/*
- * ========================================
- * ACTIVE STATUS
- * ========================================
- */
+/* =========================================================
+   ACTIVE / INACTIVE
+========================================================= */
 
 export async function updateUserStatus(
   userId,
@@ -144,6 +135,38 @@ export async function updateUserStatus(
         Boolean(
           activo
         ),
+    }
+  );
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+/* =========================================================
+   DELETE USER
+   SOLO SUPERADMIN
+========================================================= */
+
+export async function deleteUserCompletely(
+  userId
+) {
+  if (!userId) {
+    throw new Error(
+      "Usuario inválido."
+    );
+  }
+
+  const {
+    data,
+    error,
+  } = await supabase.rpc(
+    "admin_delete_user",
+    {
+      p_user_id:
+        userId,
     }
   );
 

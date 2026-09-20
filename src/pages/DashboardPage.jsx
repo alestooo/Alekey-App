@@ -35,6 +35,10 @@ import ScrollToTop from "../components/common/ScrollToTop";
 import logoAlekey from "../assets/images/alekey-logo.jpeg";
 
 import {
+  useAuth,
+} from "../contexts/AuthContext";
+
+import {
   currency,
 } from "../utils/formatters";
 
@@ -183,6 +187,60 @@ export default function DashboardPage({
 }) {
   const navigate =
     useNavigate();
+
+  const {
+    profile,
+    user,
+  } = useAuth();
+
+  /*
+   * ========================================
+   * NOMBRE DEL USUARIO
+   * ========================================
+   */
+
+  const displayName =
+    useMemo(() => {
+      const profileName =
+        String(
+          profile?.nombre ||
+            ""
+        ).trim();
+
+      if (profileName) {
+        return profileName;
+      }
+
+      const metadataName =
+        String(
+          user?.user_metadata
+            ?.nombre ||
+            user?.user_metadata
+              ?.full_name ||
+            ""
+        ).trim();
+
+      if (metadataName) {
+        return metadataName;
+      }
+
+      const emailName =
+        String(
+          user?.email ||
+            ""
+        )
+          .split("@")[0]
+          .trim();
+
+      if (emailName) {
+        return emailName;
+      }
+
+      return "Usuario";
+    }, [
+      profile?.nombre,
+      user,
+    ]);
 
   /*
    * ========================================
@@ -535,8 +593,8 @@ export default function DashboardPage({
                   text-slate-900
                 "
               >
-                Hola,
-                Alekey
+                Hola,{" "}
+                {displayName}
                 <span className="text-[#8ED4BE]">
                   .
                 </span>

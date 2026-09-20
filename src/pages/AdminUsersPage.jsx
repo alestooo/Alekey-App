@@ -3,6 +3,7 @@ import {
   ChevronDown,
   Search,
   ShieldCheck,
+  Trash2,
   UserRound,
   UsersRound,
   XCircle,
@@ -21,38 +22,17 @@ import {
 } from "../contexts/AuthContext";
 
 import {
+  ASSIGNABLE_ROLES,
   getRoleLabel,
   ROLES,
 } from "../constants/roles";
 
 import {
+  deleteUserCompletely,
   getUsers,
   updateUserRole,
   updateUserStatus,
 } from "../services/usersService";
-
-/* =========================================================
-   ROLES QUE EL SUPERADMIN PUEDE ASIGNAR
-========================================================= */
-
-const ASSIGNABLE_ROLES = [
-  {
-    value: ROLES.USUARIO,
-    label: "Usuario",
-  },
-  {
-    value: ROLES.EMPLEADO,
-    label: "Empleado",
-  },
-  {
-    value: ROLES.VENDEDOR,
-    label: "Vendedor",
-  },
-  {
-    value: ROLES.COADMIN,
-    label: "Co-admin",
-  },
-];
 
 /* =========================================================
    PAGE
@@ -87,7 +67,7 @@ export default function AdminUsersPage() {
   ] = useState(null);
 
   /* =======================================================
-     LOAD
+     LOAD USERS
   ======================================================= */
 
   const loadUsers =
@@ -148,7 +128,7 @@ export default function AdminUsersPage() {
               ROLES.COADMIN
         ).length;
 
-      const normalUsers =
+      const withoutPermissions =
         users.filter(
           (item) =>
             item.role ===
@@ -164,7 +144,7 @@ export default function AdminUsersPage() {
       return {
         total,
         admins,
-        normalUsers,
+        withoutPermissions,
         active,
       };
     }, [
@@ -172,7 +152,7 @@ export default function AdminUsersPage() {
     ]);
 
   /* =======================================================
-     SEARCH
+     FILTER
   ======================================================= */
 
   const filteredUsers =
@@ -200,7 +180,7 @@ export default function AdminUsersPage() {
                 ""
             ).toLowerCase();
 
-          const roleLabel =
+          const roleName =
             getRoleLabel(
               item.role
             ).toLowerCase();
@@ -212,7 +192,7 @@ export default function AdminUsersPage() {
             email.includes(
               clean
             ) ||
-            roleLabel.includes(
+            roleName.includes(
               clean
             )
           );
@@ -224,22 +204,14 @@ export default function AdminUsersPage() {
     ]);
 
   /* =======================================================
-     ROLE PERMISSIONS
+     CAN CHANGE ROLE
   ======================================================= */
 
   const canChangeRole =
     (target) => {
-      /*
-       * Únicamente superadmin.
-       */
-
       if (!isSuperAdmin) {
         return false;
       }
-
-      /*
-       * Owner jamás se modifica.
-       */
 
       if (
         target.is_owner ||
@@ -248,10 +220,6 @@ export default function AdminUsersPage() {
       ) {
         return false;
       }
-
-      /*
-       * No cambiar tu propio rol.
-       */
 
       if (
         target.id ===
@@ -263,12 +231,12 @@ export default function AdminUsersPage() {
       return true;
     };
 
+  /* =======================================================
+     CAN CHANGE STATUS
+  ======================================================= */
+
   const canChangeStatus =
     (target) => {
-      /*
-       * Owner jamás.
-       */
-
       if (
         target.is_owner ||
         target.role ===
@@ -277,10 +245,6 @@ export default function AdminUsersPage() {
         return false;
       }
 
-      /*
-       * No desactivar tu propia cuenta.
-       */
-
       if (
         target.id ===
         user?.id
@@ -288,21 +252,9 @@ export default function AdminUsersPage() {
         return false;
       }
 
-      /*
-       * Superadmin puede controlar
-       * cualquier rol inferior.
-       */
-
       if (isSuperAdmin) {
         return true;
       }
-
-      /*
-       * Co-admin solamente:
-       * vendedor
-       * empleado
-       * usuario
-       */
 
       if (isCoAdmin) {
         return [
@@ -315,6 +267,34 @@ export default function AdminUsersPage() {
       }
 
       return false;
+    };
+
+  /* =======================================================
+     CAN DELETE
+  ======================================================= */
+
+  const canDeleteUser =
+    (target) => {
+      if (!isSuperAdmin) {
+        return false;
+      }
+
+      if (
+        target.is_owner ||
+        target.role ===
+          ROLES.SUPERADMIN
+      ) {
+        return false;
+      }
+
+      if (
+        target.id ===
+        user?.id
+      ) {
+        return false;
+      }
+
+      return true;
     };
 
   /* =======================================================
@@ -335,8 +315,8 @@ export default function AdminUsersPage() {
       }
 
       if (
-        nextRole ===
-        target.role
+        target.role ===
+        nextRole
       ) {
         return;
       }
@@ -346,32 +326,12 @@ export default function AdminUsersPage() {
           title:
             "¿Cambiar rol?",
 
-          html: `
-            <p style="
-              color:#94a3b8;
-              font-size:13px;
-              line-height:1.6;
-            ">
-              <strong style="color:#0f172a;">
-                ${escapeHtml(
-                  target.nombre ||
-                    target.email
-                )}
-              </strong>
-              pasará de
-              <strong>${escapeHtml(
-                getRoleLabel(
-                  target.role
-                )
-              )}</strong>
-              a
-              <strong>${escapeHtml(
-                getRoleLabel(
-                  nextRole
-                )
-              )}</strong>.
-            </p>
-          `,
+          text:
+            `${target.nombre || target.email} pasará de ${getRoleLabel(
+              target.role
+            )} a ${getRoleLabel(
+              nextRole
+            )}.`,
 
           icon:
             "question",
@@ -463,7 +423,7 @@ export default function AdminUsersPage() {
     };
 
   /* =======================================================
-     ACTIVE / INACTIVE
+     CHANGE STATUS
   ======================================================= */
 
   const handleStatus =
@@ -491,7 +451,7 @@ export default function AdminUsersPage() {
           text:
             nextStatus
               ? "El usuario recuperará el acceso correspondiente a su rol."
-              : "El usuario ya no podrá utilizar Alekey.",
+              : "El usuario dejará de tener acceso a Alekey.",
 
           icon:
             "question",
@@ -573,12 +533,186 @@ export default function AdminUsersPage() {
     };
 
   /* =======================================================
+     DELETE USER
+  ======================================================= */
+
+  const handleDeleteUser =
+    async (
+      target
+    ) => {
+      if (
+        !canDeleteUser(
+          target
+        )
+      ) {
+        return;
+      }
+
+      const firstConfirm =
+        await Swal.fire({
+          title:
+            "¿Eliminar esta cuenta?",
+
+          html: `
+            <div style="
+              text-align:center;
+              font-size:13px;
+              line-height:1.7;
+            ">
+              <strong>
+                ${target.nombre || "Usuario"}
+              </strong>
+              <br>
+              ${target.email}
+              <br><br>
+              La cuenta se eliminará completamente
+              y podrá registrarse nuevamente.
+            </div>
+          `,
+
+          icon:
+            "warning",
+
+          showCancelButton:
+            true,
+
+          confirmButtonText:
+            "Continuar",
+
+          cancelButtonText:
+            "Cancelar",
+
+          confirmButtonColor:
+            "#F79598",
+
+          cancelButtonColor:
+            "#94a3b8",
+        });
+
+      if (
+        !firstConfirm.isConfirmed
+      ) {
+        return;
+      }
+
+      const secondConfirm =
+        await Swal.fire({
+          title:
+            "Confirmar eliminación",
+
+          text:
+            "Escribe ELIMINAR para confirmar.",
+
+          input:
+            "text",
+
+          inputPlaceholder:
+            "ELIMINAR",
+
+          showCancelButton:
+            true,
+
+          confirmButtonText:
+            "Eliminar cuenta",
+
+          cancelButtonText:
+            "Cancelar",
+
+          confirmButtonColor:
+            "#ef4444",
+
+          preConfirm:
+            (value) => {
+              if (
+                String(value)
+                  .trim()
+                  .toUpperCase() !==
+                "ELIMINAR"
+              ) {
+                Swal.showValidationMessage(
+                  "Escribe ELIMINAR para continuar."
+                );
+
+                return false;
+              }
+
+              return true;
+            },
+        });
+
+      if (
+        !secondConfirm.isConfirmed
+      ) {
+        return;
+      }
+
+      setUpdatingId(
+        target.id
+      );
+
+      try {
+        await deleteUserCompletely(
+          target.id
+        );
+
+        setUsers(
+          (previous) =>
+            previous.filter(
+              (item) =>
+                item.id !==
+                target.id
+            )
+        );
+
+        await Swal.fire({
+          title:
+            "Cuenta eliminada",
+
+          text:
+            "El correo puede registrarse nuevamente en Alekey.",
+
+          icon:
+            "success",
+
+          confirmButtonColor:
+            "#8ED4BE",
+        });
+      } catch (error) {
+        console.error(
+          "Error eliminando usuario:",
+          error
+        );
+
+        await Swal.fire({
+          title:
+            "No se pudo eliminar",
+
+          text:
+            error.message ||
+            "No se pudo eliminar la cuenta.",
+
+          icon:
+            "error",
+
+          confirmButtonColor:
+            "#8ED4BE",
+        });
+      } finally {
+        setUpdatingId(
+          null
+        );
+      }
+    };
+
+  /* =======================================================
      RENDER
   ======================================================= */
 
   return (
     <div
       className="
+        admin-users-page
+
         max-w-[1500px]
         mx-auto
 
@@ -628,6 +762,8 @@ export default function AdminUsersPage() {
         <div>
           <h1
             className="
+              admin-users-title
+
               text-3xl
               md:text-4xl
 
@@ -652,6 +788,8 @@ export default function AdminUsersPage() {
 
           <p
             className="
+              admin-users-subtitle
+
               mt-1
 
               text-[7px]
@@ -659,7 +797,8 @@ export default function AdminUsersPage() {
               uppercase
               tracking-[0.22em]
 
-              text-slate-400
+              text-slate-500
+              dark:text-slate-400
             "
           >
             Usuarios y permisos
@@ -674,7 +813,6 @@ export default function AdminUsersPage() {
       <section
         className="
           grid
-
           grid-cols-2
           xl:grid-cols-4
 
@@ -711,7 +849,7 @@ export default function AdminUsersPage() {
           }
           label="Sin permisos"
           value={
-            stats.normalUsers
+            stats.withoutPermissions
           }
         />
 
@@ -761,13 +899,13 @@ export default function AdminUsersPage() {
             event
           ) =>
             setSearch(
-              event
-                .target
-                .value
+              event.target.value
             )
           }
           placeholder="Buscar usuario, correo o rol..."
           className="
+            admin-users-search
+
             w-full
 
             h-16
@@ -781,10 +919,11 @@ export default function AdminUsersPage() {
             dark:bg-slate-900
 
             border
-            border-slate-100
+            border-slate-200
             dark:border-slate-800
 
-            shadow-[0_8px_24px_rgba(15,23,42,0.05)]
+            shadow-[0_10px_28px_rgba(15,23,42,0.08)]
+            dark:shadow-none
 
             outline-none
 
@@ -802,7 +941,7 @@ export default function AdminUsersPage() {
       </section>
 
       {/* =================================================
-          LIST
+          USERS
       ================================================= */}
 
       {loading ? (
@@ -840,29 +979,42 @@ export default function AdminUsersPage() {
                 key={
                   account.id
                 }
+
                 account={
                   account
                 }
+
                 currentUserId={
                   user?.id
                 }
+
                 actorRole={
                   role
                 }
+
                 updating={
                   updatingId ===
                   account.id
                 }
+
                 canChangeRole={
                   canChangeRole(
                     account
                   )
                 }
+
                 canChangeStatus={
                   canChangeStatus(
                     account
                   )
                 }
+
+                canDelete={
+                  canDeleteUser(
+                    account
+                  )
+                }
+
                 onRoleChange={(
                   nextRole
                 ) =>
@@ -871,8 +1023,15 @@ export default function AdminUsersPage() {
                     nextRole
                   )
                 }
+
                 onStatusChange={() =>
                   handleStatus(
+                    account
+                  )
+                }
+
+                onDelete={() =>
+                  handleDeleteUser(
                     account
                   )
                 }
@@ -892,15 +1051,18 @@ export default function AdminUsersPage() {
               flex
               items-center
               justify-center
-
-              text-center
             "
           >
-            <div>
+            <div
+              className="
+                text-center
+              "
+            >
               <UserRound
                 size={30}
                 className="
                   mx-auto
+
                   text-slate-300
                 "
               />
@@ -937,8 +1099,10 @@ function UserCard({
   updating,
   canChangeRole,
   canChangeStatus,
+  canDelete,
   onRoleChange,
   onStatusChange,
+  onDelete,
 }) {
   const isMe =
     account.id ===
@@ -957,6 +1121,8 @@ function UserCard({
   return (
     <article
       className="
+        admin-user-card
+
         p-5
         md:p-6
 
@@ -966,10 +1132,11 @@ function UserCard({
         dark:bg-slate-900
 
         border
-        border-slate-100
+        border-slate-200
         dark:border-slate-800
 
-        shadow-[0_14px_34px_rgba(15,23,42,0.06)]
+        shadow-[0_16px_40px_rgba(15,23,42,0.09)]
+        dark:shadow-none
       "
     >
       {/* HEADER */}
@@ -1071,7 +1238,8 @@ function UserCard({
 
               font-semibold
 
-              text-slate-400
+              text-slate-500
+              dark:text-slate-400
 
               truncate
             "
@@ -1087,7 +1255,7 @@ function UserCard({
         />
       </div>
 
-      {/* BODY */}
+      {/* ROLE / STATUS */}
 
       <div
         className="
@@ -1104,6 +1272,8 @@ function UserCard({
 
         <div
           className="
+            admin-user-panel
+
             p-4
 
             rounded-2xl
@@ -1112,7 +1282,7 @@ function UserCard({
             dark:bg-slate-950/40
 
             border
-            border-slate-100
+            border-slate-200
             dark:border-slate-800
           "
         >
@@ -1125,7 +1295,8 @@ function UserCard({
               uppercase
               tracking-widest
 
-              text-slate-400
+              text-slate-500
+              dark:text-slate-400
             "
           >
             Rol
@@ -1152,8 +1323,7 @@ function UserCard({
                   event
                 ) =>
                   onRoleChange(
-                    event
-                      .target
+                    event.target
                       .value
                   )
                 }
@@ -1172,7 +1342,7 @@ function UserCard({
                   dark:bg-slate-900
 
                   border
-                  border-slate-200
+                  border-slate-300
                   dark:border-slate-700
 
                   outline-none
@@ -1181,8 +1351,8 @@ function UserCard({
                   uppercase
                   tracking-wide
 
-                  text-slate-700
-                  dark:text-slate-200
+                  text-slate-800
+                  dark:text-slate-100
 
                   cursor-pointer
 
@@ -1221,7 +1391,7 @@ function UserCard({
 
                   pointer-events-none
 
-                  text-slate-400
+                  text-slate-500
                 "
               />
             </div>
@@ -1238,6 +1408,8 @@ function UserCard({
 
         <div
           className="
+            admin-user-panel
+
             p-4
 
             rounded-2xl
@@ -1246,7 +1418,7 @@ function UserCard({
             dark:bg-slate-950/40
 
             border
-            border-slate-100
+            border-slate-200
             dark:border-slate-800
           "
         >
@@ -1259,7 +1431,8 @@ function UserCard({
               uppercase
               tracking-widest
 
-              text-slate-400
+              text-slate-500
+              dark:text-slate-400
             "
           >
             Estado
@@ -1339,8 +1512,12 @@ function UserCard({
 
                 rounded-xl
 
-                bg-slate-100
+                bg-white
                 dark:bg-slate-900
+
+                border
+                border-slate-200
+                dark:border-slate-800
 
                 flex
                 items-center
@@ -1350,7 +1527,8 @@ function UserCard({
                 uppercase
                 tracking-wide
 
-                text-slate-400
+                text-slate-600
+                dark:text-slate-400
               "
             >
               {account.activo ? (
@@ -1371,7 +1549,71 @@ function UserCard({
         </div>
       </div>
 
-      {/* INFO DE SEGURIDAD */}
+      {/* DELETE */}
+
+      {canDelete && (
+        <div
+          className="
+            mt-4
+            pt-4
+
+            border-t
+            border-slate-200
+            dark:border-slate-800
+          "
+        >
+          <button
+            type="button"
+            disabled={
+              updating
+            }
+            onClick={
+              onDelete
+            }
+            className="
+              w-full
+              sm:w-auto
+
+              min-h-11
+
+              px-5
+
+              rounded-xl
+
+              bg-red-50
+              dark:bg-red-500/10
+
+              text-red-500
+              dark:text-red-400
+
+              flex
+              items-center
+              justify-center
+              gap-2
+
+              text-[7px]
+
+              uppercase
+              tracking-widest
+
+              transition-all
+
+              hover:bg-red-100
+              dark:hover:bg-red-500/20
+
+              disabled:opacity-40
+            "
+          >
+            <Trash2
+              size={15}
+            />
+
+            Eliminar cuenta
+          </button>
+        </div>
+      )}
+
+      {/* OWNER / COADMIN INFO */}
 
       {(isOwner ||
         actorRole ===
@@ -1382,7 +1624,7 @@ function UserCard({
             pt-4
 
             border-t
-            border-slate-100
+            border-slate-200
             dark:border-slate-800
           "
         >
@@ -1393,14 +1635,15 @@ function UserCard({
               uppercase
               tracking-wider
 
-              text-slate-400
+              text-slate-500
+              dark:text-slate-400
             "
           >
             {isOwner
               ? "Esta cuenta es el propietario del sistema y no puede ser modificada."
               : actorRole ===
                   ROLES.COADMIN
-                ? "Como Co-admin puedes administrar cuentas, pero no modificar roles."
+                ? "Como Co-admin puedes administrar cuentas, pero no modificar roles ni eliminar usuarios."
                 : ""}
           </p>
         </div>
@@ -1422,6 +1665,8 @@ function StatCard({
   return (
     <article
       className="
+        admin-stat-card
+
         min-h-[100px]
 
         p-4
@@ -1433,10 +1678,11 @@ function StatCard({
         dark:bg-slate-900
 
         border
-        border-slate-100
+        border-slate-200
         dark:border-slate-800
 
-        shadow-[0_12px_30px_rgba(15,23,42,0.06)]
+        shadow-[0_12px_30px_rgba(15,23,42,0.08)]
+        dark:shadow-none
 
         flex
         items-center
@@ -1485,7 +1731,8 @@ function StatCard({
             uppercase
             tracking-widest
 
-            text-slate-400
+            text-slate-500
+            dark:text-slate-400
           "
         >
           {label}
@@ -1525,12 +1772,12 @@ function LockedRole({
 
         rounded-xl
 
-        bg-slate-100
+        bg-white
         dark:bg-slate-900
 
         border
-        border-slate-200
-        dark:border-slate-800
+        border-slate-300
+        dark:border-slate-700
 
         flex
         items-center
@@ -1540,8 +1787,8 @@ function LockedRole({
         uppercase
         tracking-wide
 
-        text-slate-500
-        dark:text-slate-300
+        text-slate-800
+        dark:text-slate-200
       "
     >
       <span>
@@ -1629,34 +1876,4 @@ function StatusBadge({
         : "Desactivado"}
     </span>
   );
-}
-
-/* =========================================================
-   HTML ESCAPE
-========================================================= */
-
-function escapeHtml(
-  value = ""
-) {
-  return String(value)
-    .replaceAll(
-      "&",
-      "&amp;"
-    )
-    .replaceAll(
-      "<",
-      "&lt;"
-    )
-    .replaceAll(
-      ">",
-      "&gt;"
-    )
-    .replaceAll(
-      '"',
-      "&quot;"
-    )
-    .replaceAll(
-      "'",
-      "&#039;"
-    );
 }

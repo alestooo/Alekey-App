@@ -1,46 +1,53 @@
 import {
-  useState,
-} from "react";
+  AnimatePresence,
+  motion,
+} from "motion/react";
 
 import {
+  ArrowRight,
   Eye,
   EyeOff,
+  KeyRound,
   LockKeyhole,
-  LogIn,
   Mail,
   UserRound,
 } from "lucide-react";
 
 import {
-  Navigate,
+  useState,
+} from "react";
+
+import {
   useNavigate,
 } from "react-router-dom";
 
 import Swal from "sweetalert2";
 
-import {
-  useAuth,
-} from "../contexts/AuthContext";
-
 import logoAlekey from "../assets/images/alekey-logo.jpeg";
+
+import {
+  supabase,
+} from "../lib/supabase";
+
+import {
+  emailIsRegistered,
+  normalizeAuthEmail,
+} from "../services/authLookupService";
+
+/* =========================================================
+   CONFIG
+========================================================= */
+
+const FAILED_LOGIN_THRESHOLD =
+  3;
+
+/* =========================================================
+   LOGIN PAGE
+========================================================= */
 
 export default function LoginPage() {
   const navigate =
     useNavigate();
-
-  const {
-    user,
-    profile,
-
-    loading,
-    isActive,
-    isVerified,
-
-    login,
-    register,
-
-    loginWithGoogle,
-  } = useAuth();
 
   const [
     mode,
@@ -50,18 +57,48 @@ export default function LoginPage() {
   );
 
   const [
-    nombre,
-    setNombre,
+    loading,
+    setLoading,
+  ] = useState(
+    false
+  );
+
+  /* =======================================================
+     LOGIN
+  ======================================================= */
+
+  const [
+    loginEmail,
+    setLoginEmail,
   ] = useState("");
 
   const [
-    email,
-    setEmail,
+    loginPassword,
+    setLoginPassword,
   ] = useState("");
 
   const [
-    password,
-    setPassword,
+    showLoginPassword,
+    setShowLoginPassword,
+  ] = useState(false);
+
+  /* =======================================================
+     REGISTER
+  ======================================================= */
+
+  const [
+    registerName,
+    setRegisterName,
+  ] = useState("");
+
+  const [
+    registerEmail,
+    setRegisterEmail,
+  ] = useState("");
+
+  const [
+    registerPassword,
+    setRegisterPassword,
   ] = useState("");
 
   const [
@@ -70,66 +107,106 @@ export default function LoginPage() {
   ] = useState("");
 
   const [
-    showPassword,
-    setShowPassword,
-  ] = useState(
-    false
-  );
+    showRegisterPassword,
+    setShowRegisterPassword,
+  ] = useState(false);
 
   const [
-    submitting,
-    setSubmitting,
-  ] = useState(
-    false
-  );
+    showConfirmPassword,
+    setShowConfirmPassword,
+  ] = useState(false);
 
-  /*
-   * ========================================
-   * VALIDATION
-   * ========================================
-   */
+  /* =======================================================
+     CHANGE MODE
+  ======================================================= */
 
-  const emailValid =
-    /\S+@\S+\.\S+/.test(
-      email.trim()
+  const changeMode = (
+    nextMode
+  ) => {
+    if (
+      loading ||
+      nextMode === mode
+    ) {
+      return;
+    }
+
+    setMode(
+      nextMode
     );
+  };
 
-  const registerValid =
-    Boolean(
-      nombre.trim() &&
-        emailValid &&
-        password.length >=
-          8 &&
-        password ===
-          confirmPassword
-    );
+  /* =======================================================
+     FAILED ATTEMPTS
+  ======================================================= */
 
-  /*
-   * ========================================
-   * ALREADY LOGGED
-   * ========================================
-   */
+  const getFailureKey = (
+    email
+  ) => {
+    return `alekey-login-failures:${normalizeAuthEmail(
+      email
+    )}`;
+  };
 
-  if (
-    !loading &&
-    user &&
-    profile &&
-    isActive &&
-    isVerified
-  ) {
-    return (
-      <Navigate
-        to="/"
-        replace
-      />
-    );
-  }
+  const getFailedAttempts = (
+    email
+  ) => {
+    try {
+      return Number(
+        sessionStorage.getItem(
+          getFailureKey(
+            email
+          )
+        ) || 0
+      );
+    } catch {
+      return 0;
+    }
+  };
 
-  /*
-   * ========================================
-   * LOGIN
-   * ========================================
-   */
+  const increaseFailedAttempts = (
+    email
+  ) => {
+    const current =
+      getFailedAttempts(
+        email
+      );
+
+    const next =
+      current + 1;
+
+    try {
+      sessionStorage.setItem(
+        getFailureKey(
+          email
+        ),
+        String(
+          next
+        )
+      );
+    } catch {
+      // No hacemos nada.
+    }
+
+    return next;
+  };
+
+  const clearFailedAttempts = (
+    email
+  ) => {
+    try {
+      sessionStorage.removeItem(
+        getFailureKey(
+          email
+        )
+      );
+    } catch {
+      // No hacemos nada.
+    }
+  };
+
+  /* =======================================================
+     LOGIN
+  ======================================================= */
 
   const handleLogin =
     async (
@@ -137,87 +214,264 @@ export default function LoginPage() {
     ) => {
       event.preventDefault();
 
-      if (
-        !email.trim() ||
-        !password
-      ) {
+      if (loading) {
         return;
       }
 
-      setSubmitting(
-        true
-      );
+      const email =
+        normalizeAuthEmail(
+          loginEmail
+        );
+
+      const password =
+        loginPassword;
+
+      if (
+        !email ||
+        !email.includes("@")
+      ) {
+        await Swal.fire({
+          title:
+            "Correo inválido",
+
+          text:
+            "Ingresa un correo electrónico válido.",
+
+          icon:
+            "warning",
+
+          confirmButtonColor:
+            "#8ED4BE",
+        });
+
+        return;
+      }
+
+      if (!password) {
+        await Swal.fire({
+          title:
+            "Contraseña requerida",
+
+          text:
+            "Ingresa tu contraseña.",
+
+          icon:
+            "warning",
+
+          confirmButtonColor:
+            "#8ED4BE",
+        });
+
+        return;
+      }
+
+      setLoading(true);
 
       try {
-        await login(
-          email,
-          password
-        );
+        const {
+          error,
+        } =
+          await supabase.auth.signInWithPassword(
+            {
+              email,
+              password,
+            }
+          );
 
-        navigate(
-          "/",
-          {
-            replace:
-              true,
-          }
-        );
-      } catch (error) {
-        console.error(
-          error
-        );
+        /* ===============================================
+           SUCCESS
+        =============================================== */
 
-        const message =
+        if (!error) {
+          clearFailedAttempts(
+            email
+          );
+
+          navigate(
+            "/",
+            {
+              replace:
+                true,
+            }
+          );
+
+          return;
+        }
+
+        const errorMessage =
           String(
-            error?.message ||
+            error.message ||
               ""
           ).toLowerCase();
 
-        const code =
-          String(
-            error?.code ||
-              ""
-          ).toLowerCase();
-
-        /*
-         * La cuenta existe pero todavía
-         * no confirmó el OTP.
-         */
+        /* ===============================================
+           EMAIL NOT CONFIRMED
+        =============================================== */
 
         if (
-          message.includes(
+          errorMessage.includes(
             "email not confirmed"
+          )
+        ) {
+          const result =
+            await Swal.fire({
+              title:
+                "Correo pendiente de verificación",
+
+              text:
+                "Esta cuenta ya existe, pero todavía debes verificar el código enviado a tu correo.",
+
+              icon:
+                "info",
+
+              showCancelButton:
+                true,
+
+              confirmButtonText:
+                "Verificar ahora",
+
+              cancelButtonText:
+                "Cancelar",
+
+              confirmButtonColor:
+                "#8ED4BE",
+
+              cancelButtonColor:
+                "#64748b",
+            });
+
+          if (
+            result.isConfirmed
+          ) {
+            navigate(
+              `/verificar?email=${encodeURIComponent(
+                email
+              )}`
+            );
+          }
+
+          return;
+        }
+
+        /* ===============================================
+           RATE LIMIT
+        =============================================== */
+
+        if (
+          error.status ===
+            429 ||
+          errorMessage.includes(
+            "rate limit"
           ) ||
-          code.includes(
-            "email_not_confirmed"
+          errorMessage.includes(
+            "too many requests"
           )
         ) {
           await Swal.fire({
             title:
-              "Falta verificar tu correo",
+              "Demasiados intentos",
 
             text:
-              "Tu cuenta todavía está pendiente de verificación. Ingresa el código enviado a tu correo.",
+              "Espera unos minutos antes de intentarlo nuevamente.",
 
             icon:
               "info",
-
-            confirmButtonText:
-              "Verificar",
 
             confirmButtonColor:
               "#8ED4BE",
           });
 
-          navigate(
-            `/verificar?email=${encodeURIComponent(
-              email
-                .trim()
-                .toLowerCase()
-            )}`
+          return;
+        }
+
+        /* ===============================================
+           INVALID LOGIN
+        =============================================== */
+
+        const attempts =
+          increaseFailedAttempts(
+            email
           );
+
+        /*
+         * Intentos 1 y 2:
+         * mensaje normal.
+         */
+
+        if (
+          attempts <
+          FAILED_LOGIN_THRESHOLD
+        ) {
+          await Swal.fire({
+            title:
+              "No se pudo ingresar",
+
+            text:
+              "Correo o contraseña incorrectos.",
+
+            icon:
+              "error",
+
+            confirmButtonColor:
+              "#8ED4BE",
+          });
 
           return;
         }
+
+        /*
+         * Tercer intento:
+         * ofrecer recuperación.
+         */
+
+        if (
+          attempts ===
+          FAILED_LOGIN_THRESHOLD
+        ) {
+          const result =
+            await Swal.fire({
+              title:
+                "Parece que tienes problemas",
+
+              text:
+                "Has intentado iniciar sesión varias veces. Si no recuerdas tu contraseña, puedes cambiarla.",
+
+              icon:
+                "question",
+
+              showCancelButton:
+                true,
+
+              confirmButtonText:
+                "Cambiar contraseña",
+
+              cancelButtonText:
+                "Seguir intentando",
+
+              confirmButtonColor:
+                "#8ED4BE",
+
+              cancelButtonColor:
+                "#64748b",
+            });
+
+          if (
+            result.isConfirmed
+          ) {
+            navigate(
+              `/recuperar-contrasena?email=${encodeURIComponent(
+                email
+              )}`
+            );
+          }
+
+          return;
+        }
+
+        /*
+         * A partir del cuarto:
+         * mantener el mensaje normal.
+         */
 
         await Swal.fire({
           title:
@@ -232,18 +486,35 @@ export default function LoginPage() {
           confirmButtonColor:
             "#8ED4BE",
         });
-      } finally {
-        setSubmitting(
-          false
+      } catch (
+        error
+      ) {
+        console.error(
+          "Error login:",
+          error
         );
+
+        await Swal.fire({
+          title:
+            "No se pudo ingresar",
+
+          text:
+            "Ocurrió un problema al intentar iniciar sesión.",
+
+          icon:
+            "error",
+
+          confirmButtonColor:
+            "#8ED4BE",
+        });
+      } finally {
+        setLoading(false);
       }
     };
 
-  /*
-   * ========================================
-   * REGISTER
-   * ========================================
-   */
+  /* =======================================================
+     REGISTER
+  ======================================================= */
 
   const handleRegister =
     async (
@@ -251,24 +522,40 @@ export default function LoginPage() {
     ) => {
       event.preventDefault();
 
-      if (
-        !nombre.trim()
-      ) {
+      if (loading) {
         return;
       }
 
+      const nombre =
+        registerName.trim();
+
+      const email =
+        normalizeAuthEmail(
+          registerEmail
+        );
+
+      const password =
+        registerPassword;
+
+      const confirmation =
+        confirmPassword;
+
+      /* ===============================================
+         VALIDATIONS
+      =============================================== */
+
       if (
-        !emailValid
+        nombre.length < 2
       ) {
         await Swal.fire({
           title:
-            "Correo inválido",
+            "Nombre requerido",
 
           text:
-            "Escribe un correo electrónico válido.",
+            "Ingresa tu nombre.",
 
           icon:
-            "info",
+            "warning",
 
           confirmButtonColor:
             "#8ED4BE",
@@ -278,18 +565,38 @@ export default function LoginPage() {
       }
 
       if (
-        password.length <
-        8
+        !email ||
+        !email.includes("@")
       ) {
         await Swal.fire({
           title:
-            "Contraseña muy corta",
+            "Correo inválido",
 
           text:
-            "Utiliza al menos 8 caracteres.",
+            "Ingresa un correo electrónico válido.",
 
           icon:
-            "info",
+            "warning",
+
+          confirmButtonColor:
+            "#8ED4BE",
+        });
+
+        return;
+      }
+
+      if (
+        password.length < 8
+      ) {
+        await Swal.fire({
+          title:
+            "Contraseña demasiado corta",
+
+          text:
+            "La contraseña debe tener al menos 8 caracteres.",
+
+          icon:
+            "warning",
 
           confirmButtonColor:
             "#8ED4BE",
@@ -300,14 +607,17 @@ export default function LoginPage() {
 
       if (
         password !==
-        confirmPassword
+        confirmation
       ) {
         await Swal.fire({
           title:
             "Las contraseñas no coinciden",
 
+          text:
+            "Verifica ambas contraseñas e inténtalo nuevamente.",
+
           icon:
-            "info",
+            "warning",
 
           confirmButtonColor:
             "#8ED4BE",
@@ -316,88 +626,145 @@ export default function LoginPage() {
         return;
       }
 
-      setSubmitting(
-        true
-      );
+      setLoading(true);
 
       try {
-        const result =
-          await register({
-            nombre,
-            email,
-            password,
-          });
+        /* ===============================================
+           CHECK EXISTING EMAIL FIRST
+        =============================================== */
 
-        /*
-         * ==================================
-         * CUENTA YA CONFIRMADA
-         * ==================================
-         */
+        const exists =
+          await emailIsRegistered(
+            email
+          );
 
-        if (
-          result.status ===
-          "already_registered"
-        ) {
+        if (exists) {
           await Swal.fire({
             title:
-              "Correo en uso",
+              "Correo ya registrado",
 
-            html: `
-              <p style="
-                color:#64748b;
-                font-size:13px;
-                line-height:1.6;
-              ">
-                Este correo ya está asociado a una cuenta de Alekey.
-                Puedes iniciar sesión, recuperar tu contraseña
-                o continuar con Google si utilizaste Google anteriormente.
-              </p>
-            `,
+            text:
+              "Este correo ya está en uso. Inicia sesión o recupera tu contraseña.",
 
             icon:
               "info",
 
             confirmButtonText:
-              "Ir a iniciar sesión",
+              "Entendido",
 
             confirmButtonColor:
               "#8ED4BE",
           });
 
-          setMode(
-            "login"
+          return;
+        }
+
+        /* ===============================================
+           CREATE ACCOUNT
+        =============================================== */
+
+        const {
+          data,
+          error,
+        } =
+          await supabase.auth.signUp(
+            {
+              email,
+              password,
+
+              options: {
+                data: {
+                  nombre,
+                },
+              },
+            }
           );
 
-          setPassword(
-            ""
-          );
+        if (error) {
+          throw error;
+        }
 
-          setConfirmPassword(
-            ""
+        /* ===============================================
+           EXTRA DUPLICATE PROTECTION
+        =============================================== */
+
+        if (
+          data?.user &&
+          Array.isArray(
+            data.user
+              .identities
+          ) &&
+          data.user
+            .identities
+            .length === 0
+        ) {
+          await Swal.fire({
+            title:
+              "Correo ya registrado",
+
+            text:
+              "Este correo ya está en uso.",
+
+            icon:
+              "info",
+
+            confirmButtonColor:
+              "#8ED4BE",
+          });
+
+          return;
+        }
+
+        /* ===============================================
+           EMAIL CONFIRMATION
+        =============================================== */
+
+        if (
+          !data?.session
+        ) {
+          await Swal.fire({
+            title:
+              "Código enviado",
+
+            text:
+              "Te enviamos un código de 6 dígitos para verificar tu cuenta.",
+
+            icon:
+              "success",
+
+            timer:
+              1300,
+
+            showConfirmButton:
+              false,
+          });
+
+          navigate(
+            `/verificar?email=${encodeURIComponent(
+              email
+            )}`
           );
 
           return;
         }
 
         /*
-         * ==================================
-         * NUEVA O PENDIENTE
-         * ==================================
-         *
-         * Si nunca confirmó el OTP,
-         * permitimos volver a llegar
-         * a /verificar.
+         * Por seguridad, si algún día desactivaras
+         * confirmación de email.
          */
 
         navigate(
-          `/verificar?email=${encodeURIComponent(
-            email
-              .trim()
-              .toLowerCase()
-          )}`
+          "/",
+          {
+            replace:
+              true,
+          }
         );
-      } catch (error) {
+      } catch (
+        error
+      ) {
         console.error(
+          "Error register:",
           error
         );
 
@@ -405,15 +772,78 @@ export default function LoginPage() {
           String(
             error?.message ||
               ""
-          );
+          ).toLowerCase();
+
+        /* ===============================================
+           DUPLICATE
+        =============================================== */
+
+        if (
+          message.includes(
+            "already registered"
+          ) ||
+          message.includes(
+            "already exists"
+          ) ||
+          message.includes(
+            "user already"
+          )
+        ) {
+          await Swal.fire({
+            title:
+              "Correo ya registrado",
+
+            text:
+              "Este correo ya está en uso.",
+
+            icon:
+              "info",
+
+            confirmButtonColor:
+              "#8ED4BE",
+          });
+
+          return;
+        }
+
+        /* ===============================================
+           RATE LIMIT
+        =============================================== */
+
+        if (
+          error?.status ===
+            429 ||
+          message.includes(
+            "rate limit"
+          ) ||
+          message.includes(
+            "too many requests"
+          )
+        ) {
+          await Swal.fire({
+            title:
+              "Límite temporal de correos",
+
+            text:
+              "No pudimos enviar el código en este momento. Espera un poco e inténtalo nuevamente.",
+
+            icon:
+              "info",
+
+            confirmButtonColor:
+              "#8ED4BE",
+          });
+
+          return;
+        }
 
         await Swal.fire({
           title:
             "No se pudo crear la cuenta",
 
           text:
-            message ||
-            "Inténtalo nuevamente.",
+            error?.message ||
+            "Ocurrió un problema al crear la cuenta.",
 
           icon:
             "error",
@@ -422,33 +852,57 @@ export default function LoginPage() {
             "#8ED4BE",
         });
       } finally {
-        setSubmitting(
-          false
-        );
+        setLoading(false);
       }
     };
 
-  /*
-   * ========================================
-   * GOOGLE
-   * ========================================
-   */
+  /* =======================================================
+     GOOGLE
+  ======================================================= */
 
   const handleGoogle =
     async () => {
+      if (loading) {
+        return;
+      }
+
+      setLoading(true);
+
       try {
-        await loginWithGoogle();
-      } catch (error) {
+        const {
+          error,
+        } =
+          await supabase.auth.signInWithOAuth(
+            {
+              provider:
+                "google",
+
+              options: {
+                redirectTo:
+                  `${window.location.origin}/`,
+              },
+            }
+          );
+
+        if (error) {
+          throw error;
+        }
+      } catch (
+        error
+      ) {
         console.error(
+          "Google Auth:",
           error
         );
 
+        setLoading(false);
+
         await Swal.fire({
           title:
-            "No se pudo continuar con Google",
+            "No se pudo ingresar con Google",
 
           text:
-            error.message ||
+            error?.message ||
             "Inténtalo nuevamente.",
 
           icon:
@@ -460,84 +914,75 @@ export default function LoginPage() {
       }
     };
 
+  /* =======================================================
+     RENDER
+  ======================================================= */
+
   return (
     <main
       className="
         min-h-screen
-
-        bg-slate-50
+        bg-[#070d1a]
 
         flex
         items-center
         justify-center
 
-        p-4
-        sm:p-6
-
-        font-black
+        px-4
+        py-10
       "
     >
-      <div
+      <section
         className="
           w-full
-          max-w-[460px]
-
-          bg-white
-
-          rounded-[2.3rem]
-          sm:rounded-[3rem]
+          max-w-[470px]
 
           overflow-hidden
 
-          border
-          border-slate-100
+          rounded-[2.6rem]
 
-          shadow-[0_24px_70px_rgba(15,23,42,0.13)]
+          border
+          border-slate-800
+
+          bg-[#0b1324]
+
+          shadow-2xl
         "
       >
-        {/* HEADER */}
+        {/* =================================================
+            LOGO
+        ================================================= */}
 
         <div
           className="
-            bg-slate-900
-
-            px-6
-            py-8
+            px-7
+            pt-8
+            pb-7
 
             text-center
+
+            bg-[#070d1a]
           "
         >
-          <div
+          <img
+            src={
+              logoAlekey
+            }
+            alt="Alekey"
             className="
-              w-20
-              h-20
+              w-16
+              h-16
 
               mx-auto
 
-              rounded-[1.7rem]
+              rounded-2xl
 
-              bg-white
+              object-cover
 
-              p-2
-
-              shadow-lg
+              border-4
+              border-slate-700
             "
-          >
-            <img
-              src={
-                logoAlekey
-              }
-              alt="Alekey"
-              className="
-                w-full
-                h-full
-
-                object-cover
-
-                rounded-[1.25rem]
-              "
-            />
-          </div>
+          />
 
           <h1
             className="
@@ -546,13 +991,19 @@ export default function LoginPage() {
               text-3xl
 
               italic
-              uppercase
+              font-black
+
+              tracking-tight
 
               text-white
             "
           >
-            Alekey
-            <span className="text-[#8ED4BE]">
+            ALEKEY
+            <span
+              className="
+                text-[#8ED4BE]
+              "
+            >
               .
             </span>
           </h1>
@@ -563,73 +1014,84 @@ export default function LoginPage() {
 
               text-[7px]
 
-              uppercase
-              tracking-[0.25em]
+              font-black
 
-              text-slate-400
+              tracking-[0.3em]
+
+              text-slate-500
             "
           >
-            Gestión Administrativa
+            GESTIÓN ADMINISTRATIVA
           </p>
         </div>
 
-        {/* CONTENT */}
+        {/* =================================================
+            CONTENT
+        ================================================= */}
 
         <div
           className="
-            p-5
-            sm:p-8
+            px-7
+            py-7
+
+            sm:px-8
           "
         >
-          {/* TABS */}
+          {/* ===============================================
+              TABS
+          =============================================== */}
 
           <div
             className="
               grid
               grid-cols-2
 
-              gap-2
-
-              p-1.5
+              p-1
 
               rounded-2xl
 
-              bg-slate-50
+              bg-[#070d1a]
 
-              mb-6
+              border
+              border-slate-800
+
+              mb-7
             "
           >
             <button
               type="button"
-              onClick={() => {
-                setMode(
+              onClick={() =>
+                changeMode(
                   "login"
-                );
-
-                setPassword(
-                  ""
-                );
-
-                setConfirmPassword(
-                  ""
-                );
-              }}
+                )
+              }
               className={`
                 h-11
 
                 rounded-xl
 
-                text-[8px]
+                text-[9px]
+
+                font-black
+
                 uppercase
-                tracking-widest
+                tracking-wider
 
                 transition-all
+                duration-200
 
                 ${
                   mode ===
                   "login"
-                    ? "bg-slate-900 text-white shadow-md"
-                    : "text-slate-400"
+                    ? `
+                      bg-[#172238]
+                      text-white
+                      shadow-lg
+                    `
+                    : `
+                      text-slate-500
+                      hover:text-slate-300
+                    `
                 }
               `}
             >
@@ -638,35 +1100,38 @@ export default function LoginPage() {
 
             <button
               type="button"
-              onClick={() => {
-                setMode(
+              onClick={() =>
+                changeMode(
                   "register"
-                );
-
-                setPassword(
-                  ""
-                );
-
-                setConfirmPassword(
-                  ""
-                );
-              }}
+                )
+              }
               className={`
                 h-11
 
                 rounded-xl
 
-                text-[8px]
+                text-[9px]
+
+                font-black
+
                 uppercase
-                tracking-widest
+                tracking-wider
 
                 transition-all
+                duration-200
 
                 ${
                   mode ===
                   "register"
-                    ? "bg-slate-900 text-white shadow-md"
-                    : "text-slate-400"
+                    ? `
+                      bg-[#172238]
+                      text-white
+                      shadow-lg
+                    `
+                    : `
+                      text-slate-500
+                      hover:text-slate-300
+                    `
                 }
               `}
             >
@@ -674,265 +1139,192 @@ export default function LoginPage() {
             </button>
           </div>
 
-          {/* FORM */}
+          {/* ===============================================
+              ANIMATED FORM
+          =============================================== */}
 
-          <form
-            onSubmit={
-              mode ===
-              "login"
-                ? handleLogin
-                : handleRegister
-            }
-            className="
-              space-y-4
-            "
+          <AnimatePresence
+            mode="wait"
+            initial={false}
           >
             {mode ===
-              "register" && (
-              <AuthField
-                label="Nombre"
-                icon={
-                  UserRound
-                }
+            "login" ? (
+              <motion.div
+                key="login"
+                initial={{
+                  opacity:
+                    0,
+
+                  x:
+                    -12,
+                }}
+                animate={{
+                  opacity:
+                    1,
+
+                  x:
+                    0,
+                }}
+                exit={{
+                  opacity:
+                    0,
+
+                  x:
+                    12,
+                }}
+                transition={{
+                  duration:
+                    0.18,
+
+                  ease:
+                    "easeOut",
+                }}
               >
-                <input
-                  type="text"
-                  autoComplete="name"
-                  value={
-                    nombre
+                <LoginForm
+                  email={
+                    loginEmail
                   }
-                  onChange={(
-                    event
-                  ) =>
-                    setNombre(
-                      event
-                        .target
-                        .value
-                    )
+
+                  setEmail={
+                    setLoginEmail
                   }
-                  placeholder="Nombre completo"
-                  className="auth-input"
+
+                  password={
+                    loginPassword
+                  }
+
+                  setPassword={
+                    setLoginPassword
+                  }
+
+                  showPassword={
+                    showLoginPassword
+                  }
+
+                  setShowPassword={
+                    setShowLoginPassword
+                  }
+
+                  loading={
+                    loading
+                  }
+
+                  onSubmit={
+                    handleLogin
+                  }
+
+                  onForgot={() => {
+                    const email =
+                      normalizeAuthEmail(
+                        loginEmail
+                      );
+
+                    navigate(
+                      email
+                        ? `/recuperar-contrasena?email=${encodeURIComponent(
+                            email
+                          )}`
+                        : "/recuperar-contrasena"
+                    );
+                  }}
                 />
-              </AuthField>
-            )}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="register"
+                initial={{
+                  opacity:
+                    0,
 
-            <AuthField
-              label="Correo"
-              icon={Mail}
-            >
-              <input
-                type="email"
-                autoComplete="email"
-                value={
-                  email
-                }
-                onChange={(
-                  event
-                ) =>
-                  setEmail(
-                    event
-                      .target
-                      .value
-                  )
-                }
-                placeholder="correo@ejemplo.com"
-                className="auth-input"
-              />
-            </AuthField>
+                  x:
+                    12,
+                }}
+                animate={{
+                  opacity:
+                    1,
 
-            <PasswordField
-              value={
-                password
-              }
-              setValue={
-                setPassword
-              }
-              showPassword={
-                showPassword
-              }
-              setShowPassword={
-                setShowPassword
-              }
-              autoComplete={
-                mode ===
-                "register"
-                  ? "new-password"
-                  : "current-password"
-              }
-            />
+                  x:
+                    0,
+                }}
+                exit={{
+                  opacity:
+                    0,
 
-            {mode ===
-              "register" && (
-              <AuthField
-                label="Confirmar contraseña"
-                icon={
-                  LockKeyhole
-                }
+                  x:
+                    -12,
+                }}
+                transition={{
+                  duration:
+                    0.18,
+
+                  ease:
+                    "easeOut",
+                }}
               >
-                <input
-                  type={
-                    showPassword
-                      ? "text"
-                      : "password"
+                <RegisterForm
+                  name={
+                    registerName
                   }
-                  autoComplete="new-password"
-                  value={
+
+                  setName={
+                    setRegisterName
+                  }
+
+                  email={
+                    registerEmail
+                  }
+
+                  setEmail={
+                    setRegisterEmail
+                  }
+
+                  password={
+                    registerPassword
+                  }
+
+                  setPassword={
+                    setRegisterPassword
+                  }
+
+                  confirmation={
                     confirmPassword
                   }
-                  onChange={(
-                    event
-                  ) =>
-                    setConfirmPassword(
-                      event
-                        .target
-                        .value
-                    )
+
+                  setConfirmation={
+                    setConfirmPassword
                   }
-                  placeholder="Repite la contraseña"
-                  className="auth-input"
-                />
-              </AuthField>
-            )}
 
-            {mode ===
-              "register" && (
-              <div
-                className="
-                  px-4
-                  py-3
-
-                  rounded-2xl
-
-                  bg-[#8ED4BE]/10
-
-                  flex
-                  items-start
-                  gap-3
-                "
-              >
-                <Mail
-                  size={16}
-                  className="
-                    mt-0.5
-                    shrink-0
-
-                    text-[#58B99A]
-                  "
-                />
-
-                <p
-                  className="
-                    text-[8px]
-                    leading-relaxed
-
-                    font-semibold
-
-                    text-slate-500
-                  "
-                >
-                  La cuenta no quedará verificada hasta ingresar el código de 6 dígitos enviado al correo.
-                </p>
-              </div>
-            )}
-
-            {mode ===
-              "login" && (
-              <div
-                className="
-                  text-right
-                "
-              >
-                <button
-                  type="button"
-                  onClick={() =>
-                    navigate(
-                      "/recuperar-contrasena"
-                    )
+                  showPassword={
+                    showRegisterPassword
                   }
-                  className="
-                    text-[8px]
 
-                    uppercase
-                    tracking-wide
+                  setShowPassword={
+                    setShowRegisterPassword
+                  }
 
-                    text-[#58B99A]
+                  showConfirmation={
+                    showConfirmPassword
+                  }
 
-                    hover:underline
-                  "
-                >
-                  ¿Olvidaste tu contraseña?
-                </button>
-              </div>
+                  setShowConfirmation={
+                    setShowConfirmPassword
+                  }
+
+                  loading={
+                    loading
+                  }
+
+                  onSubmit={
+                    handleRegister
+                  }
+                />
+              </motion.div>
             )}
+          </AnimatePresence>
 
-            <button
-              type="submit"
-              disabled={
-                submitting ||
-                (
-                  mode ===
-                    "login" &&
-                  (
-                    !email.trim() ||
-                    !password
-                  )
-                ) ||
-                (
-                  mode ===
-                    "register" &&
-                  !registerValid
-                )
-              }
-              className="
-                w-full
-
-                min-h-14
-
-                rounded-2xl
-
-                bg-[#8ED4BE]
-                text-slate-900
-
-                flex
-                items-center
-                justify-center
-                gap-2
-
-                text-[9px]
-                uppercase
-                tracking-widest
-
-                shadow-lg
-
-                transition-all
-
-                hover:brightness-105
-
-                disabled:opacity-40
-                disabled:pointer-events-none
-              "
-            >
-              {mode ===
-              "login" ? (
-                <LogIn
-                  size={17}
-                />
-              ) : (
-                <Mail
-                  size={17}
-                />
-              )}
-
-              {submitting
-                ? "Procesando..."
-                : mode ===
-                    "login"
-                  ? "Ingresar"
-                  : "Crear cuenta"}
-            </button>
-          </form>
-
-          {/* DIVIDER */}
+          {/* ===============================================
+              GOOGLE
+          =============================================== */}
 
           <div
             className="
@@ -947,7 +1339,8 @@ export default function LoginPage() {
               className="
                 h-px
                 flex-1
-                bg-slate-100
+
+                bg-slate-800
               "
             />
 
@@ -955,10 +1348,12 @@ export default function LoginPage() {
               className="
                 text-[7px]
 
+                font-black
+
                 uppercase
                 tracking-widest
 
-                text-slate-300
+                text-slate-600
               "
             >
               O continuar con
@@ -968,29 +1363,34 @@ export default function LoginPage() {
               className="
                 h-px
                 flex-1
-                bg-slate-100
+
+                bg-slate-800
               "
             />
           </div>
 
-          {/* GOOGLE */}
-
           <button
             type="button"
+            disabled={
+              loading
+            }
             onClick={
               handleGoogle
             }
             className="
               w-full
+              h-13
 
-              min-h-14
+              min-h-13
 
               rounded-2xl
 
               border
-              border-slate-200
+              border-slate-700
 
-              bg-white
+              bg-[#101a2d]
+
+              text-slate-200
 
               flex
               items-center
@@ -998,16 +1398,18 @@ export default function LoginPage() {
               gap-3
 
               text-[9px]
+
+              font-black
+
               uppercase
-              tracking-wide
-
-              text-slate-600
-
-              shadow-sm
+              tracking-wider
 
               transition-all
 
-              hover:bg-slate-50
+              hover:bg-[#172238]
+              hover:border-slate-600
+
+              disabled:opacity-40
             "
           >
             <GoogleIcon />
@@ -1015,10 +1417,337 @@ export default function LoginPage() {
             Continuar con Google
           </button>
         </div>
-      </div>
+      </section>
     </main>
   );
 }
+
+/* =========================================================
+   LOGIN FORM
+========================================================= */
+
+function LoginForm({
+  email,
+  setEmail,
+  password,
+  setPassword,
+  showPassword,
+  setShowPassword,
+  loading,
+  onSubmit,
+  onForgot,
+}) {
+  return (
+    <form
+      onSubmit={
+        onSubmit
+      }
+      className="
+        space-y-4
+      "
+    >
+      <AuthField
+        label="Correo electrónico"
+        icon={
+          Mail
+        }
+      >
+        <input
+          type="email"
+          value={
+            email
+          }
+          onChange={(
+            event
+          ) =>
+            setEmail(
+              event.target.value
+            )
+          }
+          autoComplete="email"
+          placeholder="correo@ejemplo.com"
+          className={inputClass}
+        />
+      </AuthField>
+
+      <AuthField
+        label="Contraseña"
+        icon={
+          LockKeyhole
+        }
+      >
+        <input
+          type={
+            showPassword
+              ? "text"
+              : "password"
+          }
+          value={
+            password
+          }
+          onChange={(
+            event
+          ) =>
+            setPassword(
+              event.target.value
+            )
+          }
+          autoComplete="current-password"
+          placeholder="Tu contraseña"
+          className={`${inputClass} pr-12`}
+        />
+
+        <PasswordButton
+          visible={
+            showPassword
+          }
+          onClick={() =>
+            setShowPassword(
+              !showPassword
+            )
+          }
+        />
+      </AuthField>
+
+      <div
+        className="
+          flex
+          justify-end
+        "
+      >
+        <button
+          type="button"
+          onClick={
+            onForgot
+          }
+          className="
+            text-[8px]
+
+            font-black
+
+            uppercase
+            tracking-wide
+
+            text-[#8ED4BE]
+
+            hover:opacity-80
+          "
+        >
+          ¿Olvidaste tu contraseña?
+        </button>
+      </div>
+
+      <SubmitButton
+        loading={
+          loading
+        }
+        text="Iniciar sesión"
+        loadingText="Ingresando..."
+      />
+    </form>
+  );
+}
+
+/* =========================================================
+   REGISTER FORM
+========================================================= */
+
+function RegisterForm({
+  name,
+  setName,
+  email,
+  setEmail,
+  password,
+  setPassword,
+  confirmation,
+  setConfirmation,
+  showPassword,
+  setShowPassword,
+  showConfirmation,
+  setShowConfirmation,
+  loading,
+  onSubmit,
+}) {
+  return (
+    <form
+      onSubmit={
+        onSubmit
+      }
+      className="
+        space-y-4
+      "
+    >
+      <AuthField
+        label="Nombre"
+        icon={
+          UserRound
+        }
+      >
+        <input
+          type="text"
+          value={
+            name
+          }
+          onChange={(
+            event
+          ) =>
+            setName(
+              event.target.value
+            )
+          }
+          autoComplete="name"
+          placeholder="Tu nombre"
+          className={
+            inputClass
+          }
+        />
+      </AuthField>
+
+      <AuthField
+        label="Correo electrónico"
+        icon={
+          Mail
+        }
+      >
+        <input
+          type="email"
+          value={
+            email
+          }
+          onChange={(
+            event
+          ) =>
+            setEmail(
+              event.target.value
+            )
+          }
+          autoComplete="email"
+          placeholder="correo@ejemplo.com"
+          className={
+            inputClass
+          }
+        />
+      </AuthField>
+
+      <AuthField
+        label="Contraseña"
+        icon={
+          LockKeyhole
+        }
+      >
+        <input
+          type={
+            showPassword
+              ? "text"
+              : "password"
+          }
+          value={
+            password
+          }
+          onChange={(
+            event
+          ) =>
+            setPassword(
+              event.target.value
+            )
+          }
+          autoComplete="new-password"
+          placeholder="Mínimo 8 caracteres"
+          className={`${inputClass} pr-12`}
+        />
+
+        <PasswordButton
+          visible={
+            showPassword
+          }
+          onClick={() =>
+            setShowPassword(
+              !showPassword
+            )
+          }
+        />
+      </AuthField>
+
+      <AuthField
+        label="Confirmar contraseña"
+        icon={
+          KeyRound
+        }
+      >
+        <input
+          type={
+            showConfirmation
+              ? "text"
+              : "password"
+          }
+          value={
+            confirmation
+          }
+          onChange={(
+            event
+          ) =>
+            setConfirmation(
+              event.target.value
+            )
+          }
+          autoComplete="new-password"
+          placeholder="Repite tu contraseña"
+          className={`${inputClass} pr-12`}
+        />
+
+        <PasswordButton
+          visible={
+            showConfirmation
+          }
+          onClick={() =>
+            setShowConfirmation(
+              !showConfirmation
+            )
+          }
+        />
+      </AuthField>
+
+      <div
+        className="
+          px-4
+          py-3
+
+          rounded-xl
+
+          bg-[#8ED4BE]/5
+
+          border
+          border-[#8ED4BE]/10
+        "
+      >
+        <p
+          className="
+            text-[7px]
+
+            leading-relaxed
+
+            text-slate-500
+          "
+        >
+          La cuenta no quedará verificada hasta ingresar
+          el código de 6 dígitos enviado al correo.
+        </p>
+      </div>
+
+      <SubmitButton
+        loading={
+          loading
+        }
+        text="Crear cuenta"
+        loadingText="Procesando..."
+      />
+    </form>
+  );
+}
+
+/* =========================================================
+   AUTH FIELD
+========================================================= */
 
 function AuthField({
   label,
@@ -1026,30 +1755,37 @@ function AuthField({
   children,
 }) {
   return (
-    <div>
-      <label
+    <label
+      className="
+        block
+      "
+    >
+      <span
         className="
-          ml-2
+          block
+
+          mb-2
 
           text-[7px]
 
-          uppercase
-          tracking-widest
+          font-black
 
-          text-slate-400
+          uppercase
+          tracking-[0.16em]
+
+          text-slate-500
         "
       >
         {label}
-      </label>
+      </span>
 
       <div
         className="
           relative
-          mt-2
         "
       >
         <Icon
-          size={17}
+          size={16}
           className="
             absolute
 
@@ -1058,119 +1794,192 @@ function AuthField({
 
             -translate-y-1/2
 
-            text-slate-300
+            text-slate-600
+
+            pointer-events-none
           "
         />
 
         {children}
       </div>
-    </div>
+    </label>
   );
 }
 
-function PasswordField({
-  value,
-  setValue,
-  showPassword,
-  setShowPassword,
-  autoComplete,
+/* =========================================================
+   PASSWORD BUTTON
+========================================================= */
+
+function PasswordButton({
+  visible,
+  onClick,
 }) {
   return (
-    <AuthField
-      label="Contraseña"
-      icon={
-        LockKeyhole
+    <button
+      type="button"
+      onClick={
+        onClick
+      }
+      className="
+        absolute
+
+        right-4
+        top-1/2
+
+        -translate-y-1/2
+
+        text-slate-600
+
+        hover:text-slate-300
+
+        transition-colors
+      "
+      aria-label={
+        visible
+          ? "Ocultar contraseña"
+          : "Mostrar contraseña"
       }
     >
-      <input
-        type={
-          showPassword
-            ? "text"
-            : "password"
-        }
-        autoComplete={
-          autoComplete
-        }
-        value={
-          value
-        }
-        onChange={(
-          event
-        ) =>
-          setValue(
-            event.target
-              .value
-          )
-        }
-        placeholder="Contraseña"
-        className="
-          auth-input
-          pr-12
-        "
-      />
-
-      <button
-        type="button"
-        onClick={() =>
-          setShowPassword(
-            (
-              previous
-            ) =>
-              !previous
-          )
-        }
-        className="
-          absolute
-
-          right-4
-          top-1/2
-
-          -translate-y-1/2
-
-          text-slate-400
-        "
-      >
-        {showPassword ? (
-          <EyeOff
-            size={17}
-          />
-        ) : (
-          <Eye
-            size={17}
-          />
-        )}
-      </button>
-    </AuthField>
+      {visible ? (
+        <EyeOff
+          size={17}
+        />
+      ) : (
+        <Eye
+          size={17}
+        />
+      )}
+    </button>
   );
 }
+
+/* =========================================================
+   SUBMIT
+========================================================= */
+
+function SubmitButton({
+  loading,
+  text,
+  loadingText,
+}) {
+  return (
+    <button
+      type="submit"
+      disabled={
+        loading
+      }
+      className="
+        w-full
+        min-h-13
+
+        mt-2
+
+        rounded-2xl
+
+        bg-[#8ED4BE]
+
+        text-[#07130f]
+
+        flex
+        items-center
+        justify-center
+        gap-2
+
+        text-[9px]
+
+        font-black
+
+        uppercase
+        tracking-wider
+
+        transition-all
+
+        hover:brightness-105
+
+        active:scale-[0.99]
+
+        disabled:opacity-40
+        disabled:cursor-not-allowed
+      "
+    >
+      {loading
+        ? loadingText
+        : text}
+
+      {!loading && (
+        <ArrowRight
+          size={15}
+        />
+      )}
+    </button>
+  );
+}
+
+/* =========================================================
+   GOOGLE ICON
+========================================================= */
 
 function GoogleIcon() {
   return (
     <svg
-      width="18"
-      height="18"
+      width="17"
+      height="17"
       viewBox="0 0 24 24"
       aria-hidden="true"
     >
       <path
         fill="#4285F4"
-        d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4c-.2 1.2-.9 2.2-1.9 2.9v2.4h3.1c1.8-1.7 3-4.1 3-7.1Z"
+        d="M21.6 12.23c0-.71-.06-1.4-.18-2.06H12v3.9h5.38a4.6 4.6 0 0 1-2 3.02v2.53h3.24c1.9-1.75 2.98-4.33 2.98-7.39Z"
       />
 
       <path
         fill="#34A853"
-        d="M12 22c2.7 0 5-.9 6.6-2.4l-3.1-2.4c-.9.6-2 .9-3.5.9-2.6 0-4.8-1.7-5.6-4.1H3.2v2.5C4.9 19.8 8.2 22 12 22Z"
+        d="M12 22c2.7 0 4.98-.9 6.64-2.38l-3.24-2.53c-.9.6-2.05.96-3.4.96-2.61 0-4.82-1.76-5.61-4.13H3.04v2.61A10 10 0 0 0 12 22Z"
       />
 
       <path
         fill="#FBBC05"
-        d="M6.4 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.5H3.2C2.4 8.8 2 10.4 2 12s.4 3.2 1.2 4.5L6.4 14Z"
+        d="M6.39 13.92A6.02 6.02 0 0 1 6.08 12c0-.67.11-1.32.31-1.92V7.47H3.04A10 10 0 0 0 2 12c0 1.61.39 3.13 1.04 4.53l3.35-2.61Z"
       />
 
       <path
         fill="#EA4335"
-        d="M12 5.9c1.6 0 3 .5 4.1 1.6l3-3C17.3 2.8 14.9 2 12 2 8.2 2 4.9 4.2 3.2 7.5L6.4 10C7.2 7.6 9.4 5.9 12 5.9Z"
+        d="M12 5.95c1.47 0 2.78.5 3.82 1.5l2.87-2.87A9.62 9.62 0 0 0 12 2a10 10 0 0 0-8.96 5.47l3.35 2.61C7.18 7.71 9.39 5.95 12 5.95Z"
       />
     </svg>
   );
 }
+
+/* =========================================================
+   INPUT
+========================================================= */
+
+const inputClass = `
+  w-full
+  h-13
+
+  pl-11
+  pr-4
+
+  rounded-2xl
+
+  bg-[#080f1e]
+
+  border
+  border-slate-800
+
+  outline-none
+
+  text-sm
+  font-semibold
+
+  text-slate-200
+
+  placeholder:text-slate-700
+
+  transition-all
+
+  focus:border-[#8ED4BE]/70
+  focus:ring-2
+  focus:ring-[#8ED4BE]/5
+`;

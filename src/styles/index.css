@@ -1042,3 +1042,126 @@ html.dark .auth-input:focus {
 
   border-color: #8ed4be;
 }
+
+
+/* =========================================================
+   ADMIN USERS - LIGHT MODE FIX
+   Solo afecta Administración cuando NO está activo .dark
+========================================================= */
+
+html:not(.dark) .admin-users-page .admin-users-title {
+  color: #0f172a !important;
+}
+
+html:not(.dark) .admin-users-page .admin-users-subtitle {
+  color: #64748b !important;
+}
+
+/* Tarjetas superiores */
+
+html:not(.dark) .admin-users-page .admin-stat-card {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+
+  box-shadow:
+    0 12px 30px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Buscador */
+
+html:not(.dark) .admin-users-page .admin-users-search {
+  background: #ffffff !important;
+  color: #334155 !important;
+  border-color: #e2e8f0 !important;
+
+  box-shadow:
+    0 10px 28px rgba(15, 23, 42, 0.08) !important;
+}
+
+html:not(.dark)
+  .admin-users-page
+  .admin-users-search::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Tarjetas de usuarios */
+
+html:not(.dark) .admin-users-page .admin-user-card {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+
+  box-shadow:
+    0 16px 40px rgba(15, 23, 42, 0.09) !important;
+}
+
+/* Nombre de usuario dentro de tarjeta */
+
+html:not(.dark)
+  .admin-users-page
+  .admin-user-card h2 {
+  color: #0f172a !important;
+}
+
+/* Cuadros de ROL y ESTADO */
+
+html:not(.dark) .admin-users-page .admin-user-panel {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Labels internos */
+
+html:not(.dark)
+  .admin-users-page
+  .admin-user-panel > p {
+  color: #64748b !important;
+}
+
+/* Select de roles */
+
+html:not(.dark)
+  .admin-users-page
+  .admin-user-panel select {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* Opciones del select */
+
+html:not(.dark)
+  .admin-users-page
+  .admin-user-panel select option {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+/* =========================================================
+   ADMIN STATS - TEXTO EN MODO CLARO
+========================================================= */
+
+html:not(.dark)
+  .admin-users-page
+  .admin-stat-card p {
+  color: #0f172a !important;
+}
+
+/* Título pequeño:
+   USUARIOS / ADMINISTRADORES / SIN PERMISOS / ACTIVOS
+*/
+html:not(.dark)
+  .admin-users-page
+  .admin-stat-card p:first-of-type {
+  color: #334155 !important;
+}
+
+/* Número:
+   5 / 4 / 0 / 5
+*/
+html:not(.dark)
+  .admin-users-page
+  .admin-stat-card p:last-of-type {
+  color: #0f172a !important;
+}
