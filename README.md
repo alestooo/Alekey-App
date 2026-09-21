@@ -1,21 +1,21 @@
 # Alekey — Sistema de Gestión Administrativa
 
-**Alekey** es una aplicación web administrativa diseñada para centralizar y facilitar la operación diaria del negocio.
+**Alekey** es una aplicación web administrativa desarrollada para centralizar y facilitar la operación diaria del negocio.
 
-El sistema permite gestionar ventas, pedidos, inventario, clientes, centros educativos, pagos, productos pendientes, usuarios, permisos y estadísticas desde una misma plataforma.
+El sistema permite gestionar ventas, pedidos, inventario, clientes, centros educativos, pagos, productos pendientes, estadísticas, usuarios, roles y permisos desde una única plataforma.
 
-La aplicación fue desarrollada con un enfoque **responsive**, por lo que puede utilizarse cómodamente tanto en computadora como en dispositivos móviles.
+La aplicación fue diseñada con un enfoque **responsive**, por lo que puede utilizarse tanto desde computadora como desde dispositivos móviles.
 
 ---
 
 ## Descripción
 
-Alekey nace como una solución interna para sustituir procesos administrativos dispersos y reunir la información del negocio en un único sistema.
+Alekey nace como una solución interna para sustituir procesos administrativos dispersos y reunir la información del negocio dentro de un solo sistema.
 
-Desde la aplicación es posible controlar:
+Desde la aplicación es posible administrar:
 
 - Ventas y cotizaciones.
-- Pedidos realizados.
+- Pedidos.
 - Clientes.
 - Centros educativos.
 - Inventario y stock.
@@ -24,13 +24,13 @@ Desde la aplicación es posible controlar:
 - Pagos pendientes.
 - Historial de ventas.
 - Estadísticas comerciales.
-- Usuarios y roles.
-- Permisos de acceso.
+- Usuarios.
+- Roles y permisos.
 - Alertas operativas.
 - Preferencias visuales.
 - Configuración de la aplicación.
 
-La información se almacena en **Supabase**, permitiendo mantener los datos sincronizados y disponibles desde distintos dispositivos.
+La información se almacena utilizando **Supabase**, permitiendo mantener los datos disponibles y sincronizados entre distintos dispositivos.
 
 ---
 
@@ -41,9 +41,9 @@ La información se almacena en **Supabase**, permitiendo mantener los datos sinc
 | React | Construcción de la interfaz |
 | Vite | Entorno de desarrollo y compilación |
 | Tailwind CSS | Diseño y estilos responsive |
-| Supabase | Base de datos y autenticación |
-| PostgreSQL | Base de datos utilizada mediante Supabase |
-| Supabase Auth | Inicio de sesión y gestión de cuentas |
+| Supabase | Backend, base de datos y autenticación |
+| PostgreSQL | Base de datos mediante Supabase |
+| Supabase Auth | Gestión de cuentas y sesiones |
 | Google OAuth | Inicio de sesión con Google |
 | Gmail SMTP | Envío de OTP y recuperación de contraseña |
 | React Router | Navegación de la aplicación |
@@ -52,15 +52,38 @@ La información se almacena en **Supabase**, permitiendo mantener los datos sinc
 | SweetAlert2 | Alertas y confirmaciones |
 | dnd-kit | Drag & drop |
 | jsPDF | Generación de documentos PDF |
+| jsPDF AutoTable | Tablas dentro de documentos PDF |
 | SheetJS / XLSX | Manejo de información tabular |
 | Motion | Animaciones de interfaz |
 | Vercel | Despliegue de producción |
+| pnpm | Gestión de dependencias |
+
+---
+
+# Arquitectura general
+
+La aplicación utiliza una arquitectura basada en componentes y separación de responsabilidades.
+
+```text
+Frontend
+   ↓
+React + Vite
+   ↓
+Supabase Client
+   ↓
+Supabase Auth
+PostgreSQL
+RLS
+RPC / funciones SQL
+```
+
+El frontend se despliega mediante **Vercel**, mientras que Supabase administra la autenticación, base de datos y políticas de acceso.
 
 ---
 
 # Autenticación
 
-Alekey cuenta con un sistema completo de autenticación utilizando **Supabase Auth**.
+Alekey cuenta con un sistema completo de autenticación mediante **Supabase Auth**.
 
 Los usuarios pueden acceder mediante:
 
@@ -69,81 +92,163 @@ Los usuarios pueden acceder mediante:
 
 También se encuentran disponibles los procesos de:
 
-- Crear una cuenta.
-- Verificar correo mediante OTP.
-- Reenviar código de verificación.
+- Crear cuenta.
+- Verificar correo.
+- Reenviar código OTP.
 - Recuperar contraseña.
-- Establecer una nueva contraseña.
+- Crear una nueva contraseña.
 - Cerrar sesión.
+
+---
+
+## Registro de cuenta
+
+Al crear una cuenta mediante correo electrónico, el sistema verifica primero si el correo ya se encuentra registrado.
+
+```text
+Crear cuenta
+      ↓
+Comprobar correo
+      ↓
+¿Ya existe?
+   ↙       ↘
+ Sí        No
+ ↓          ↓
+Aviso      Crear cuenta
+            ↓
+          OTP
+```
+
+Si el correo ya se encuentra registrado, la aplicación evita crear una cuenta duplicada.
 
 ---
 
 ## Verificación mediante OTP
 
-Cuando un usuario crea una cuenta mediante correo y contraseña, recibe un código de verificación de **6 dígitos**.
+Las cuentas creadas mediante correo y contraseña deben verificar su identidad utilizando un código OTP de **6 dígitos**.
 
-La cuenta no obtiene acceso completo hasta confirmar correctamente dicho código.
-
-Flujo general:
+El flujo general es:
 
 ```text
 Crear cuenta
       ↓
-Se registra el correo
+Supabase registra la cuenta
       ↓
-Se envía código OTP
+Gmail SMTP envía OTP
       ↓
-Usuario ingresa los 6 dígitos
+Usuario recibe código
       ↓
-Correo verificado
+Ingresa los 6 dígitos
       ↓
-Cuenta disponible
+Cuenta verificada
 ```
 
-Si el correo ya se encuentra registrado, el sistema evita crear una cuenta duplicada.
+Mientras el correo no haya sido verificado, el usuario no obtiene acceso normal a la aplicación.
+
+También es posible solicitar nuevamente el código de verificación respetando los límites de envío configurados.
 
 ---
 
-## Recuperación de contraseña
+# Inicio de sesión
 
-Los usuarios registrados pueden solicitar un enlace de recuperación.
+El sistema permite iniciar sesión utilizando:
+
+```text
+Correo + contraseña
+```
+
+o:
+
+```text
+Google OAuth
+```
+
+Cuando las credenciales son incorrectas se muestra:
+
+```text
+Correo o contraseña incorrectos.
+```
+
+Si una persona falla varias veces utilizando el mismo correo, el sistema puede sugerir utilizar la recuperación de contraseña.
+
+Esto mejora la experiencia del usuario sin revelar cuál de las dos credenciales fue incorrecta durante el inicio de sesión.
+
+---
+
+# Recuperación de contraseña
+
+Los usuarios registrados pueden solicitar un enlace para crear una nueva contraseña.
 
 ```text
 Olvidé mi contraseña
         ↓
-Verificación del correo
+Comprobar correo
         ↓
-Correo de recuperación
+Correo registrado
+        ↓
+Enviar recuperación
         ↓
 Nueva contraseña
         ↓
 Inicio de sesión
 ```
 
-Si el correo no se encuentra registrado, el sistema informa al usuario antes de realizar el envío.
+Si el correo no se encuentra registrado en Alekey, la aplicación informa que no existe una cuenta asociada.
 
 ---
 
-## Envío de correos
+# Envío de correos
 
-Alekey utiliza **SMTP personalizado mediante Gmail** para los correos de autenticación.
+Alekey utiliza **Gmail SMTP como SMTP personalizado de Supabase**.
 
-Esto permite gestionar:
+Se utiliza para enviar:
 
 - Códigos OTP.
 - Reenvío de códigos.
 - Recuperación de contraseña.
-- Correos relacionados con autenticación.
+- Comunicaciones relacionadas con autenticación.
 
-El envío se realiza desde Supabase y no depende de que una computadora local se encuentre encendida.
+El envío de correos se realiza desde la infraestructura de Supabase y Gmail.
+
+No depende de que una computadora local se encuentre encendida.
+
+```text
+Usuario
+   ↓
+Alekey
+   ↓
+Supabase Auth
+   ↓
+Gmail SMTP
+   ↓
+Correo del usuario
+```
+
+---
+
+# Google OAuth
+
+Los usuarios también pueden autenticarse mediante su cuenta de Google.
+
+```text
+Alekey
+   ↓
+Google
+   ↓
+Supabase Auth
+   ↓
+Sesión
+```
+
+Las cuentas autenticadas mediante Google utilizan la verificación de identidad proporcionada por Google.
 
 ---
 
 # Sistema de roles y permisos
 
-Alekey cuenta con cinco niveles de acceso.
+Alekey cuenta con cinco niveles principales de acceso.
 
-| Rol | Nivel de acceso |
+| Rol | Nivel |
 |---|---|
 | Administrador total | Acceso completo |
 | Co-admin | Administración operativa |
@@ -151,66 +256,82 @@ Alekey cuenta con cinco niveles de acceso.
 | Empleado | Operación básica |
 | Usuario | Cuenta sin permisos administrativos |
 
----
+Los permisos no dependen únicamente del frontend.
 
-## Administrador total
-
-El **Administrador total** es el propietario principal del sistema.
-
-Tiene acceso a todas las funciones de Alekey:
-
-- Dashboard completo.
-- Ventas.
-- Creación de pedidos.
-- Edición de ventas.
-- Eliminación de ventas.
-- Estadísticas completas.
-- Inventario.
-- Creación de productos.
-- Edición de productos.
-- Eliminación de productos.
-- Administración de usuarios.
-- Activación y desactivación de cuentas.
-- Asignación de roles.
-- Creación de Co-admins.
-- Eliminación completa de cuentas.
-
-La cuenta propietaria del sistema se encuentra protegida y no puede ser eliminada ni modificada desde el panel administrativo.
+Supabase también valida las operaciones mediante políticas RLS y funciones SQL protegidas.
 
 ---
 
-## Co-admin
+# Administrador total
 
-El Co-admin puede administrar gran parte de la operación del sistema.
+El **Administrador total** representa al propietario principal del sistema.
 
-Cuenta con acceso a:
+Cuenta con acceso completo a Alekey.
 
-- Dashboard completo.
-- Ventas.
-- Creación de ventas.
-- Edición de ventas.
-- Eliminación de ventas.
-- Estadísticas completas.
-- Inventario completo.
-- Administración de usuarios.
-- Activación y desactivación de usuarios de menor nivel.
+Puede:
+
+- Consultar el Dashboard completo.
+- Crear ventas.
+- Consultar ventas.
+- Editar ventas.
+- Eliminar ventas.
+- Consultar estadísticas completas.
+- Consultar inventario.
+- Crear productos.
+- Editar productos.
+- Eliminar productos.
+- Administrar usuarios.
+- Activar usuarios.
+- Desactivar usuarios.
+- Cambiar roles.
+- Asignar Co-admins.
+- Eliminar cuentas.
+- Administrar el sistema.
+
+La cuenta propietaria está protegida para evitar modificaciones accidentales.
+
+No puede ser eliminada desde el panel administrativo.
+
+---
+
+# Co-admin
+
+El rol **Co-admin** permite administrar gran parte de la operación del sistema.
+
+Puede:
+
+- Consultar el Dashboard completo.
+- Crear ventas.
+- Consultar ventas.
+- Editar ventas.
+- Eliminar ventas.
+- Consultar estadísticas completas.
+- Administrar inventario.
+- Crear productos.
+- Editar productos.
+- Eliminar productos.
+- Consultar el panel de usuarios.
+- Activar usuarios.
+- Desactivar usuarios de menor nivel.
 
 No puede:
 
-- Modificar roles.
-- Crear otros Co-admins.
-- Eliminar cuentas.
+- Cambiar roles.
+- Crear nuevos Co-admins.
+- Eliminar usuarios.
 - Modificar al Administrador total.
+- Eliminar al propietario.
 
 ---
 
-## Vendedor
+# Vendedor
 
-El rol Vendedor está orientado al personal encargado de ventas.
+El rol **Vendedor** está orientado a usuarios encargados de ventas.
 
 Puede:
 
 - Consultar su Dashboard.
+- Utilizar accesos rápidos.
 - Crear ventas.
 - Consultar ventas.
 - Editar ventas.
@@ -221,17 +342,17 @@ Puede:
 - Editar productos.
 - Eliminar productos.
 
-Las estadísticas financieras completas permanecen reservadas para los administradores.
+La información financiera completa permanece reservada para los roles administrativos.
 
 ---
 
-## Empleado
+# Empleado
 
-El rol Empleado permite trabajar con las operaciones básicas.
+El rol **Empleado** permite realizar operaciones básicas.
 
 Puede:
 
-- Consultar el Dashboard básico.
+- Consultar un Dashboard simplificado.
 - Utilizar accesos rápidos.
 - Consultar ventas.
 - Crear ventas.
@@ -243,77 +364,110 @@ No puede:
 
 - Editar ventas existentes.
 - Eliminar ventas.
-- Eliminar productos del inventario.
-- Consultar estadísticas.
-- Acceder al panel administrativo.
+- Eliminar productos.
+- Consultar estadísticas administrativas.
+- Acceder al panel de administración.
 
 ---
 
-## Usuario
+# Usuario
 
-Una cuenta nueva comienza con el rol **Usuario**.
+Las cuentas nuevas utilizan inicialmente el rol:
 
-Esto significa que la identidad ya puede estar verificada, pero todavía no posee permisos para consultar información administrativa del negocio.
+```text
+usuario
+```
 
-El usuario debe esperar a que un Administrador asigne uno de los roles disponibles.
+Una cuenta puede encontrarse correctamente verificada pero todavía no tener acceso a la información administrativa de Alekey.
 
-Mientras tanto puede acceder únicamente a funciones relacionadas con su cuenta y configuración.
+Mientras un administrador no asigne un rol superior, el usuario únicamente puede acceder a funciones relacionadas con:
+
+- Su cuenta.
+- Perfil.
+- Ajustes.
+- Ayuda.
+
+El usuario no puede consultar información comercial o administrativa.
 
 ---
 
 # Administración de usuarios
 
-El panel de Administración permite visualizar todas las cuentas registradas.
+Alekey incluye un panel específico para la administración de cuentas.
 
 Cada usuario muestra:
 
 - Nombre.
-- Correo electrónico.
+- Correo.
 - Rol.
 - Estado.
+- Estado de verificación.
 - Tipo de cuenta.
-- Estado de actividad.
 
-Desde este panel, dependiendo del rol del administrador, es posible:
+El panel permite:
 
 - Buscar usuarios.
+- Consultar roles.
 - Cambiar roles.
-- Activar cuentas.
-- Desactivar cuentas.
-- Eliminar cuentas.
-- Identificar al propietario del sistema.
+- Activar usuarios.
+- Desactivar usuarios.
+- Eliminar usuarios.
+- Identificar al Administrador total.
+
+Las funciones disponibles dependen del rol del administrador conectado.
 
 ---
 
-## Eliminación de usuarios
+# Eliminación de usuarios
 
-El Administrador total puede eliminar completamente una cuenta.
+Únicamente el **Administrador total** puede eliminar completamente una cuenta.
 
-La eliminación borra al usuario del sistema de autenticación y de los perfiles internos de Alekey.
+La eliminación borra:
+
+```text
+Perfil interno
++
+Cuenta de Supabase Auth
+```
 
 Una vez eliminada:
 
 ```text
 Cuenta eliminada
       ↓
-Correo disponible nuevamente
+Correo disponible
       ↓
-El usuario puede registrarse otra vez
+Puede registrarse nuevamente
       ↓
 Nuevo OTP
       ↓
 Nueva cuenta
 ```
 
-Esta función se encuentra disponible únicamente para el Administrador total.
+Los Co-admins no tienen permiso para eliminar cuentas.
+
+---
+
+# Protección del propietario
+
+La cuenta propietaria dispone de protecciones adicionales.
+
+No puede:
+
+- Cambiar accidentalmente su rol.
+- Ser desactivada.
+- Ser eliminada.
+- Ser modificada por un Co-admin.
+
+Esto reduce el riesgo de perder el acceso administrativo principal.
 
 ---
 
 # Dashboard
 
-El Dashboard funciona como el centro de control principal del sistema.
+El Dashboard funciona como centro de control de Alekey.
 
-Dependiendo del rol del usuario puede mostrar diferentes niveles de información.
+El contenido mostrado depende del rol del usuario.
 
 El Dashboard administrativo incluye:
 
@@ -322,14 +476,19 @@ El Dashboard administrativo incluye:
 - Ventas totales.
 - Piezas pendientes.
 - Pedidos realizados.
-- Ventas de los últimos siete días.
-- Cantidad de clientes.
-- Cantidad de piezas vendidas.
+- Gráfica de ventas recientes.
+- Cantidad de pedidos.
+- Piezas vendidas.
+- Clientes.
 - Categorías vendidas.
 - Resumen rápido.
 - Acciones rápidas.
 
-Entre los accesos rápidos se encuentran:
+---
+
+## Acciones rápidas
+
+Desde el Dashboard se puede acceder rápidamente a:
 
 - Nueva venta.
 - Inventario.
@@ -340,7 +499,7 @@ Entre los accesos rápidos se encuentran:
 
 # Ventas y cotizaciones
 
-Alekey permite registrar pedidos mediante un formulario diseñado para ser utilizado tanto en computadora como en dispositivos móviles.
+Alekey permite registrar nuevos pedidos utilizando un formulario optimizado para computadora y dispositivos móviles.
 
 Cada venta puede incluir:
 
@@ -354,18 +513,35 @@ Cada venta puede incluir:
 - Múltiples productos.
 - Cantidad.
 - Precio.
-- Productos pendientes.
+- Cantidad pendiente.
 - Total automático.
 
-La provincia y el cantón son campos opcionales.
+La provincia y el cantón son opcionales.
 
-Los productos utilizados en las ventas se encuentran relacionados con el inventario.
+---
+
+# Productos dentro de una venta
+
+Una venta puede contener múltiples productos.
+
+Cada producto puede incluir:
+
+```text
+Categoría
+Tema
+Cantidad
+Precio
+Pendiente
+Subtotal
+```
+
+Los productos utilizados se relacionan con el inventario disponible.
 
 ---
 
 # Métodos de pago
 
-Actualmente se encuentran disponibles los siguientes métodos:
+Actualmente Alekey incluye:
 
 - Efectivo.
 - Tarjeta.
@@ -376,27 +552,27 @@ Actualmente se encuentran disponibles los siguientes métodos:
 
 ---
 
-## DEBE
+# DEBE
 
-El método **DEBE** se utiliza para identificar pedidos cuyo pago todavía se encuentra pendiente.
+El método de pago **DEBE** identifica pedidos cuyo pago todavía se encuentra pendiente.
 
-Las ventas marcadas como DEBE cuentan con:
+Estos pedidos cuentan con:
 
-- Identificación visual destacada.
-- Indicador rojo.
+- Indicador visual destacado.
+- Color rojo.
 - Total resaltado.
 - Carpeta automática.
-- Modificación posterior del método de pago.
+- Edición posterior del método de pago.
 
-Cuando el cliente realiza el pago, el método puede cambiarse desde el historial.
+Cuando el cliente realiza el pago, se puede modificar el método directamente desde el historial.
 
-Al dejar de utilizar `DEBE`, el pedido se elimina automáticamente de la carpeta correspondiente.
+Al dejar de utilizar `DEBE`, el pedido desaparece automáticamente de la carpeta correspondiente.
 
 ---
 
 # Historial de ventas
 
-El historial permite consultar y administrar los pedidos registrados.
+El historial permite consultar todos los pedidos registrados.
 
 Cada venta puede mostrar:
 
@@ -413,7 +589,7 @@ Cada venta puede mostrar:
 - Subtotales.
 - Total.
 
-Dependiendo de los permisos del usuario, desde una venta se puede:
+Dependiendo del rol del usuario, es posible:
 
 - Editar.
 - Cancelar una edición.
@@ -422,95 +598,95 @@ Dependiendo de los permisos del usuario, desde una venta se puede:
 - Modificar productos.
 - Modificar pendientes.
 - Cambiar método de pago.
-- Asociar a un centro educativo.
+- Asociar el pedido a un centro educativo.
 
 ---
 
 # Filtros de ventas
 
-El historial cuenta con diferentes vistas para facilitar la búsqueda de pedidos.
-
-Se pueden consultar:
+El historial permite visualizar:
 
 - Todas las ventas.
 - Ventas listas.
-- Ventas pendientes.
-- Ventas con pagos pendientes.
+- Ventas con pendientes.
+- Ventas que deben pagar.
 
 También incluye:
 
 - Buscador.
 - Paginación.
-- Navegación por páginas.
+- Navegación directa a páginas.
 - Cantidad configurable de resultados por página.
 
 ---
 
 # Centros educativos
 
-Los pedidos pueden organizarse mediante carpetas asociadas a centros educativos o instituciones.
+Los pedidos pueden organizarse utilizando carpetas asociadas a centros educativos o instituciones.
 
-Cada carpeta muestra:
+Cada carpeta puede mostrar:
 
 - Nombre.
 - Cantidad de pedidos.
 - Total acumulado.
 
-Las carpetas permiten:
+Las carpetas pueden:
 
-- Crear.
-- Editar.
-- Eliminar.
-- Reordenar.
-- Mover pedidos.
+- Crearse.
+- Editarse.
+- Eliminarse.
+- Reordenarse.
+- Recibir pedidos.
 
-El orden se almacena en la base de datos.
+El orden se conserva en la base de datos.
 
 ---
 
 # Drag & Drop
 
-Las carpetas pueden reorganizarse mediante **drag & drop** utilizando `dnd-kit`.
+Las carpetas utilizan **dnd-kit** para permitir reorganización mediante drag & drop.
 
-La funcionalidad está diseñada para funcionar tanto con:
+La funcionalidad puede utilizarse desde:
 
 - Mouse.
-- Pantallas táctiles.
+- Pantalla táctil.
 - Dispositivos móviles.
 
 ---
 
 # Carpetas automáticas
 
-Alekey incluye carpetas especiales administradas automáticamente por el sistema.
+Alekey incluye carpetas administradas automáticamente por el sistema.
 
 ---
 
 ## DEBE
 
-La carpeta `DEBE` contiene automáticamente todas las ventas cuyo método de pago sea:
+La carpeta:
 
 ```text
 DEBE
 ```
 
-Esta carpeta tiene prioridad visual y aparece primero dentro de la organización de pedidos.
+contiene automáticamente todas las ventas cuyo método de pago sea `DEBE`.
+
+Esta carpeta tiene prioridad visual dentro de la organización de pedidos.
 
 ---
 
 ## PENDIENTES
 
-Los pedidos que contienen productos pendientes también pueden organizarse automáticamente.
+Los pedidos que contienen productos pendientes pueden identificarse automáticamente dentro de la carpeta correspondiente.
 
-Esto permite identificar rápidamente cuáles pedidos todavía requieren completar una entrega.
+Esto permite localizar rápidamente pedidos que todavía necesitan completar una entrega.
 
 ---
 
 # Inventario
 
-El módulo de Inventario permite administrar los productos disponibles en Alekey.
+El módulo de inventario permite administrar los productos disponibles.
 
-Cada producto puede contener:
+Cada producto puede incluir:
 
 - Categoría.
 - Tema.
@@ -518,7 +694,7 @@ Cada producto puede contener:
 - Precio.
 - Estado.
 
-Dependiendo del rol, los usuarios pueden:
+Dependiendo del rol, un usuario puede:
 
 - Consultar productos.
 - Crear productos.
@@ -528,9 +704,9 @@ Dependiendo del rol, los usuarios pueden:
 
 ---
 
-## Control de stock
+# Control de stock
 
-El inventario permite consultar:
+El inventario permite consultar información como:
 
 - Total de productos.
 - Total de unidades.
@@ -538,13 +714,13 @@ El inventario permite consultar:
 - Productos activos.
 - Productos filtrados.
 
-Las ventas pueden modificar las existencias correspondientes a los productos utilizados.
+Las ventas pueden modificar las existencias de los productos relacionados.
 
 ---
 
 # Estadísticas
 
-Alekey incluye un módulo de estadísticas para visualizar el comportamiento del negocio.
+Alekey incluye módulos de estadísticas para visualizar el comportamiento del negocio.
 
 Entre los datos disponibles se encuentran:
 
@@ -557,28 +733,30 @@ Entre los datos disponibles se encuentran:
 - Ventas recientes.
 - Gráficas por período.
 
-El nivel de información visible depende del rol.
+El contenido visible depende del rol.
 
-Los administradores pueden consultar información financiera completa, mientras que otros roles reciben únicamente métricas operativas autorizadas.
+Los administradores pueden consultar información financiera completa.
+
+Los vendedores reciben estadísticas operativas limitadas.
 
 ---
 
 # Alertas
 
-La aplicación cuenta con un sistema de alertas para destacar información importante.
+La aplicación dispone de un sistema de alertas para destacar información relevante.
 
-Puede utilizarse para identificar situaciones como:
+Puede utilizarse para identificar:
 
 - Productos pendientes.
 - Pagos pendientes.
-- Eventos operativos.
-- Cambios relevantes dentro del sistema.
+- Eventos importantes.
+- Cambios operativos.
 
 ---
 
 # Configuración
 
-Los usuarios pueden acceder al módulo de configuración para modificar preferencias de la aplicación.
+Cada usuario puede acceder al módulo de configuración.
 
 Entre las opciones disponibles se encuentran:
 
@@ -590,13 +768,13 @@ Entre las opciones disponibles se encuentran:
 - Cantidad de carpetas por página.
 - Cantidad de productos de inventario por página.
 
-Las preferencias se conservan localmente en el dispositivo.
+Las preferencias visuales se almacenan localmente en el dispositivo.
 
 ---
 
 # Modo claro y oscuro
 
-Alekey cuenta con soporte completo para:
+Alekey cuenta con soporte para:
 
 ```text
 Modo claro
@@ -604,42 +782,47 @@ Modo oscuro
 Tema del sistema
 ```
 
-La interfaz adapta automáticamente:
+La interfaz adapta:
 
 - Fondos.
 - Tarjetas.
 - Texto.
-- Controles.
 - Navegación.
-- Panel administrativo.
-- Inventario.
+- Formularios.
 - Ventas.
+- Inventario.
 - Estadísticas.
+- Administración.
 
 ---
 
 # Diseño responsive
 
-La interfaz está optimizada para distintos tamaños de pantalla.
+La aplicación se encuentra optimizada para diferentes tamaños de pantalla.
 
-### Computadora
+---
 
-Incluye:
+## Computadora
 
-- Sidebar lateral.
-- Paneles amplios.
-- Estadísticas completas.
+La versión de escritorio incluye:
+
+- Sidebar.
+- Dashboard completo.
 - Gráficas.
-- Navegación administrativa.
+- Paneles amplios.
+- Administración.
+- Navegación completa.
 
-### Dispositivos móviles
+---
 
-Incluye:
+## Dispositivos móviles
+
+La versión móvil incluye:
 
 - Navegación inferior.
 - Menús adaptados.
-- Formularios optimizados.
-- Tarjetas responsive.
+- Formularios responsive.
+- Tarjetas adaptadas.
 - Acciones rápidas.
 - Controles táctiles.
 
@@ -647,9 +830,9 @@ Incluye:
 
 # Navegación
 
-La navegación disponible cambia automáticamente dependiendo de los permisos del usuario.
+La navegación cambia automáticamente según los permisos del usuario.
 
-Entre las secciones principales se encuentran:
+Las principales secciones son:
 
 ```text
 Inicio
@@ -663,7 +846,7 @@ Ayuda
 Perfil
 ```
 
-Un usuario solo puede visualizar las secciones correspondientes a su rol.
+Un usuario únicamente puede visualizar las rutas autorizadas para su rol.
 
 ---
 
@@ -671,7 +854,7 @@ Un usuario solo puede visualizar las secciones correspondientes a su rol.
 
 Cada usuario dispone de una sección personal.
 
-Desde ella puede consultar:
+Puede consultar:
 
 - Nombre.
 - Correo.
@@ -679,41 +862,45 @@ Desde ella puede consultar:
 - Estado.
 - Estado de verificación.
 
-El usuario puede modificar únicamente su propio nombre.
+Cada usuario puede modificar únicamente su propio nombre.
 
-Datos como correo, rol, estado administrativo y permisos están protegidos.
+El correo, rol, estado administrativo y permisos se encuentran protegidos.
 
 ---
 
 # Seguridad
 
-Alekey utiliza diferentes capas de seguridad.
+Alekey utiliza múltiples capas de seguridad tanto en frontend como en backend.
 
 Entre ellas:
 
 - Supabase Auth.
-- Autenticación mediante JWT.
+- Sesiones mediante JWT.
+- Verificación de correo.
+- Google OAuth.
+- OTP.
+- Protección de rutas.
+- Validación de usuarios activos.
+- Validación de usuarios verificados.
+- Roles y permisos.
 - Row Level Security.
 - Funciones SQL protegidas.
-- Control de permisos por rol.
-- Protección de rutas.
-- Verificación de correo.
-- Validación de usuarios activos.
-- Separación entre identidad y autorización.
+- RPC.
+- Políticas de acceso.
+- Seguridad HTTP.
+- Content Security Policy.
 
-La seguridad no depende únicamente de la interfaz.
+La seguridad no depende únicamente de ocultar elementos de la interfaz.
 
 Las operaciones sensibles también se validan directamente en Supabase.
-
-Esto evita que un usuario pueda obtener permisos simplemente modificando el frontend.
 
 ---
 
 # Row Level Security
 
-Las políticas RLS de Supabase controlan las operaciones permitidas sobre la base de datos.
+Las políticas **RLS** de Supabase regulan las operaciones permitidas sobre la base de datos.
 
-Dependiendo del rol se regula el acceso a:
+Dependiendo del rol del usuario se controla el acceso a:
 
 ```text
 SELECT
@@ -722,7 +909,7 @@ UPDATE
 DELETE
 ```
 
-en tablas como:
+sobre información como:
 
 - Ventas.
 - Inventario.
@@ -732,18 +919,190 @@ en tablas como:
 
 ---
 
-# Protección del Administrador total
+# Funciones SQL protegidas
 
-La cuenta propietaria del sistema dispone de protecciones adicionales.
+Las operaciones administrativas sensibles utilizan funciones SQL controladas.
 
-No puede:
+Entre ellas se encuentran funciones para:
 
-- Cambiar su propio rol.
-- Desactivarse desde el panel.
-- Eliminarse.
-- Ser modificada por un Co-admin.
+- Cambiar roles.
+- Activar usuarios.
+- Desactivar usuarios.
+- Eliminar usuarios.
+- Editar información personal permitida.
+- Comprobar existencia de correos.
 
-Esto reduce el riesgo de perder accidentalmente el acceso administrativo principal.
+Estas funciones validan el rol del usuario antes de realizar cambios.
+
+---
+
+# Seguridad HTTP
+
+La aplicación utiliza cabeceras HTTP de seguridad configuradas mediante **Vercel**.
+
+Entre ellas:
+
+- `Content-Security-Policy`
+- `X-Content-Type-Options`
+- `X-Frame-Options`
+- `Referrer-Policy`
+- `Permissions-Policy`
+- `Cross-Origin-Opener-Policy`
+- `Cross-Origin-Resource-Policy`
+
+Estas cabeceras ayudan a reducir riesgos relacionados con:
+
+- Cross-Site Scripting.
+- Clickjacking.
+- Carga de recursos no autorizados.
+- MIME sniffing.
+- Filtración innecesaria de información.
+- Uso no autorizado de cámara.
+- Uso no autorizado de micrófono.
+- Uso no autorizado de ubicación.
+
+---
+
+# Content Security Policy
+
+Alekey utiliza una política **Content-Security-Policy (CSP)**.
+
+La CSP restringe los recursos que el navegador tiene permitido cargar.
+
+Entre otros controles, limita:
+
+- Scripts.
+- Estilos.
+- Imágenes.
+- Conexiones.
+- Frames.
+- Formularios.
+- Workers.
+- Recursos externos.
+
+Las conexiones necesarias hacia Supabase se encuentran autorizadas explícitamente.
+
+```text
+https://*.supabase.co
+wss://*.supabase.co
+```
+
+Esto permite utilizar Supabase sin permitir conexiones indiscriminadas hacia otros servicios.
+
+---
+
+# Protección contra clickjacking
+
+Alekey utiliza:
+
+```text
+X-Frame-Options: DENY
+```
+
+y:
+
+```text
+frame-ancestors 'none'
+```
+
+dentro de la CSP.
+
+Esto evita que otras páginas puedan cargar Alekey dentro de un `iframe`.
+
+---
+
+# Permissions Policy
+
+La aplicación restringe funciones del navegador que actualmente no necesita.
+
+Por ejemplo:
+
+```text
+camera=()
+microphone=()
+geolocation=()
+```
+
+Esto evita que la aplicación solicite accidentalmente acceso a esos dispositivos.
+
+---
+
+# security.txt
+
+El proyecto incluye el archivo:
+
+```text
+/.well-known/security.txt
+```
+
+Su función es indicar un canal de contacto para reportar posibles vulnerabilidades o problemas de seguridad relacionados con la aplicación.
+
+En producción puede consultarse desde:
+
+```text
+https://alekey-app.vercel.app/.well-known/security.txt
+```
+
+---
+
+# HTTPS
+
+La aplicación de producción utiliza HTTPS mediante Vercel.
+
+Esto proporciona comunicación cifrada entre el navegador del usuario y la aplicación.
+
+El entorno de producción utiliza tecnologías como:
+
+- HTTPS.
+- TLS.
+- HSTS.
+
+---
+
+# Variables de entorno
+
+Las credenciales y configuraciones necesarias para conectar la aplicación con Supabase utilizan variables de entorno.
+
+Los archivos locales como:
+
+```text
+.env
+.env.local
+```
+
+no se almacenan dentro del repositorio.
+
+Estos archivos están incluidos dentro de `.gitignore`.
+
+---
+
+## Variables en Vercel
+
+Las variables necesarias en producción se configuran desde:
+
+```text
+Vercel
+→ Project
+→ Settings
+→ Environment Variables
+```
+
+Esto permite mantener configuraciones fuera del código fuente.
+
+---
+
+# Información sensible
+
+Nunca deben almacenarse dentro del frontend:
+
+- Service Role Key.
+- Contraseñas SMTP.
+- Contraseñas personales.
+- Google Client Secret.
+- Tokens administrativos.
+- Credenciales privadas.
+
+El frontend únicamente debe utilizar las credenciales públicas necesarias para conectarse a Supabase.
 
 ---
 
@@ -751,37 +1110,56 @@ Esto reduce el riesgo de perder accidentalmente el acceso administrativo princip
 
 Los pedidos pueden exportarse mediante documentos PDF.
 
-La generación de documentos utiliza:
+La generación utiliza:
 
 ```text
 jsPDF
 jsPDF AutoTable
 ```
 
-Esto facilita imprimir o compartir información relacionada con los pedidos.
+Esto facilita imprimir o compartir información asociada a los pedidos.
 
 ---
 
 # Experiencia de usuario
 
-La aplicación utiliza diferentes recursos para mejorar la experiencia:
+Alekey utiliza diferentes recursos para mejorar la experiencia del usuario.
 
-- SweetAlert2 para confirmaciones.
-- Animaciones de transición.
+Entre ellos:
+
+- SweetAlert2.
+- Animaciones.
+- Confirmaciones.
 - Indicadores visuales.
-- Iconografía consistente.
-- Feedback al guardar cambios.
 - Estados de carga.
-- Formularios adaptados.
-- Confirmaciones antes de acciones destructivas.
+- Iconografía consistente.
+- Formularios responsive.
+- Mensajes de error personalizados.
+- Confirmaciones para acciones destructivas.
 
 ---
 
-# Favicon y aplicación web
+# Animaciones
 
-Alekey cuenta con iconos optimizados para:
+La aplicación utiliza **Motion** para determinadas transiciones.
 
-- Navegadores web.
+Por ejemplo:
+
+```text
+Iniciar sesión
+      ↔
+Crear cuenta
+```
+
+Las animaciones se mantienen cortas y discretas para no afectar la experiencia de uso.
+
+---
+
+# Favicon e iconos
+
+Alekey incluye iconos optimizados para:
+
+- Navegadores.
 - Chrome.
 - Edge.
 - Firefox.
@@ -790,7 +1168,7 @@ Alekey cuenta con iconos optimizados para:
 - iPhone.
 - iPad.
 
-El proyecto incluye:
+El proyecto contiene:
 
 ```text
 favicon.ico
@@ -804,22 +1182,59 @@ web-app-manifest-512x512.png
 
 ---
 
+# Open Graph
+
+El archivo `index.html` incluye metadatos Open Graph.
+
+Esto permite mejorar la presentación del enlace cuando se comparte mediante plataformas compatibles como:
+
+- WhatsApp.
+- Facebook.
+- Discord.
+- LinkedIn.
+
+La vista previa puede incluir:
+
+- Nombre de Alekey.
+- Descripción.
+- Imagen.
+- URL.
+
+---
+
+# Manifest
+
+La aplicación incluye:
+
+```text
+site.webmanifest
+```
+
+con los iconos correspondientes para dispositivos móviles y navegadores compatibles.
+
+---
+
 # Estructura principal
 
 ```text
 alekey-app/
 │
 ├── public/
+│   ├── .well-known/
+│   │   └── security.txt
+│   │
+│   ├── alekey.png
+│   ├── apple-touch-icon.png
+│   ├── favicon-96x96.png
 │   ├── favicon.ico
 │   ├── favicon.svg
-│   ├── favicon-96x96.png
-│   ├── apple-touch-icon.png
 │   ├── site.webmanifest
 │   ├── web-app-manifest-192x192.png
 │   └── web-app-manifest-512x512.png
 │
 ├── src/
 │   ├── assets/
+│   │   └── images/
 │   │
 │   ├── components/
 │   │   ├── auth/
@@ -851,10 +1266,15 @@ alekey-app/
 │   ├── App.jsx
 │   └── main.jsx
 │
+├── .gitignore
 ├── index.html
 ├── package.json
 ├── pnpm-lock.yaml
+├── pnpm-workspace.yaml
+├── postcss.config.js
+├── tailwind.config.js
 ├── vite.config.js
+├── vercel.json
 └── README.md
 ```
 
@@ -880,7 +1300,7 @@ Instalar dependencias:
 pnpm install
 ```
 
-Ejecutar en desarrollo:
+Ejecutar el entorno de desarrollo:
 
 ```bash
 pnpm dev
@@ -896,10 +1316,16 @@ http://localhost:5173
 
 # Compilación
 
-Para generar una versión de producción:
+Para generar la versión de producción:
 
 ```bash
 pnpm build
+```
+
+El resultado se genera dentro de:
+
+```text
+dist/
 ```
 
 Para probar localmente el build:
@@ -910,68 +1336,175 @@ pnpm preview
 
 ---
 
-# Variables de entorno
+# Administrador de paquetes
 
-La conexión con Supabase debe configurarse mediante variables de entorno.
-
-Las credenciales privadas o claves administrativas nunca deben almacenarse directamente dentro del código fuente ni subirse al repositorio.
-
-El frontend debe utilizar únicamente las credenciales públicas correspondientes al cliente de Supabase.
-
----
-
-# Despliegue
-
-La aplicación se encuentra preparada para desplegarse mediante **Vercel**.
-
-El flujo utilizado es:
+El proyecto utiliza:
 
 ```text
-GitHub
-   ↓
-main
-   ↓
-Vercel
-   ↓
-Producción
+pnpm
 ```
-
-Cada actualización enviada a la rama principal puede generar automáticamente un nuevo despliegue.
-
----
-
-# Desarrollo
-
-El proyecto utiliza **pnpm** como administrador de paquetes.
 
 Se recomienda utilizar exclusivamente:
 
 ```bash
 pnpm install
 pnpm add
+pnpm remove
 pnpm dev
 pnpm build
 ```
 
-para evitar conflictos entre distintos gestores de dependencias.
+Esto evita conflictos entre diferentes administradores de paquetes.
+
+El proyecto utiliza:
+
+```text
+pnpm-lock.yaml
+```
+
+como archivo de bloqueo de dependencias.
+
+---
+
+# Archivos ignorados por Git
+
+El repositorio no almacena archivos generados o información sensible como:
+
+```text
+node_modules/
+dist/
+.env
+.env.local
+.vercel/
+*.log
+```
+
+Esto mantiene el repositorio limpio y evita publicar información privada.
+
+---
+
+# Vercel
+
+Alekey se despliega mediante **Vercel**.
+
+El flujo general es:
+
+```text
+Desarrollo local
+      ↓
+Git
+      ↓
+GitHub
+      ↓
+main
+      ↓
+Vercel
+      ↓
+Producción
+```
+
+Los nuevos commits enviados a la rama principal pueden iniciar automáticamente un nuevo despliegue.
+
+---
+
+# Configuración de Vercel
+
+El archivo:
+
+```text
+vercel.json
+```
+
+contiene configuración necesaria para el entorno de producción.
+
+Incluye:
+
+- Rewrites para React Router.
+- Security Headers.
+- Content Security Policy.
+- Restricciones de permisos del navegador.
+
+---
+
+## React Router en Vercel
+
+La aplicación utiliza un rewrite hacia:
+
+```text
+/index.html
+```
+
+para permitir acceder directamente a rutas como:
+
+```text
+/login
+/ventas
+/inventario
+/stats
+/admin/usuarios
+```
+
+sin obtener un error `404` al recargar la página.
+
+---
+
+# Build de producción
+
+Antes de realizar un despliegue se recomienda ejecutar:
+
+```bash
+pnpm build
+```
+
+Un build correcto debería finalizar con un mensaje similar a:
+
+```text
+✓ built in ...
+```
+
+Los avisos relacionados con tamaño de chunks no necesariamente representan errores de compilación.
+
+---
+
+# Rendimiento
+
+La aplicación utiliza varias librerías para proporcionar funcionalidades avanzadas como:
+
+- Gráficas.
+- PDF.
+- XLSX.
+- Drag & drop.
+- Alertas.
+- Animaciones.
+
+Como parte de la evolución del proyecto se pueden aplicar optimizaciones como:
+
+- Lazy loading.
+- Dynamic imports.
+- Code splitting.
+- Optimización de imágenes.
+- Reducción del tamaño del bundle.
+- Carga diferida de módulos pesados.
 
 ---
 
 # Objetivo del proyecto
 
-Alekey busca digitalizar y simplificar procesos que anteriormente podían requerir múltiples herramientas o controles manuales.
+Alekey busca digitalizar y simplificar procesos administrativos que anteriormente podían requerir múltiples herramientas o controles manuales.
 
-El objetivo principal es disponer de una plataforma centralizada que permita:
+Los principales objetivos son:
 
+- Centralizar información.
 - Reducir errores.
-- Mantener el inventario actualizado.
+- Mantener inventario actualizado.
 - Organizar pedidos.
 - Controlar pagos.
-- Detectar productos pendientes.
+- Detectar pendientes.
 - Consultar estadísticas.
-- Gestionar usuarios.
-- Mantener información accesible.
+- Administrar usuarios.
+- Aplicar permisos.
 - Facilitar el trabajo desde computadora o celular.
+- Mantener la información disponible desde diferentes dispositivos.
 
 ---
 
@@ -979,11 +1512,16 @@ El objetivo principal es disponer de una plataforma centralizada que permita:
 
 Alekey se encuentra en desarrollo activo.
 
-Actualmente cuenta con los módulos principales de:
+Actualmente incluye los módulos principales de:
 
 ```text
 Autenticación
-Usuarios y permisos
+OTP
+Google OAuth
+Recuperación de contraseña
+Usuarios
+Roles
+Permisos
 Dashboard
 Ventas
 Historial
@@ -993,23 +1531,58 @@ Estadísticas
 Alertas
 Configuración
 Perfil
+Seguridad HTTP
+CSP
 ```
 
-El sistema continúa evolucionando mediante mejoras en experiencia de usuario, seguridad, automatización y administración del negocio.
+El sistema continúa evolucionando mediante mejoras en:
+
+- Seguridad.
+- Rendimiento.
+- Experiencia de usuario.
+- Automatización.
+- Administración.
+- Diseño responsive.
 
 ---
 
-## Autor
+# Producción
+
+La aplicación se encuentra preparada para funcionar tanto en:
+
+```text
+Desarrollo local
+```
+
+como en:
+
+```text
+Vercel
+```
+
+La versión de producción está disponible mediante:
+
+```text
+https://alekey-app.vercel.app
+```
+
+---
+
+# Autor
 
 **Alejandro Soto Víquez**
 
 Ingeniería de Software  
 Universidad CENFOTEC
 
-GitHub: `alestooo`
+GitHub:
+
+```text
+alestooo
+```
 
 ---
 
-## Alekey
+# Alekey
 
-Sistema interno de gestión administrativa desarrollado específicamente para apoyar la operación diaria de **Alekey**.
+Sistema de gestión administrativa desarrollado específicamente para apoyar y digitalizar la operación diaria de **Alekey**.
