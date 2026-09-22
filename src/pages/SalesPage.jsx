@@ -693,6 +693,11 @@ export default function SalesPage({
   ] = useState(null);
 
   const [
+    editInitialSnapshot,
+    setEditInitialSnapshot,
+  ] = useState(null);
+
+  const [
     carpetas,
     setCarpetas,
   ] = useState([]);
@@ -1787,11 +1792,29 @@ export default function SalesPage({
             ""
         );
 
-      setEditCache(
+      const direccionNormalizada =
+        location.provincia &&
+        location.canton
+          ? `${location.provincia}, ${location.canton}`
+          : location.provincia ||
+            "";
+
+      const copia =
         structuredClone(
           venta
-        )
+        );
+
+      setEditCache(
+        copia
       );
+
+      setEditInitialSnapshot({
+        ...structuredClone(
+          venta
+        ),
+        direccion:
+          direccionNormalizada,
+      });
 
       setProvinciaEdit(
         location.provincia
@@ -1810,6 +1833,9 @@ export default function SalesPage({
     () => {
       setEditId(null);
       setEditCache(null);
+      setEditInitialSnapshot(
+        null
+      );
       setProvinciaEdit("");
       setCantonEdit("");
     };
@@ -2083,8 +2109,12 @@ export default function SalesPage({
               []
             ).filter(
               (item) =>
-                item.id !==
-                itemId
+                String(
+                  item.id
+                ) !==
+                String(
+                  itemId
+                )
             );
 
           return {
@@ -2112,9 +2142,44 @@ export default function SalesPage({
       );
     };
 
+  const hayCambiosEnEdicion =
+    () => {
+      if (
+        !editCache ||
+        !editInitialSnapshot
+      ) {
+        return false;
+      }
+
+      const direccionActual =
+        provinciaEdit &&
+        cantonEdit
+          ? `${provinciaEdit}, ${cantonEdit}`
+          : provinciaEdit ||
+            "";
+
+      const actual = {
+        ...editCache,
+        direccion:
+          direccionActual,
+      };
+
+      return (
+        JSON.stringify(
+          actual
+        ) !==
+        JSON.stringify(
+          editInitialSnapshot
+        )
+      );
+    };
+
   const guardarEdicion =
     async (id) => {
-      if (!editCache) {
+      if (
+        !editCache ||
+        !hayCambiosEnEdicion()
+      ) {
         return;
       }
 
@@ -2193,6 +2258,11 @@ export default function SalesPage({
             venta.id
           )
         }
+        hasChanges={
+          editId ===
+            venta.id &&
+          hayCambiosEnEdicion()
+        }
         onDelete={
           onDelete
         }
@@ -2201,6 +2271,9 @@ export default function SalesPage({
         }
         onRemoveFromFolder={
           deseleccionarDeCarpeta
+        }
+        inventarioCatalog={
+          inventarioCatalog
         }
         onEditItem={
           handleEditItem

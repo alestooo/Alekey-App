@@ -1,5 +1,7 @@
 import {
+  useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -971,7 +973,7 @@ export default function SaleForm({
           sm:rounded-[2.7rem]
           lg:rounded-[4rem]
 
-          shadow-[0_18px_48px_rgba(15,23,42,0.10),0_5px_16px_rgba(15,23,42,0.05)]
+          shadow-xl
 
           overflow-hidden
 
@@ -1117,7 +1119,9 @@ export default function SaleForm({
             text-slate-800
           "
         >
-          {/* CLIENT */}
+          {/* ===============================
+              CLIENT
+          =============================== */}
 
           <FormSection
             icon={User}
@@ -1192,7 +1196,9 @@ export default function SaleForm({
             </div>
           </FormSection>
 
-          {/* SALE INFO */}
+          {/* ===============================
+              SALE INFO
+          =============================== */}
 
           <FormSection
             icon={ShoppingBag}
@@ -1402,7 +1408,9 @@ export default function SaleForm({
             </div>
           )}
 
-          {/* LOCATION */}
+          {/* ===============================
+              LOCATION
+          =============================== */}
 
           <FormSection
             icon={MapPin}
@@ -1532,7 +1540,9 @@ export default function SaleForm({
             </div>
           </FormSection>
 
-          {/* PRODUCTS */}
+          {/* ===============================
+              PRODUCTS
+          =============================== */}
 
           <section>
             <div
@@ -1541,6 +1551,7 @@ export default function SaleForm({
 
                 flex
                 items-center
+                justify-between
                 gap-4
               "
             >
@@ -1549,6 +1560,59 @@ export default function SaleForm({
                 title="Productos"
                 subtitle={`${items.length} líneas · ${piezasPendientes} pendientes`}
               />
+
+              <button
+                type="button"
+                onClick={
+                  agregarLinea
+                }
+                className="
+                  shrink-0
+
+                  h-11
+                  px-4
+
+                  rounded-2xl
+
+                  bg-slate-900
+                  text-white
+
+                  flex
+                  items-center
+                  justify-center
+                  gap-2
+
+                  text-[8px]
+                  uppercase
+
+                  hover:bg-[#8ED4BE]
+                  hover:text-slate-900
+
+                  transition-all
+                "
+              >
+                <Plus
+                  size={15}
+                />
+
+                <span
+                  className="
+                    hidden
+                    sm:inline
+                  "
+                >
+                  Agregar
+                  producto
+                </span>
+
+                <span
+                  className="
+                    sm:hidden
+                  "
+                >
+                  Agregar
+                </span>
+              </button>
             </div>
 
             <div className="space-y-4">
@@ -1597,58 +1661,12 @@ export default function SaleForm({
                   />
                 )
               )}
-
-              {/* AGREGAR LÍNEA ABAJO */}
-
-              <button
-                type="button"
-                onClick={
-                  agregarLinea
-                }
-                className="
-                  w-full
-
-                  min-h-14
-                  px-5
-
-                  rounded-[1.4rem]
-
-                  border-2
-                  border-dashed
-                  border-slate-200
-
-                  bg-slate-50/40
-                  text-slate-400
-
-                  flex
-                  items-center
-                  justify-center
-                  gap-2
-
-                  text-[8px]
-                  sm:text-[9px]
-                  uppercase
-                  tracking-widest
-
-                  shadow-[0_8px_20px_rgba(15,23,42,0.035)]
-
-                  hover:border-[#8ED4BE]
-                  hover:bg-[#8ED4BE]/5
-                  hover:text-[#58B99A]
-
-                  transition-all
-                "
-              >
-                <Plus
-                  size={16}
-                />
-
-                Agregar línea
-              </button>
             </div>
           </section>
 
-          {/* COMMENT */}
+          {/* ===============================
+              COMMENT
+          =============================== */}
 
           <FormSection
             icon={TrendingUp}
@@ -1677,7 +1695,9 @@ export default function SaleForm({
             />
           </FormSection>
 
-          {/* SUMMARY */}
+          {/* ===============================
+              SUMMARY
+          =============================== */}
 
           <div
             className="
@@ -1714,7 +1734,9 @@ export default function SaleForm({
             />
           </div>
 
-          {/* SAVE */}
+          {/* ===============================
+              SAVE
+          =============================== */}
 
           <div
             className="
@@ -1776,7 +1798,7 @@ export default function SaleForm({
                 text-[9px]
                 uppercase
 
-                shadow-[0_12px_28px_rgba(15,23,42,0.12)]
+                shadow-lg
 
                 ${
                   isDebtPayment(
@@ -1805,6 +1827,361 @@ export default function SaleForm({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/*
+ * ========================================
+ * PRODUCT COMBOBOX
+ * ========================================
+ */
+
+function ProductCombobox({
+  value = "",
+  options = [],
+  onChange,
+  placeholder = "Seleccionar o escribir...",
+  disabled = false,
+  customValue = "OTROS...",
+}) {
+  const [
+    open,
+    setOpen,
+  ] = useState(false);
+
+  const containerRef =
+    useRef(null);
+
+  const cleanValue =
+    String(value || "");
+
+  const search =
+    cleanValue
+      .trim()
+      .toLowerCase();
+
+  const filteredOptions =
+    options.filter(
+      (option) => {
+        if (!search) {
+          return true;
+        }
+
+        return String(option)
+          .toLowerCase()
+          .includes(search);
+      }
+    );
+
+  const isCustom =
+    cleanValue ===
+    customValue;
+
+  useEffect(() => {
+    const handleOutside =
+      (event) => {
+        if (
+          containerRef.current &&
+          !containerRef.current.contains(
+            event.target
+          )
+        ) {
+          setOpen(false);
+        }
+      };
+
+    document.addEventListener(
+      "mousedown",
+      handleOutside
+    );
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleOutside
+      );
+    };
+  }, []);
+
+  const selectOption =
+    (option) => {
+      onChange?.(option);
+      setOpen(false);
+    };
+
+  return (
+    <div
+      ref={containerRef}
+      className="
+        sale-combobox
+        relative
+        w-full
+        min-w-0
+      "
+    >
+      <div
+        className={`
+          sale-combobox-control
+          ${isCustom ? "sale-combobox-control-custom" : ""}
+          ${disabled ? "sale-combobox-disabled" : ""}
+
+          relative
+          min-h-[52px]
+
+          rounded-2xl
+          border-[1.5px]
+
+          !bg-white
+          dark:!bg-[#111c2d]
+
+          shadow-[0_2px_8px_rgba(15,23,42,0.025)]
+
+          transition-all
+
+          ${
+            isCustom
+              ? `
+                border-purple-400
+                !bg-purple-50
+                dark:!bg-purple-950/35
+                dark:border-purple-700
+
+                shadow-[0_0_0_3px_rgba(168,85,247,0.08)]
+              `
+              : `
+                border-slate-200
+                dark:border-slate-700
+
+                focus-within:border-[#8ED4BE]
+              `
+          }
+
+          ${
+            disabled
+              ? "opacity-40"
+              : ""
+          }
+        `}
+      >
+        <input
+          type="text"
+          value={cleanValue}
+          disabled={disabled}
+          autoComplete="off"
+          placeholder={placeholder}
+          onFocus={() => {
+            if (!disabled) {
+              setOpen(true);
+            }
+          }}
+          onChange={(event) => {
+            onChange?.(
+              event.target.value
+            );
+
+            setOpen(true);
+          }}
+          className={`
+            sale-combobox-input
+
+            w-full
+            min-h-[50px]
+
+            pl-4
+            pr-11
+
+            border-0
+            outline-none
+
+            bg-transparent
+
+            text-xs
+            font-black
+
+            placeholder:!text-slate-500
+            dark:placeholder:!text-slate-500
+
+            ${
+              isCustom
+                ? "!text-slate-950 dark:!text-purple-200"
+                : "!text-slate-950 dark:!text-slate-200"
+            }
+          `}
+        />
+
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => {
+            if (!disabled) {
+              setOpen(
+                (previous) =>
+                  !previous
+              );
+            }
+          }}
+          className="
+            sale-combobox-button
+
+            absolute
+            right-0
+            top-0
+
+            h-full
+            w-11
+
+            flex
+            items-center
+            justify-center
+
+            text-slate-400
+            dark:text-slate-500
+
+            disabled:cursor-not-allowed
+          "
+          aria-label="Mostrar opciones"
+        >
+          <ChevronDown
+            size={15}
+          />
+        </button>
+      </div>
+
+      {open &&
+        !disabled && (
+          <div
+            className="
+              sale-combobox-menu
+
+              absolute
+              z-[80]
+
+              left-0
+              right-0
+              top-[calc(100%+7px)]
+
+              max-h-56
+              overflow-y-auto
+
+              p-2
+
+              rounded-2xl
+
+              border
+              border-slate-200
+              dark:border-slate-700
+
+              bg-white
+              dark:bg-slate-900
+
+              shadow-[0_18px_45px_rgba(15,23,42,0.18)]
+              dark:shadow-[0_18px_45px_rgba(0,0,0,0.45)]
+            "
+          >
+            {filteredOptions.length >
+            0 ? (
+              filteredOptions.map(
+                (option) => {
+                  const optionCustom =
+                    option ===
+                    customValue;
+
+                  const selected =
+                    option ===
+                    cleanValue;
+
+                  return (
+                    <button
+                      type="button"
+                      key={option}
+                      onMouseDown={(
+                        event
+                      ) => {
+                        event.preventDefault();
+
+                        selectOption(
+                          option
+                        );
+                      }}
+                      className={`
+                        sale-combobox-option
+                        ${optionCustom ? "sale-combobox-option-custom" : ""}
+                        ${selected ? "sale-combobox-option-selected" : ""}
+
+                        w-full
+
+                        px-3
+                        py-2.5
+
+                        rounded-xl
+
+                        text-left
+                        text-[10px]
+                        uppercase
+                        font-black
+
+                        transition-all
+
+                        ${
+                          optionCustom
+                            ? `
+                              bg-purple-50
+                              !text-slate-950
+
+                              hover:bg-purple-100
+
+                              dark:bg-purple-500/10
+                              dark:!text-purple-300
+                              dark:hover:bg-purple-500/20
+                            `
+                            : selected
+                              ? `
+                                bg-slate-100
+                                text-slate-900
+
+                                dark:bg-slate-800
+                                dark:text-white
+                              `
+                              : `
+                                text-slate-600
+                                hover:bg-slate-50
+                                hover:text-slate-900
+
+                                dark:text-slate-300
+                                dark:hover:bg-slate-800
+                                dark:hover:text-white
+                              `
+                        }
+                      `}
+                    >
+                      {option}
+                    </button>
+                  );
+                }
+              )
+            ) : (
+              <div
+                className="
+                  sale-combobox-empty
+
+                  px-3
+                  py-3
+
+                  text-center
+                  text-[9px]
+                  uppercase
+                  font-bold
+
+                  text-slate-400
+                "
+              >
+                Puedes escribir
+                el valor manualmente
+              </div>
+            )}
+          </div>
+        )}
     </div>
   );
 }
@@ -1853,8 +2230,6 @@ function ProductRow({
       className={`
         sale-product-card
 
-        shadow-[0_10px_26px_rgba(15,23,42,0.055)]
-
         ${
           pendiente > 0
             ? "sale-product-card-pending"
@@ -1862,6 +2237,8 @@ function ProductRow({
         }
       `}
     >
+      {/* TOP */}
+
       <div
         className="
           flex
@@ -1963,6 +2340,8 @@ function ProductRow({
         </button>
       </div>
 
+      {/* CATEGORY / THEME */}
+
       <div
         className="
           grid
@@ -1976,48 +2355,23 @@ function ProductRow({
             Categoría
           </FieldLabel>
 
-          <SelectShell>
-            <select
-              value={
-                item.cat
-              }
-              onChange={(
-                event
-              ) =>
-                onChange(
-                  "cat",
-                  event.target
-                    .value
-                )
-              }
-              className="
-                sale-form-select
-              "
-            >
-              <option value="">
-                Seleccionar...
-              </option>
-
-              {categorias.map(
-                (
-                  categoria
-                ) => (
-                  <option
-                    key={
-                      categoria
-                    }
-                    value={
-                      categoria
-                    }
-                  >
-                    {
-                      categoria
-                    }
-                  </option>
-                )
-              )}
-            </select>
-          </SelectShell>
+          <ProductCombobox
+            value={
+              item.cat
+            }
+            options={
+              categorias
+            }
+            onChange={(
+              value
+            ) =>
+              onChange(
+                "cat",
+                value
+              )
+            }
+            placeholder="Seleccionar o escribir..."
+          />
         </Field>
 
         <Field compact>
@@ -2028,6 +2382,7 @@ function ProductRow({
           {item.cat ===
           "OTROS..." ? (
             <input
+              type="text"
               value={
                 item.tema
               }
@@ -2040,102 +2395,181 @@ function ProductRow({
                     .value
                 )
               }
-              placeholder="Descripción..."
+              placeholder="Escribe la descripción..."
               className="
                 sale-form-control
+                sale-custom-option
                 w-full
+
+                !border-purple-400
+                !bg-purple-50
+                !text-slate-950
+
+                placeholder:!text-slate-500
+
+                focus:!border-purple-500
+                focus:!shadow-[0_0_0_4px_rgba(168,85,247,0.12)]
+
+                dark:!bg-purple-950/35
+                dark:!border-purple-700
+                dark:!text-purple-200
+                dark:placeholder:!text-purple-300/60
               "
             />
           ) : (
-            <SelectShell
+            <ProductCombobox
+              value={
+                item.tema
+              }
+              options={
+                temas
+              }
               disabled={
                 !item.cat
               }
-            >
-              <select
-                value={
-                  item.tema
-                }
-                disabled={
-                  !item.cat
-                }
-                onChange={(
-                  event
-                ) =>
-                  onChange(
-                    "tema",
-                    event.target
-                      .value
-                  )
-                }
-                className="
-                  sale-form-select
-                "
-              >
-                <option value="">
-                  Seleccionar...
-                </option>
-
-                {temas.map(
-                  (tema) => (
-                    <option
-                      key={
-                        tema
-                      }
-                      value={
-                        tema
-                      }
-                    >
-                      {tema}
-                    </option>
-                  )
-                )}
-              </select>
-            </SelectShell>
+              onChange={(
+                value
+              ) =>
+                onChange(
+                  "tema",
+                  value
+                )
+              }
+              placeholder={
+                item.cat
+                  ? "Seleccionar o escribir..."
+                  : "Primero selecciona categoría"
+              }
+            />
           )}
         </Field>
       </div>
 
+      {/* PRICE */}
+
       <div
-        className="
+        className={`
           mt-3
           sale-product-price
-        "
+
+          ${
+            item.cat ===
+            "OTROS..."
+              ? `
+                sale-product-price-custom
+                !border-purple-400
+                !bg-purple-50
+
+                shadow-[0_0_0_3px_rgba(168,85,247,0.08)]
+
+                dark:!border-purple-700
+                dark:!bg-purple-950/35
+              `
+              : ""
+          }
+        `}
       >
         <span
-          className="
+          className={`
             text-[7px]
             uppercase
             tracking-widest
-            text-slate-400
-          "
+
+            ${
+              item.cat ===
+              "OTROS..."
+                ? "sale-custom-price-label !text-slate-950 dark:!text-purple-300"
+                : "text-slate-400"
+            }
+          `}
         >
-          Precio
+          {item.cat ===
+          "OTROS..."
+            ? "Precio manual"
+            : "Precio"}
         </span>
 
         {item.cat ===
         "OTROS..." ? (
-          <input
-            type="number"
-            min="0"
-            value={
-              item.precio
-            }
-            onChange={(
-              event
-            ) =>
-              onChange(
-                "precio",
-                Number.parseFloat(
-                  event.target
-                    .value
-                ) || 0
-              )
-            }
+          <div
             className="
-              sale-price-input
+              sale-custom-price-control
+
+              min-w-[145px]
+
+              flex
+              items-center
+
+              overflow-hidden
+
+              rounded-xl
+
+              border
+              border-purple-300
+              dark:border-purple-800
+
+              bg-white
+              dark:bg-purple-950/50
             "
-          />
+          >
+            <span
+              className="
+                sale-custom-price-currency
+
+                pl-3
+
+                text-sm
+                font-black
+
+                !text-slate-950
+                dark:!text-purple-300
+              "
+            >
+              ₡
+            </span>
+
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={
+                item.precio
+              }
+              onChange={(
+                event
+              ) =>
+                onChange(
+                  "precio",
+                  Number.parseFloat(
+                    event.target
+                      .value
+                  ) || 0
+                )
+              }
+              placeholder="0"
+              className="
+                sale-price-input
+                sale-custom-price-input
+
+                w-[120px]
+                min-h-[38px]
+
+                px-3
+
+                border-0
+                outline-none
+
+                bg-transparent
+
+                text-right
+                text-sm
+                font-black
+
+                !text-slate-950
+                dark:!text-purple-200
+              "
+            />
+          </div>
         ) : (
           <strong
             className="
@@ -2152,6 +2586,8 @@ function ProductRow({
           </strong>
         )}
       </div>
+
+      {/* MOBILE-FRIENDLY QUANTITY / PENDING */}
 
       <div
         className="
@@ -2230,6 +2666,8 @@ function ProductRow({
           />
         </div>
       </div>
+
+      {/* FOOT */}
 
       <div
         className="
@@ -2331,8 +2769,6 @@ function FormSection({
     <section
       className={`
         sale-form-section
-
-        shadow-[0_8px_22px_rgba(15,23,42,0.04)]
 
         ${
           soft
@@ -2516,8 +2952,6 @@ function SummaryCard({
         border
 
         min-w-0
-
-        shadow-[0_6px_18px_rgba(15,23,42,0.04)]
 
         ${
           danger

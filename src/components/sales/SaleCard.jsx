@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import QuantityControls from "../common/QuantityControls";
+import ProductCombobox from "./ProductCombobox";
 
 import {
   UBICACIONES_CR,
@@ -51,9 +52,13 @@ export default function SaleCard({
   onCancelEdit,
   onSaveEdit,
 
+  hasChanges = false,
+
   onDelete,
   onAddToFolder,
   onRemoveFromFolder,
+
+  inventarioCatalog = [],
 
   onEditItem,
   onAddLine,
@@ -67,6 +72,76 @@ export default function SaleCard({
   if (!data) {
     return null;
   }
+
+  const inventarioActivo =
+    (
+      inventarioCatalog ||
+      []
+    ).filter(
+      (producto) =>
+        producto?.activo !==
+        false
+    );
+
+  const categorias =
+    [
+      ...new Set(
+        inventarioActivo
+          .map(
+            (producto) =>
+              producto.categoria
+          )
+          .filter(Boolean)
+      ),
+    ].sort(
+      (a, b) =>
+        String(a).localeCompare(
+          String(b),
+          "es",
+          {
+            sensitivity:
+              "base",
+          }
+        )
+    );
+
+  if (
+    !categorias.includes(
+      "OTROS..."
+    )
+  ) {
+    categorias.push(
+      "OTROS..."
+    );
+  }
+
+  const obtenerTemas =
+    (categoria) =>
+      [
+        ...new Set(
+          inventarioActivo
+            .filter(
+              (producto) =>
+                producto.categoria ===
+                categoria
+            )
+            .map(
+              (producto) =>
+                producto.tema
+            )
+            .filter(Boolean)
+        ),
+      ].sort(
+        (a, b) =>
+          String(a).localeCompare(
+            String(b),
+            "es",
+            {
+              sensitivity:
+                "base",
+            }
+          )
+      );
 
   const tienePendientes =
     (
@@ -629,12 +704,19 @@ export default function SaleCard({
                 <button
                   type="button"
                   disabled={
-                    !editValido
+                    !editValido ||
+                    !hasChanges
                   }
                   onClick={
                     onSaveEdit
                   }
-                  title="Guardar cambios"
+                  title={
+                    !hasChanges
+                      ? "Haz un cambio para guardar"
+                      : !editValido
+                        ? "Completa los datos requeridos"
+                        : "Guardar cambios"
+                  }
                   className="
                     w-11
                     h-11
@@ -644,9 +726,22 @@ export default function SaleCard({
                     flex
                     items-center
                     justify-center
+                    transition-all
+
                     hover:bg-emerald-500
                     hover:text-white
-                    disabled:opacity-30
+
+                    disabled:bg-slate-100
+                    disabled:text-slate-300
+                    disabled:opacity-100
+                    disabled:cursor-not-allowed
+                    disabled:hover:bg-slate-100
+                    disabled:hover:text-slate-300
+
+                    dark:disabled:bg-slate-800
+                    dark:disabled:text-slate-600
+                    dark:disabled:hover:bg-slate-800
+                    dark:disabled:hover:text-slate-600
                   "
                 >
                   <Check
@@ -664,13 +759,23 @@ export default function SaleCard({
                     w-11
                     h-11
                     rounded-xl
-                    bg-slate-100
-                    text-slate-500
+
+                    bg-red-50
+                    text-red-400
+
                     flex
                     items-center
                     justify-center
+
+                    transition-all
+
                     hover:bg-red-500
                     hover:text-white
+
+                    dark:bg-red-500/10
+                    dark:text-red-300
+                    dark:hover:bg-red-500
+                    dark:hover:text-white
                   "
                 >
                   <X
@@ -781,24 +886,56 @@ export default function SaleCard({
       ================================= */}
 
       <div
-        className="
+        style={
+          editing
+            ? {
+                minHeight:
+                  "430px",
+                maxHeight:
+                  "620px",
+              }
+            : undefined
+        }
+        className={`
           sale-card-body
-          overflow-x-auto
-          max-h-[300px]
           overflow-y-auto
-        "
+
+          ${
+            editing
+              ? "overflow-x-hidden sm:overflow-x-auto"
+              : "overflow-x-auto max-h-[300px]"
+          }
+        `}
       >
         <div
-          className="
-            min-w-[700px]
-            px-5
-            lg:px-7
-          "
+          className={
+            editing
+              ? `
+                min-w-0
+                px-4
+
+                sm:min-w-[700px]
+                sm:px-5
+
+                lg:px-7
+              `
+              : `
+                min-w-[700px]
+                px-5
+                lg:px-7
+              `
+          }
         >
           <div
-            className="
+            className={`
               sale-card-table-head
-              grid
+
+              ${
+                editing
+                  ? "hidden sm:grid"
+                  : "grid"
+              }
+
               grid-cols-[70px_1fr_100px_120px]
               gap-3
               py-4
@@ -806,7 +943,7 @@ export default function SaleCard({
               uppercase
               tracking-widest
               text-slate-300
-            "
+            `}
           >
             <span>
               Cant.
@@ -843,36 +980,73 @@ export default function SaleCard({
                   key={
                     item.id
                   }
-                  className="
+                  className={`
                     sale-card-row
                     grid
-                    grid-cols-[70px_1fr_100px_120px]
                     gap-3
-                    items-center
                     py-4
                     border-b
                     border-slate-100
-                  "
+
+                    ${
+                      editing
+                        ? `
+                          grid-cols-[58px_minmax(0,1fr)]
+                          items-start
+
+                          sm:grid-cols-[70px_1fr_100px_120px]
+                          sm:items-center
+                        `
+                        : `
+                          grid-cols-[70px_1fr_100px_120px]
+                          items-center
+                        `
+                    }
+                  `}
                 >
                   {editing ? (
-                    <QuantityControls
-                      value={
-                        Number(
-                          item.cant
-                        ) || 1
-                      }
-                      min={1}
-                      max={99}
-                      onChange={(
-                        value
-                      ) =>
-                        onEditItem?.(
-                          item.id,
-                          "cant",
+                    <div
+                      className="
+                        pt-1
+
+                        sm:pt-0
+                      "
+                    >
+                      <span
+                        className="
+                          block
+                          mb-2
+
+                          text-[7px]
+                          uppercase
+                          tracking-widest
+                          text-slate-300
+
+                          sm:hidden
+                        "
+                      >
+                        Cant.
+                      </span>
+
+                      <QuantityControls
+                        value={
+                          Number(
+                            item.cant
+                          ) || 1
+                        }
+                        min={1}
+                        max={99}
+                        onChange={(
                           value
-                        )
-                      }
-                    />
+                        ) =>
+                          onEditItem?.(
+                            item.id,
+                            "cant",
+                            value
+                          )
+                        }
+                      />
+                    </div>
                   ) : (
                     <span
                       className="
@@ -895,111 +1069,235 @@ export default function SaleCard({
                     {editing ? (
                       <div
                         className="
-                          flex
-                          items-center
-                          gap-2
+                          space-y-2
                         "
                       >
-                        <input
-                          list="productos-list"
-                          value={
-                            item.cat ||
-                            ""
-                          }
-                          onChange={(
-                            event
-                          ) =>
-                            onEditItem?.(
-                              item.id,
-                              "cat",
-                              event
-                                .target
-                                .value
-                            )
-                          }
-                          placeholder="Categoría"
+                        <span
                           className="
-                            sale-edit-input
-                            w-40
-                          "
-                        />
+                            block
+                            mb-2
 
-                        <input
-                          list="temas-list"
-                          value={
-                            item.tema ||
-                            ""
-                          }
-                          onChange={(
-                            event
-                          ) =>
-                            onEditItem?.(
-                              item.id,
-                              "tema",
-                              event
-                                .target
-                                .value
-                            )
-                          }
-                          placeholder="Tema"
+                            text-[7px]
+                            uppercase
+                            tracking-widest
+                            text-slate-300
+
+                            sm:hidden
+                          "
+                        >
+                          Descripción
+                        </span>
+
+                        <div
                           className="
-                            sale-edit-input
-                            flex-1
-                          "
-                        />
+                            grid
+                            grid-cols-[minmax(0,1fr)_40px]
+                            gap-2
+                            items-center
 
-                        {item.cat ===
-                          "OTROS..." && (
-                          <input
-                            type="number"
-                            min="0"
+                            sm:grid-cols-[160px_minmax(180px,1fr)_40px]
+                          "
+                        >
+                          <div
+                            className="
+                              min-w-0
+                            "
+                          >
+                            <ProductCombobox
                             value={
-                              item.precio ||
-                              0
+                              item.cat ||
+                              ""
+                            }
+                            options={
+                              categorias
                             }
                             onChange={(
-                              event
+                              value
                             ) =>
                               onEditItem?.(
                                 item.id,
-                                "precio",
-                                Number.parseFloat(
+                                "cat",
+                                value
+                              )
+                            }
+                              placeholder="Categoría"
+                            />
+                          </div>
+
+                          <div
+                            className="
+                              col-span-2
+                              min-w-0
+
+                              sm:col-span-1
+                              sm:col-start-2
+                              sm:row-start-1
+                            "
+                          >
+                            {item.cat ===
+                            "OTROS..." ? (
+                              <input
+                              type="text"
+                              value={
+                                item.tema ||
+                                ""
+                              }
+                              onChange={(
+                                event
+                              ) =>
+                                onEditItem?.(
+                                  item.id,
+                                  "tema",
                                   event
                                     .target
                                     .value
-                                ) ||
-                                  0
+                                )
+                              }
+                              placeholder="Escribe el tema..."
+                              className="
+                                sale-edit-input
+                                sale-custom-option
+                                w-full
+                              "
+                            />
+                          ) : (
+                            <ProductCombobox
+                              value={
+                                item.tema ||
+                                ""
+                              }
+                              options={
+                                obtenerTemas(
+                                  item.cat
+                                )
+                              }
+                              disabled={
+                                !item.cat
+                              }
+                              onChange={(
+                                value
+                              ) =>
+                                onEditItem?.(
+                                  item.id,
+                                  "tema",
+                                  value
+                                )
+                              }
+                              placeholder={
+                                item.cat
+                                  ? "Seleccionar o escribir..."
+                                  : "Primero categoría"
+                              }
+                                customValue="__NO_CUSTOM__"
+                              />
+                            )}
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onDeleteLine?.(
+                                item.id
                               )
                             }
+                            title="Quitar línea"
                             className="
-                              sale-edit-input
-                              w-24
-                            "
-                          />
-                        )}
+                              col-start-2
+                              row-start-1
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            onDeleteLine?.(
-                              item.id
-                            )
-                          }
-                          className="
-                            w-9
-                            h-9
-                            rounded-xl
-                            bg-red-50
-                            text-red-400
-                            flex
-                            items-center
-                            justify-center
-                          "
-                        >
-                          <Trash2
-                            size={14}
-                          />
-                        </button>
+                              w-10
+                              h-10
+
+                              rounded-xl
+
+                              bg-red-50
+                              text-red-400
+
+                              flex
+                              items-center
+                              justify-center
+
+                              transition-all
+
+                              hover:bg-red-500
+                              hover:text-white
+
+                              sm:col-start-3
+                              sm:row-start-1
+
+                              dark:bg-red-500/10
+                              dark:text-red-300
+                              dark:hover:bg-red-500
+                              dark:hover:text-white
+                            "
+                          >
+                            <Trash2
+                              size={14}
+                            />
+                          </button>
+                        </div>
+
+                        {item.cat ===
+                          "OTROS..." && (
+                          <div
+                            className="
+                              sale-edit-custom-price
+                            "
+                          >
+                            <span
+                              className="
+                                sale-edit-custom-price-label
+                              "
+                            >
+                              Precio manual
+                            </span>
+
+                            <div
+                              className="
+                                flex
+                                items-center
+                                gap-2
+                              "
+                            >
+                              <span
+                                className="
+                                  text-xs
+                                  font-black
+                                "
+                              >
+                                ₡
+                              </span>
+
+                              <input
+                                type="number"
+                                min="0"
+                                step="1"
+                                value={
+                                  item.precio ||
+                                  0
+                                }
+                                onChange={(
+                                  event
+                                ) =>
+                                  onEditItem?.(
+                                    item.id,
+                                    "precio",
+                                    Number.parseFloat(
+                                      event
+                                        .target
+                                        .value
+                                    ) ||
+                                      0
+                                  )
+                                }
+                                className="
+                                  sale-edit-input
+                                  sale-edit-price-input
+                                "
+                              />
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div
@@ -1011,16 +1309,33 @@ export default function SaleCard({
                         "
                       >
                         <span
-                          className="
+                          className={`
                             px-2
                             py-1
                             rounded-lg
-                            bg-slate-100
-                            text-slate-700
                             text-[7px]
                             uppercase
                             whitespace-nowrap
-                          "
+
+                            ${
+                              item.cat ===
+                              "OTROS..."
+                                ? `
+                                  bg-purple-50
+                                  text-purple-600
+                                  border
+                                  border-purple-100
+
+                                  dark:bg-purple-500/10
+                                  dark:text-purple-300
+                                  dark:border-purple-500/20
+                                `
+                                : `
+                                  bg-slate-100
+                                  text-slate-700
+                                `
+                            }
+                          `}
                         >
                           {
                             item.cat
@@ -1044,7 +1359,41 @@ export default function SaleCard({
                     )}
                   </div>
 
-                  <div className="text-center">
+                  <div
+                    className={
+                      editing
+                        ? `
+                          col-start-1
+                          row-start-2
+
+                          pt-2
+                          text-center
+
+                          sm:col-auto
+                          sm:row-auto
+                          sm:pt-0
+                        `
+                        : "text-center"
+                    }
+                  >
+                    {editing && (
+                      <span
+                        className="
+                          block
+                          mb-2
+
+                          text-[7px]
+                          uppercase
+                          tracking-widest
+                          text-slate-300
+
+                          sm:hidden
+                        "
+                      >
+                        Pend.
+                      </span>
+                    )}
+
                     {editing ? (
                       <QuantityControls
                         value={
@@ -1106,18 +1455,53 @@ export default function SaleCard({
                     )}
                   </div>
 
-                  <span
-                    className="
+                  <div
+                    className={`
                       sale-main
                       text-right
                       text-[10px]
                       text-slate-500
-                    "
+
+                      ${
+                        editing
+                          ? `
+                            col-start-2
+                            row-start-2
+
+                            self-end
+                            pt-2
+
+                            sm:col-auto
+                            sm:row-auto
+                            sm:self-auto
+                            sm:pt-0
+                          `
+                          : ""
+                      }
+                    `}
                   >
+                    {editing && (
+                      <span
+                        className="
+                          block
+                          mb-2
+
+                          text-[7px]
+                          uppercase
+                          tracking-widest
+                          text-slate-300
+
+                          sm:hidden
+                        "
+                      >
+                        Subtotal
+                      </span>
+                    )}
+
                     {currency(
                       subtotal
                     )}
-                  </span>
+                  </div>
                 </div>
               );
             }
