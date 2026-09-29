@@ -1,27 +1,26 @@
-export const PAYMENT_METHODS = [
-  "Efectivo",
-  "Tarjeta",
-  "Sinpe",
-  "Centro Educativo",
-  "Cheque",
-  "DEBE",
-];
-
 export const PAYMENT_PLACEHOLDER =
   "Pago...";
 
 export const PAYMENT_OPTIONS = [
   PAYMENT_PLACEHOLDER,
-  ...PAYMENT_METHODS,
+  "Efectivo",
+  "Tarjeta",
+  "Sinpe",
+  "Centro Educativo",
+  "Transferencia",
+  "Cheque",
+  "DEBE",
 ];
 
-export const isDebtPayment = (
-  value
-) => {
+export function isDebtPayment(
+  paymentMethod
+) {
   return (
-    String(value || "")
+    String(
+      paymentMethod || ""
+    )
       .trim()
       .toUpperCase() ===
     "DEBE"
   );
-};
+}

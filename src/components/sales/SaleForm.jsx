@@ -31,6 +31,12 @@ import {
 } from "../../lib/supabase";
 
 import {
+  createFolder,
+  getFolders,
+  updateFolderSales,
+} from "../../services/foldersService";
+
+import {
   UBICACIONES_CR,
 } from "../../constants/locations";
 
@@ -61,6 +67,21 @@ const SELLERS = [
   "Isabel",
   "Jason",
 ];
+
+const SYSTEM_FOLDER_NAMES =
+  new Set([
+    "DEBE",
+    "PENDIENTES",
+  ]);
+
+const NEW_GROUP_VALUE =
+  "__NUEVO_GRUPO__";
+
+const normalizeFolderName =
+  (value) =>
+    String(value || "")
+      .trim()
+      .toUpperCase();
 
 const createEmptyItem =
   () => ({
@@ -106,6 +127,21 @@ export default function SaleForm({
   ] = useState("");
 
   const [
+    carpetas,
+    setCarpetas,
+  ] = useState([]);
+
+  const [
+    grupoId,
+    setGrupoId,
+  ] = useState("");
+
+  const [
+    cargandoGrupos,
+    setCargandoGrupos,
+  ] = useState(true);
+
+  const [
     provincia,
     setProvincia,
   ] = useState("");
@@ -146,9 +182,344 @@ export default function SaleForm({
   ]);
 
   const [
+    descuentoActivo,
+    setDescuentoActivo,
+  ] = useState(false);
+
+  const [
+    descuento,
+    setDescuento,
+  ] = useState(0);
+
+  const [
     guardando,
     setGuardando,
   ] = useState(false);
+
+  /*
+   * GROUPS / FOLDERS
+   */
+
+  const gruposDisponibles =
+    useMemo(
+      () =>
+        carpetas
+          .filter(
+            (folder) =>
+              !SYSTEM_FOLDER_NAMES.has(
+                normalizeFolderName(
+                  folder?.nombre
+                )
+              )
+          )
+          .sort(
+            (a, b) =>
+              String(
+                a?.nombre || ""
+              ).localeCompare(
+                String(
+                  b?.nombre || ""
+                ),
+                "es",
+                {
+                  sensitivity:
+                    "base",
+                }
+              )
+          ),
+      [carpetas]
+    );
+
+  const grupoSeleccionado =
+    useMemo(
+      () =>
+        gruposDisponibles.find(
+          (folder) =>
+            String(folder.id) ===
+            String(grupoId)
+        ) || null,
+      [
+        gruposDisponibles,
+        grupoId,
+      ]
+    );
+
+  const cargarGrupos =
+    async () => {
+      setCargandoGrupos(
+        true
+      );
+
+      try {
+        const data =
+          await getFolders();
+
+        setCarpetas(
+          data || []
+        );
+      } catch (error) {
+        console.error(
+          "Error cargando grupos:",
+          error
+        );
+      } finally {
+        setCargandoGrupos(
+          false
+        );
+      }
+    };
+
+  useEffect(() => {
+    cargarGrupos();
+  }, []);
+
+  const crearNuevoGrupo =
+    async () => {
+      const {
+        value: nombreGrupo,
+      } = await Swal.fire({
+        title:
+          "Nuevo Grupo / Centro",
+
+        text:
+          "Se creará también en Centros Educativos.",
+
+        input:
+          "text",
+
+        inputPlaceholder:
+          "Ej: CTP CIT",
+
+        showCancelButton:
+          true,
+
+        confirmButtonText:
+          "Crear grupo",
+
+        cancelButtonText:
+          "Cancelar",
+
+        confirmButtonColor:
+          "#8ED4BE",
+
+        inputValidator:
+          (value) => {
+            if (
+              !String(
+                value || ""
+              ).trim()
+            ) {
+              return "Escribe un nombre para el grupo.";
+            }
+
+            return null;
+          },
+      });
+
+      const limpio =
+        String(
+          nombreGrupo || ""
+        ).trim();
+
+      if (!limpio) {
+        return;
+      }
+
+      if (
+        SYSTEM_FOLDER_NAMES.has(
+          normalizeFolderName(
+            limpio
+          )
+        )
+      ) {
+        await Swal.fire({
+          title:
+            "Nombre reservado",
+
+          text:
+            "DEBE y PENDIENTES son grupos automáticos del sistema.",
+
+          icon:
+            "info",
+
+          confirmButtonColor:
+            "#8ED4BE",
+        });
+
+        return;
+      }
+
+      const existente =
+        gruposDisponibles.find(
+          (folder) =>
+            normalizeFolderName(
+              folder.nombre
+            ) ===
+            normalizeFolderName(
+              limpio
+            )
+        );
+
+      if (existente) {
+        setGrupoId(
+          String(
+            existente.id
+          )
+        );
+
+        await Swal.fire({
+          title:
+            "Grupo seleccionado",
+
+          text:
+            "Ese grupo ya existía, así que lo seleccioné para esta venta.",
+
+          icon:
+            "info",
+
+          confirmButtonColor:
+            "#8ED4BE",
+        });
+
+        return;
+      }
+
+      try {
+        const actuales =
+          await getFolders();
+
+        const maxOrder =
+          (actuales || [])
+            .length
+            ? Math.max(
+                ...(actuales || []).map(
+                  (folder) =>
+                    Number(
+                      folder.orden
+                    ) || 0
+                )
+              )
+            : 1;
+
+        const creadas =
+          await createFolder({
+            nombre:
+              limpio,
+
+            orden:
+              maxOrder + 1,
+          });
+
+        const nuevaCarpeta =
+          creadas?.[0];
+
+        if (!nuevaCarpeta) {
+          throw new Error(
+            "No se pudo obtener el grupo creado."
+          );
+        }
+
+        const actualizadas =
+          [
+            ...(actuales || []),
+            nuevaCarpeta,
+          ];
+
+        setCarpetas(
+          actualizadas
+        );
+
+        setGrupoId(
+          String(
+            nuevaCarpeta.id
+          )
+        );
+      } catch (error) {
+        console.error(
+          "Error creando grupo:",
+          error
+        );
+
+        await Swal.fire({
+          title:
+            "No se pudo crear el grupo",
+
+          text:
+            error.message ||
+            "Inténtalo nuevamente.",
+
+          icon:
+            "error",
+
+          confirmButtonColor:
+            "#F79598",
+        });
+      }
+    };
+
+  const cambiarGrupo =
+    async (value) => {
+      if (
+        value ===
+        NEW_GROUP_VALUE
+      ) {
+        await crearNuevoGrupo();
+        return;
+      }
+
+      setGrupoId(
+        value
+      );
+    };
+
+  const asociarVentaAGrupo =
+    async (ventaId) => {
+      if (!grupoId) {
+        return;
+      }
+
+      const actuales =
+        await getFolders();
+
+      const folder =
+        (actuales || []).find(
+          (item) =>
+            String(item.id) ===
+            String(grupoId)
+        );
+
+      if (!folder) {
+        throw new Error(
+          "El grupo seleccionado ya no existe."
+        );
+      }
+
+      const idsVentas =
+        Array.isArray(
+          folder.ids_ventas
+        )
+          ? folder.ids_ventas
+          : [];
+
+      const yaExiste =
+        idsVentas.some(
+          (id) =>
+            String(id) ===
+            String(ventaId)
+        );
+
+      if (yaExiste) {
+        return;
+      }
+
+      await updateFolderSales(
+        folder.id,
+        [
+          ...idsVentas,
+          ventaId,
+        ]
+      );
+    };
 
   /*
    * ACTIVE INVENTORY
@@ -305,10 +676,10 @@ export default function SaleForm({
     };
 
   /*
-   * TOTAL
+   * TOTAL + DISCOUNT
    */
 
-  const total =
+  const subtotalProductos =
     useMemo(() => {
       return items.reduce(
         (
@@ -327,6 +698,48 @@ export default function SaleForm({
     }, [
       items,
     ]);
+
+  const descuentoAplicado =
+    descuentoActivo
+      ? Math.min(
+          subtotalProductos,
+          Math.max(
+            0,
+            Number(
+              descuento
+            ) || 0
+          )
+        )
+      : 0;
+
+  const total =
+    Math.max(
+      0,
+      subtotalProductos -
+        descuentoAplicado
+    );
+
+  useEffect(() => {
+    if (!descuentoActivo) {
+      return;
+    }
+
+    setDescuento(
+      (previous) =>
+        Math.min(
+          subtotalProductos,
+          Math.max(
+            0,
+            Number(
+              previous
+            ) || 0
+          )
+        )
+    );
+  }, [
+    subtotalProductos,
+    descuentoActivo,
+  ]);
 
   /*
    * PENDING
@@ -863,12 +1276,20 @@ export default function SaleForm({
             : provincia ||
               "";
 
+        const ventaId =
+          generateId();
+
+        const nombreFinal =
+          grupoSeleccionado
+            ? `${nombre.trim()} - ${grupoSeleccionado.nombre}`
+            : nombre.trim();
+
         const nueva = {
           id:
-            generateId(),
+            ventaId,
 
           nombre:
-            nombre.trim(),
+            nombreFinal,
 
           telefono:
             tel,
@@ -880,6 +1301,9 @@ export default function SaleForm({
             ventaItems,
 
           total,
+
+          descuento:
+            descuentoAplicado,
 
           encargado,
 
@@ -907,6 +1331,31 @@ export default function SaleForm({
           ok === false
         ) {
           return;
+        }
+
+        try {
+          await asociarVentaAGrupo(
+            ventaId
+          );
+        } catch (error) {
+          console.error(
+            "Pedido guardado, pero no se pudo asociar al grupo:",
+            error
+          );
+
+          await Swal.fire({
+            title:
+              "Pedido guardado",
+
+            text:
+              "La venta se guardó correctamente, pero no se pudo agregar al grupo seleccionado. Puedes agregarla desde el Historial de Ventas.",
+
+            icon:
+              "warning",
+
+            confirmButtonColor:
+              "#8ED4BE",
+          });
         }
 
         await descontarInventario();
@@ -1132,7 +1581,8 @@ export default function SaleForm({
               className="
                 grid
                 grid-cols-1
-                md:grid-cols-2
+
+                md:grid-cols-[1.2fr_0.9fr_1fr]
                 gap-4
               "
             >
@@ -1158,6 +1608,92 @@ export default function SaleForm({
                     w-full
                   "
                 />
+
+                {grupoSeleccionado &&
+                  nombre.trim() && (
+                    <p
+                      className="
+                        mt-2
+                        ml-2
+
+                        text-[7px]
+                        sm:text-[8px]
+
+                        uppercase
+                        tracking-widest
+
+                        text-emerald-500
+                      "
+                    >
+                      Se guardará como:{" "}
+                      <strong>
+                        {nombre.trim()}
+                        {" - "}
+                        {grupoSeleccionado.nombre}
+                      </strong>
+                    </p>
+                  )}
+              </Field>
+
+              <Field>
+                <FieldLabel>
+                  Grupo / Centro
+                </FieldLabel>
+
+                <SelectShell
+                  disabled={
+                    cargandoGrupos
+                  }
+                >
+                  <select
+                    value={
+                      grupoId
+                    }
+                    disabled={
+                      cargandoGrupos
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      cambiarGrupo(
+                        event.target
+                          .value
+                      )
+                    }
+                    className="
+                      sale-form-select
+                    "
+                  >
+                    <option value="">
+                      {cargandoGrupos
+                        ? "Cargando grupos..."
+                        : "Grupo..."}
+                    </option>
+
+                    {gruposDisponibles.map(
+                      (folder) => (
+                        <option
+                          key={
+                            folder.id
+                          }
+                          value={
+                            folder.id
+                          }
+                        >
+                          {folder.nombre}
+                        </option>
+                      )
+                    )}
+
+                    <option
+                      value={
+                        NEW_GROUP_VALUE
+                      }
+                    >
+                      + Nuevo Grupo
+                    </option>
+                  </select>
+                </SelectShell>
               </Field>
 
               <Field>
@@ -1563,8 +2099,13 @@ export default function SaleForm({
 
               <button
                 type="button"
-                onClick={
-                  agregarLinea
+                disabled={
+                  descuentoActivo
+                }
+                onClick={() =>
+                  setDescuentoActivo(
+                    true
+                  )
                 }
                 className="
                   shrink-0
@@ -1585,8 +2126,12 @@ export default function SaleForm({
                   text-[8px]
                   uppercase
 
-                  hover:bg-[#8ED4BE]
-                  hover:text-slate-900
+                  hover:bg-purple-500
+                  hover:text-white
+
+                  disabled:opacity-35
+                  disabled:cursor-not-allowed
+                  disabled:hover:bg-slate-900
 
                   transition-all
                 "
@@ -1595,22 +2140,8 @@ export default function SaleForm({
                   size={15}
                 />
 
-                <span
-                  className="
-                    hidden
-                    sm:inline
-                  "
-                >
-                  Agregar
-                  producto
-                </span>
-
-                <span
-                  className="
-                    sm:hidden
-                  "
-                >
-                  Agregar
+                <span>
+                  Agregar descuento
                 </span>
               </button>
             </div>
@@ -1662,6 +2193,217 @@ export default function SaleForm({
                 )
               )}
             </div>
+
+            <button
+              type="button"
+              onClick={
+                agregarLinea
+              }
+              className="
+                mt-4
+                w-full
+
+                px-4
+                py-3.5
+
+                rounded-2xl
+
+                border
+                border-dashed
+                border-slate-300
+
+                text-slate-400
+
+                flex
+                items-center
+                justify-center
+                gap-2
+
+                text-[8px]
+                uppercase
+                tracking-widest
+
+                hover:border-[#8ED4BE]
+                hover:text-[#58B99A]
+                hover:bg-[#8ED4BE]/5
+
+                dark:border-slate-700
+                dark:text-slate-500
+                dark:hover:border-[#8ED4BE]
+                dark:hover:text-[#8ED4BE]
+
+                transition-all
+              "
+            >
+              <Plus
+                size={14}
+              />
+
+              Agregar línea
+            </button>
+
+            {descuentoActivo && (
+              <div
+                className="
+                  mt-4
+
+                  px-4
+                  py-4
+
+                  rounded-2xl
+
+                  border
+                  border-purple-200
+
+                  bg-purple-50
+
+                  flex
+                  flex-col
+                  sm:flex-row
+                  sm:items-center
+                  justify-between
+                  gap-3
+
+                  dark:bg-purple-500/10
+                  dark:border-purple-500/30
+                "
+              >
+                <span
+                  className="
+                    text-[9px]
+                    uppercase
+                    tracking-widest
+                    text-purple-700
+                    font-black
+
+                    dark:text-purple-300
+                  "
+                >
+                  Descuento
+                </span>
+
+                <div
+                  className="
+                    flex
+                    items-center
+                    gap-2
+                  "
+                >
+                  <div
+                    className="
+                      min-w-[150px]
+
+                      px-3
+                      py-2
+
+                      rounded-xl
+
+                      bg-white
+                      border
+                      border-purple-200
+
+                      flex
+                      items-center
+                      gap-2
+
+                      dark:bg-[#160d24]
+                      dark:border-purple-700
+                    "
+                  >
+                    <span
+                      className="
+                        text-sm
+                        font-black
+                        text-purple-700
+
+                        dark:text-purple-300
+                      "
+                    >
+                      ₡
+                    </span>
+
+                    <input
+                      type="number"
+                      min="0"
+                      max={
+                        subtotalProductos
+                      }
+                      step="1"
+                      value={
+                        descuento
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        setDescuento(
+                          Math.min(
+                            subtotalProductos,
+                            Math.max(
+                              0,
+                              Number(
+                                event.target
+                                  .value
+                              ) || 0
+                            )
+                          )
+                        )
+                      }
+                      className="
+                        w-full
+
+                        border-0
+                        outline-none
+
+                        bg-transparent
+
+                        text-right
+                        text-sm
+                        font-black
+                        text-slate-900
+
+                        dark:text-purple-100
+                      "
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    title="Quitar descuento"
+                    onClick={() => {
+                      setDescuento(0);
+                      setDescuentoActivo(
+                        false
+                      );
+                    }}
+                    className="
+                      w-10
+                      h-10
+
+                      rounded-xl
+
+                      bg-red-50
+                      text-red-400
+
+                      flex
+                      items-center
+                      justify-center
+
+                      hover:bg-red-500
+                      hover:text-white
+
+                      dark:bg-red-500/10
+                      dark:text-red-300
+
+                      transition-all
+                    "
+                  >
+                    <Trash2
+                      size={14}
+                    />
+                  </button>
+                </div>
+              </div>
+            )}
           </section>
 
           {/* ===============================

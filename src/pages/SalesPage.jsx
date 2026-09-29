@@ -1778,6 +1778,57 @@ export default function SalesPage({
       };
     };
 
+  const calcularSubtotalItems =
+    (items = []) =>
+      items.reduce(
+        (
+          total,
+          item
+        ) =>
+          total +
+          (Number(
+            item.cant
+          ) || 0) *
+            (Number(
+              item.precio
+            ) || 0),
+        0
+      );
+
+  const calcularTotalConDescuento =
+    (
+      items = [],
+      descuento = 0
+    ) => {
+      const subtotal =
+        calcularSubtotalItems(
+          items
+        );
+
+      const descuentoAjustado =
+        Math.min(
+          subtotal,
+          Math.max(
+            0,
+            Number(
+              descuento
+            ) || 0
+          )
+        );
+
+      return {
+        subtotal,
+        descuento:
+          descuentoAjustado,
+        total:
+          Math.max(
+            0,
+            subtotal -
+              descuentoAjustado
+          ),
+      };
+    };
+
   /*
    * ========================================
    * EDIT SALE
@@ -1799,10 +1850,26 @@ export default function SalesPage({
           : location.provincia ||
             "";
 
-      const copia =
+      const copiaBase =
         structuredClone(
           venta
         );
+
+      const calculo =
+        calcularTotalConDescuento(
+          copiaBase.items ||
+            [],
+          copiaBase.descuento ||
+            0
+        );
+
+      const copia = {
+        ...copiaBase,
+        descuento:
+          calculo.descuento,
+        total:
+          calculo.total,
+      };
 
       setEditCache(
         copia
@@ -1810,7 +1877,7 @@ export default function SalesPage({
 
       setEditInitialSnapshot({
         ...structuredClone(
-          venta
+          copia
         ),
         direccion:
           direccionNormalizada,
@@ -2033,26 +2100,20 @@ export default function SalesPage({
               }
             );
 
+          const calculo =
+            calcularTotalConDescuento(
+              items,
+              previous.descuento ||
+                0
+            );
+
           return {
             ...previous,
             items,
+            descuento:
+              calculo.descuento,
             total:
-              items.reduce(
-                (
-                  sum,
-                  item
-                ) =>
-                  sum +
-                  (Number(
-                    item.cant
-                  ) ||
-                    0) *
-                    (Number(
-                      item.precio
-                    ) ||
-                      0),
-                0
-              ),
+              calculo.total,
           };
         }
       );
@@ -2117,26 +2178,46 @@ export default function SalesPage({
                 )
             );
 
+          const calculo =
+            calcularTotalConDescuento(
+              items,
+              previous.descuento ||
+                0
+            );
+
           return {
             ...previous,
             items,
+            descuento:
+              calculo.descuento,
             total:
-              items.reduce(
-                (
-                  total,
-                  item
-                ) =>
-                  total +
-                  (Number(
-                    item.cant
-                  ) ||
-                    0) *
-                    (Number(
-                      item.precio
-                    ) ||
-                      0),
-                0
-              ),
+              calculo.total,
+          };
+        }
+      );
+    };
+
+  const editarDescuento =
+    (value) => {
+      setEditCache(
+        (previous) => {
+          if (!previous) {
+            return previous;
+          }
+
+          const calculo =
+            calcularTotalConDescuento(
+              previous.items ||
+                [],
+              value
+            );
+
+          return {
+            ...previous,
+            descuento:
+              calculo.descuento,
+            total:
+              calculo.total,
           };
         }
       );
@@ -2283,6 +2364,9 @@ export default function SalesPage({
         }
         onDeleteLine={
           borrarLineaEnEdicion
+        }
+        onEditDiscount={
+          editarDescuento
         }
       />
     );

@@ -6,6 +6,10 @@ import autoTable from "jspdf-autotable";
 
 import logoAlekey from "../assets/images/alekey-logo.jpeg";
 
+/* =========================================================
+   IMAGE TO BASE64
+========================================================= */
+
 const getBase64 = (
   url
 ) => {
@@ -49,12 +53,20 @@ const getBase64 = (
         };
 
       image.onerror =
-        () => resolve(null);
+        () =>
+          resolve(
+            null
+          );
 
-      image.src = url;
+      image.src =
+        url;
     }
   );
 };
+
+/* =========================================================
+   EXPORT SALE TO PDF
+========================================================= */
 
 export async function exportToPDF(
   venta
@@ -66,6 +78,10 @@ export async function exportToPDF(
     await getBase64(
       logoAlekey
     );
+
+  /* =======================================================
+     HEADER
+  ======================================================= */
 
   doc.setFillColor(
     245,
@@ -97,7 +113,9 @@ export async function exportToPDF(
     "bold"
   );
 
-  doc.setFontSize(30);
+  doc.setFontSize(
+    30
+  );
 
   doc.setTextColor(
     30,
@@ -111,13 +129,18 @@ export async function exportToPDF(
     25
   );
 
-  doc.setFontSize(10);
+  doc.setFontSize(
+    10
+  );
 
-  doc.setTextColor(100);
+  doc.setTextColor(
+    100
+  );
 
   doc.text(
     `ORDEN: ${
-      venta.id || ""
+      venta.id ||
+      ""
     }`,
     15,
     35
@@ -125,15 +148,29 @@ export async function exportToPDF(
 
   doc.text(
     `FECHA: ${
-      venta.fecha || ""
+      venta.fecha ||
+      ""
     }`,
     15,
     42
   );
 
-  doc.setFontSize(11);
+  /* =======================================================
+     BUSINESS INFO
+  ======================================================= */
 
-  doc.setTextColor(40);
+  doc.setFontSize(
+    11
+  );
+
+  doc.setTextColor(
+    40
+  );
+
+  doc.setFont(
+    "helvetica",
+    "bold"
+  );
 
   doc.text(
     "Isabel Viquez Fernandez",
@@ -151,6 +188,10 @@ export async function exportToPDF(
     15,
     71
   );
+
+  /* =======================================================
+     CLIENT INFO
+  ======================================================= */
 
   doc.setFont(
     "helvetica",
@@ -170,7 +211,8 @@ export async function exportToPDF(
 
   doc.text(
     String(
-      venta.nombre || ""
+      venta.nombre ||
+      ""
     ),
     110,
     71
@@ -178,7 +220,8 @@ export async function exportToPDF(
 
   doc.text(
     `Tel: ${
-      venta.telefono || ""
+      venta.telefono ||
+      ""
     }`,
     110,
     77
@@ -186,7 +229,8 @@ export async function exportToPDF(
 
   doc.text(
     `Lugar: ${
-      venta.direccion || ""
+      venta.direccion ||
+      ""
     }`,
     110,
     83
@@ -201,6 +245,10 @@ export async function exportToPDF(
     89
   );
 
+  /* =======================================================
+     PRODUCTS
+  ======================================================= */
+
   const rows =
     (
       venta.items ||
@@ -211,8 +259,12 @@ export async function exportToPDF(
           item.cant
         ) || 0,
 
-        `${item.cat || ""} - ${
-          item.tema || ""
+        `${
+          item.cat ||
+          ""
+        } - ${
+          item.tema ||
+          ""
         }`,
 
         `C ${(
@@ -222,12 +274,16 @@ export async function exportToPDF(
         ).toLocaleString()}`,
 
         `C ${(
-          (Number(
-            item.cant
-          ) || 0) *
-          (Number(
-            item.precio
-          ) || 0)
+          (
+            Number(
+              item.cant
+            ) || 0
+          ) *
+          (
+            Number(
+              item.precio
+            ) || 0
+          )
         ).toLocaleString()}`,
 
         Number(
@@ -240,35 +296,103 @@ export async function exportToPDF(
       ]
     );
 
-  autoTable(doc, {
-    startY: 100,
+  autoTable(
+    doc,
+    {
+      startY: 100,
 
-    head: [
-      [
-        "Cant.",
-        "Descripción",
-        "Unitario",
-        "Subtotal",
-        "Pend.",
+      head: [
+        [
+          "Cant.",
+          "Descripción",
+          "Unitario",
+          "Subtotal",
+          "Pend.",
+        ],
       ],
-    ],
 
-    body: rows,
+      body:
+        rows,
 
-    headStyles: {
-      fillColor: [
-        142,
-        212,
-        190,
-      ],
-    },
-  });
+      headStyles: {
+        fillColor: [
+          142,
+          212,
+          190,
+        ],
+      },
+    }
+  );
+
+  /* =======================================================
+     TOTALS
+  ======================================================= */
 
   const finalY =
     doc.lastAutoTable
-      .finalY + 15;
+      .finalY +
+    15;
 
-  doc.setFontSize(14);
+  const descuento =
+    Math.max(
+      0,
+      Number(
+        venta.descuento
+      ) || 0
+    );
+
+  let totalY =
+    finalY;
+
+  /* =======================================================
+     DISCOUNT
+  ======================================================= */
+
+  if (
+    descuento >
+    0
+  ) {
+    doc.setFontSize(
+      11
+    );
+
+    doc.setFont(
+      "helvetica",
+      "bold"
+    );
+
+    doc.setTextColor(
+      126,
+      34,
+      206
+    );
+
+    doc.text(
+      `DESCUENTO: - C ${descuento.toLocaleString()}`,
+      195,
+      finalY,
+      {
+        align:
+          "right",
+      }
+    );
+
+    totalY =
+      finalY +
+      10;
+  }
+
+  /* =======================================================
+     FINAL TOTAL
+  ======================================================= */
+
+  doc.setTextColor(
+    40
+  );
+
+  doc.setFontSize(
+    14
+  );
 
   doc.setFont(
     "helvetica",
@@ -282,16 +406,21 @@ export async function exportToPDF(
       ) || 0
     ).toLocaleString()}`,
     195,
-    finalY,
+    totalY,
     {
-      align: "right",
+      align:
+        "right",
     }
   );
+
+  /* =======================================================
+     DEBT WARNING
+  ======================================================= */
 
   if (
     String(
       venta.metodo_pago ||
-        ""
+      ""
     ).toUpperCase() ===
     "DEBE"
   ) {
@@ -301,14 +430,21 @@ export async function exportToPDF(
       38
     );
 
-    doc.setFontSize(12);
+    doc.setFontSize(
+      12
+    );
 
     doc.text(
       "PAGO PENDIENTE - DEBE",
       15,
-      finalY + 12
+      totalY +
+        12
     );
   }
+
+  /* =======================================================
+     SAVE PDF
+  ======================================================= */
 
   doc.save(
     `Cotizacion_${

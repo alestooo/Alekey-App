@@ -63,6 +63,7 @@ export default function SaleCard({
   onEditItem,
   onAddLine,
   onDeleteLine,
+  onEditDiscount,
 }) {
   const data =
     editing
@@ -72,6 +73,36 @@ export default function SaleCard({
   if (!data) {
     return null;
   }
+
+  const subtotalProductos =
+    (
+      data.items ||
+      []
+    ).reduce(
+      (
+        total,
+        item
+      ) =>
+        total +
+        (Number(
+          item.cant
+        ) || 0) *
+          (Number(
+            item.precio
+          ) || 0),
+      0
+    );
+
+  const descuentoVenta =
+    Math.min(
+      subtotalProductos,
+      Math.max(
+        0,
+        Number(
+          data.descuento
+        ) || 0
+      )
+    );
 
   const inventarioActivo =
     (
@@ -1540,6 +1571,134 @@ export default function SaleCard({
           )}
         </div>
       </div>
+
+      {(
+        editing ||
+        descuentoVenta > 0
+      ) && (
+        <div
+          className="
+            px-6
+            lg:px-8
+            py-4
+
+            border-t
+            border-purple-100
+
+            bg-purple-50
+
+            flex
+            flex-col
+            sm:flex-row
+            sm:items-center
+            justify-between
+            gap-3
+
+            dark:bg-purple-500/10
+            dark:border-purple-500/20
+          "
+        >
+          <span
+            className="
+              text-[8px]
+              uppercase
+              tracking-[0.18em]
+              text-purple-600
+
+              dark:text-purple-300
+            "
+          >
+            Descuento
+          </span>
+
+          {editing ? (
+            <div
+              className="
+                min-w-[155px]
+
+                px-3
+                py-2
+
+                rounded-xl
+
+                bg-white
+                border
+                border-purple-200
+
+                flex
+                items-center
+                gap-2
+
+                dark:bg-[#160d24]
+                dark:border-purple-700
+              "
+            >
+              <span
+                className="
+                  text-sm
+                  font-black
+                  text-purple-700
+
+                  dark:text-purple-300
+                "
+              >
+                ₡
+              </span>
+
+              <input
+                type="number"
+                min="0"
+                max={
+                  subtotalProductos
+                }
+                step="1"
+                value={
+                  descuentoVenta
+                }
+                onChange={(
+                  event
+                ) =>
+                  onEditDiscount?.(
+                    Number(
+                      event.target
+                        .value
+                    ) || 0
+                  )
+                }
+                className="
+                  w-full
+
+                  border-0
+                  outline-none
+
+                  bg-transparent
+
+                  text-right
+                  text-sm
+                  font-black
+                  text-slate-900
+
+                  dark:text-purple-100
+                "
+              />
+            </div>
+          ) : (
+            <strong
+              className="
+                text-sm
+                italic
+                text-purple-600
+
+                dark:text-purple-300
+              "
+            >
+              - {currency(
+                descuentoVenta
+              )}
+            </strong>
+          )}
+        </div>
+      )}
 
       {/* =================================
           FOOTER
