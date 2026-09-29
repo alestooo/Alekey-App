@@ -718,6 +718,11 @@ export default function SalesPage({
   ] = useState("");
 
   const [
+    grupoEditId,
+    setGrupoEditId,
+  ] = useState("");
+
+  const [
     pagina,
     setPagina,
   ] = useState(1);
@@ -1829,6 +1834,93 @@ export default function SalesPage({
       };
     };
 
+  const carpetasManuales =
+    useMemo(
+      () =>
+        carpetas.filter(
+          (folder) =>
+            !isSystemFolder(
+              folder
+            )
+        ),
+      [
+        carpetas,
+      ]
+    );
+
+  const obtenerCarpetaManualDeVenta =
+    useCallback(
+      (ventaId) =>
+        carpetasManuales.find(
+          (folder) =>
+            (
+              folder.ids_ventas ||
+              []
+            ).some(
+              (id) =>
+                String(id) ===
+                String(
+                  ventaId
+                )
+            )
+        ) || null,
+      [
+        carpetasManuales,
+      ]
+    );
+
+  const obtenerNombreBase =
+    useCallback(
+      (
+        nombreCompleto,
+        folder
+      ) => {
+        const nombre =
+          String(
+            nombreCompleto ||
+              ""
+          ).trim();
+
+        const nombreGrupo =
+          String(
+            folder?.nombre ||
+              ""
+          ).trim();
+
+        if (
+          !nombre ||
+          !nombreGrupo
+        ) {
+          return nombre;
+        }
+
+        const sufijo =
+          ` - ${nombreGrupo}`;
+
+        if (
+          nombre
+            .toLocaleLowerCase(
+              "es"
+            )
+            .endsWith(
+              sufijo.toLocaleLowerCase(
+                "es"
+              )
+            )
+        ) {
+          return nombre
+            .slice(
+              0,
+              -sufijo.length
+            )
+            .trim();
+        }
+
+        return nombre;
+      },
+      []
+    );
+
   /*
    * ========================================
    * EDIT SALE
@@ -1850,6 +1942,18 @@ export default function SalesPage({
           : location.provincia ||
             "";
 
+      const carpetaActual =
+        obtenerCarpetaManualDeVenta(
+          venta.id
+        );
+
+      const grupoActualId =
+        carpetaActual
+          ? String(
+              carpetaActual.id
+            )
+          : "";
+
       const copiaBase =
         structuredClone(
           venta
@@ -1865,6 +1969,11 @@ export default function SalesPage({
 
       const copia = {
         ...copiaBase,
+        nombre:
+          obtenerNombreBase(
+            copiaBase.nombre,
+            carpetaActual
+          ),
         descuento:
           calculo.descuento,
         total:
@@ -1881,6 +1990,8 @@ export default function SalesPage({
         ),
         direccion:
           direccionNormalizada,
+        __grupoEditId:
+          grupoActualId,
       });
 
       setProvinciaEdit(
@@ -1889,6 +2000,10 @@ export default function SalesPage({
 
       setCantonEdit(
         location.canton
+      );
+
+      setGrupoEditId(
+        grupoActualId
       );
 
       setEditId(
@@ -1905,6 +2020,7 @@ export default function SalesPage({
       );
       setProvinciaEdit("");
       setCantonEdit("");
+      setGrupoEditId("");
     };
 
   const handleEditItem =
@@ -2243,6 +2359,11 @@ export default function SalesPage({
         ...editCache,
         direccion:
           direccionActual,
+        __grupoEditId:
+          String(
+            grupoEditId ||
+              ""
+          ),
       };
 
       return (
@@ -2271,19 +2392,201 @@ export default function SalesPage({
           : provinciaEdit ||
             "";
 
+      const carpetaSeleccionada =
+        carpetasManuales.find(
+          (folder) =>
+            String(
+              folder.id
+            ) ===
+            String(
+              grupoEditId ||
+                ""
+            )
+        ) || null;
+
+      const nombreBase =
+        String(
+          editCache.nombre ||
+            ""
+        ).trim();
+
+      const nombreFinal =
+        carpetaSeleccionada
+          ? `${nombreBase} - ${carpetaSeleccionada.nombre}`
+          : nombreBase;
+
+      const grupoAnteriorId =
+        String(
+          editInitialSnapshot
+            ?.__grupoEditId ||
+            ""
+        );
+
+      const grupoCambio =
+        grupoAnteriorId !==
+        String(
+          grupoEditId ||
+            ""
+        );
+
       const result =
         await onUpdate?.(
           id,
           {
             ...editCache,
+            nombre:
+              nombreFinal,
             direccion,
           }
         );
 
       if (
-        result !== false
+        result === false
       ) {
+        return;
+      }
+
+      try {
+        const carpetasActualizadas =
+          await Promise.all(
+            carpetasManuales.map(
+              async (
+                folder
+              ) => {
+                const idsActuales =
+                  folder.ids_ventas ||
+                  [];
+
+                const idsSinVenta =
+                  idsActuales.filter(
+                    (ventaId) =>
+                      String(
+                        ventaId
+                      ) !==
+                      String(id)
+                  );
+
+                const esSeleccionada =
+                  carpetaSeleccionada &&
+                  String(
+                    folder.id
+                  ) ===
+                    String(
+                      carpetaSeleccionada.id
+                    );
+
+                const idsNuevos =
+                  esSeleccionada
+                    ? [
+                        ...idsSinVenta,
+                        id,
+                      ]
+                    : idsSinVenta;
+
+                const sinCambios =
+                  idsActuales.length ===
+                    idsNuevos.length &&
+                  idsActuales.every(
+                    (
+                      ventaId,
+                      index
+                    ) =>
+                      String(
+                        ventaId
+                      ) ===
+                      String(
+                        idsNuevos[
+                          index
+                        ]
+                      )
+                  );
+
+                if (
+                  !sinCambios
+                ) {
+                  const {
+                    error,
+                  } =
+                    await supabase
+                      .from(
+                        "carpetas_centros"
+                      )
+                      .update({
+                        ids_ventas:
+                          idsNuevos,
+                      })
+                      .eq(
+                        "id",
+                        folder.id
+                      );
+
+                  if (error) {
+                    throw error;
+                  }
+                }
+
+                return {
+                  ...folder,
+                  ids_ventas:
+                    idsNuevos,
+                };
+              }
+            )
+          );
+
+        const recargadas =
+          await obtenerCarpetas();
+
+        if (grupoCambio) {
+          if (
+            carpetaSeleccionada
+          ) {
+            const destino =
+              (
+                recargadas ||
+                carpetasActualizadas
+              ).find(
+                (folder) =>
+                  String(
+                    folder.id
+                  ) ===
+                  String(
+                    carpetaSeleccionada.id
+                  )
+              );
+
+            if (destino) {
+              setFolderView(
+                destino
+              );
+            }
+          } else {
+            setFolderView(
+              null
+            );
+            setMode(
+              "normal"
+            );
+          }
+        }
+
         cancelarEdicion();
+      } catch (error) {
+        console.error(
+          "Error moviendo venta entre carpetas:",
+          error
+        );
+
+        await Swal.fire({
+          title:
+            "Venta actualizada",
+          text:
+            "Los datos se guardaron, pero no se pudo actualizar la carpeta. Intenta guardar el grupo nuevamente.",
+          icon:
+            "warning",
+          confirmButtonColor:
+            "#8ED4BE",
+        });
       }
     };
 
@@ -2325,6 +2628,15 @@ export default function SalesPage({
         }
         setCantonEdit={
           setCantonEdit
+        }
+        folderOptions={
+          carpetasManuales
+        }
+        grupoEditId={
+          grupoEditId
+        }
+        setGrupoEditId={
+          setGrupoEditId
         }
         onStartEdit={() =>
           iniciarEdicion(

@@ -48,6 +48,10 @@ export default function SaleCard({
   cantonEdit = "",
   setCantonEdit,
 
+  folderOptions = [],
+  grupoEditId = "",
+  setGrupoEditId,
+
   onStartEdit,
   onCancelEdit,
   onSaveEdit,
@@ -342,33 +346,118 @@ export default function SaleCard({
           >
             {editing ? (
               <div className="space-y-4">
-                <input
-                  value={
-                    data.nombre ||
-                    ""
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setField(
-                      "nombre",
-                      event.target
-                        .value
-                    )
-                  }
+                <div
                   className="
-                    sale-edit-input
-                    w-full
-                    p-3
-                    rounded-xl
-                    border-2
-                    border-[#8ED4BE]
-                    text-xl
-                    lg:text-2xl
-                    italic
-                    outline-none
+                    grid
+                    grid-cols-1
+                    lg:grid-cols-[minmax(0,1fr)_320px]
+                    gap-3
                   "
-                />
+                >
+                  <div>
+                    <label
+                      className="
+                        block
+                        mb-2
+                        text-[7px]
+                        uppercase
+                        tracking-[0.16em]
+                        text-slate-400
+                        sale-muted
+                      "
+                    >
+                      Nombre / Cliente
+                    </label>
+
+                    <input
+                      value={
+                        data.nombre ||
+                        ""
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        setField(
+                          "nombre",
+                          event.target
+                            .value
+                        )
+                      }
+                      placeholder="Nombre del cliente"
+                      className="
+                        sale-edit-input
+                        w-full
+                        p-3
+                        rounded-xl
+                        border-2
+                        border-[#8ED4BE]
+                        text-xl
+                        lg:text-2xl
+                        italic
+                        outline-none
+                      "
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      className="
+                        block
+                        mb-2
+                        text-[7px]
+                        uppercase
+                        tracking-[0.16em]
+                        text-slate-400
+                        sale-muted
+                      "
+                    >
+                      Grupo / Centro / Carpeta
+                    </label>
+
+                    <select
+                      value={
+                        grupoEditId ||
+                        ""
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        setGrupoEditId?.(
+                          event.target
+                            .value
+                        )
+                      }
+                      className="
+                        sale-edit-input
+                        w-full
+                        min-h-[54px]
+                      "
+                    >
+                      <option value="">
+                        Sin grupo / carpeta
+                      </option>
+
+                      {folderOptions.map(
+                        (folder) => (
+                          <option
+                            key={
+                              folder.id
+                            }
+                            value={
+                              String(
+                                folder.id
+                              )
+                            }
+                          >
+                            {
+                              folder.nombre
+                            }
+                          </option>
+                        )
+                      )}
+                    </select>
+                  </div>
+                </div>
 
                 <div
                   className="
